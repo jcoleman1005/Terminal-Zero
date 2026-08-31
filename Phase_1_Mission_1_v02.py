@@ -14,15 +14,24 @@ filesystem = {
                         "=== CLASSIFIED EMERGENCY BRIEFING ===\n"
                         "Incident: Global telemetry severed at 03:42 UTC.\n"
                         "Lead: Incident logs show unusual service failures.\n"
-                        "Next Step: Inspect /var/log/system.log for any 'phoenix' records.\n"
+                        "Next Step: Check system logs under /var/log/ for failed services.\n"
                         "====================================="
                     )
                 },
                 "notes": {
-                    "network_alert.txt": (
-                        "OPERATOR ROUTING NOTE:\n"
-                        "Emergency configurations are staged in /opt/phoenix/config/\n"
-                        "Navigate there to inspect recovery parameters.\n"
+                    "sysadmin_notes.txt": (
+                        "SYSADMIN SURVIVAL GUIDE:\n\n"
+                        "[DIRECTORY NAVIGATION]\n"
+                        "Linux paths start at root '/'. You can jump across top-level branches\n"
+                        "directly (e.g., 'cd /opt' or 'cd /var') rather than stepping backward one by one.\n\n"
+                        "[TEXT SEARCHING]\n"
+                        "When files are too long to read line-by-line, use pattern matching:\n"
+                        "    grep <pattern> <file_path>\n"
+                        "Search logs for known service names or keywords to isolate errors.\n\n"
+                        "[FILE SEARCHING]\n"
+                        "When files are scattered across unknown directories, search trees from root or sub-roots:\n"
+                        "    find <start_path> -name \"<pattern>\"\n"
+                        "Example: search /opt or root / for config files using wildcard patterns like \"*.conf\".\n"
                     ),
                     "mapping_tool.txt": (
                         "UTILITY DISCOVERY NOTE:\n"
@@ -41,7 +50,7 @@ filesystem = {
             }
         },
         "etc": {
-            "motd": "EMERGENCY PROTOCOL ACTIVE. Check 'objectives' to begin."
+            "motd": "EMERGENCY PROTOCOL ACTIVE. Check your operator manual using 'help' and type 'objectives' to begin."
         },
         "opt": {
             "phoenix": {
@@ -51,12 +60,7 @@ filesystem = {
                         "PORT=8080\n"
                         "STATUS=DEGRADED\n"
                         "AUTH_KEY=PX-9042-ALPHA\n"
-                        "LOG_TARGET=/var/log/system.log\n\n"
-                        "# INVESTIGATION LEAD:\n"
-                        "# The target log contains thousands of lines.\n"
-                        "# Use the 'grep' search tool to filter specific error lines instead of reading manually.\n"
-                        "# Syntax: grep <pattern> <file_path>\n"
-                        "# Example: grep phoenix /var/log/system.log\n"
+                        "LOG_TARGET=/var/log/system.log\n"
                     )
                 },
                 "recovery": {
@@ -70,7 +74,7 @@ filesystem = {
                     "03:40:12 apollo kernel: Network interface eth0 link down\n"
                     "03:41:05 apollo auth: Successful login for alice from 127.0.0.1\n"
                     "03:42:19 apollo systemd: phoenix-sync service terminated unexpectedly.\n"
-                    "03:42:20 apollo alert: Check operator notes in /home/alice/notes/ for recovery config paths.\n"
+                    "03:42:20 apollo alert: telemetry failure detected across core nodes\n"
                     "03:42:22 apollo alert: Global telemetry link severed\n"
                     "03:43:01 apollo systemd: service watchdog timeout on phoenix-core"
                 ),
@@ -101,34 +105,33 @@ MISSIONS = {
     },
     2: {
         "title": "MISSION 2: Location & Navigation",
-        "description": "Determine your working path, move into a subdirectory, and inspect its contents.",
+        "description": "Determine your current working path, move into a local folder, and inspect its contents.",
         "tasks": {
             "run_pwd": {"desc": "Determine your exact location in the filesystem using 'pwd'", "done": False},
             "cd_folder": {"desc": "Navigate into the 'notes' directory using 'cd'", "done": False},
-            "read_new_file": {"desc": "Read 'network_alert.txt' inside notes to uncover the next lead", "done": False}
+            "read_new_file": {"desc": "Read 'sysadmin_notes.txt' to learn core navigation and diagnostic syntax", "done": False}
         }
     },
     3: {
-        "title": "MISSION 3: Subsystem Investigation",
-        "description": "Navigate to the path uncovered in the notes, inspect the files, and view the config.",
+        "title": "MISSION 3: Subsystem Navigation",
+        "description": "Navigate to the root log directory mentioned in the briefing and inspect its files.",
         "tasks": {
-            "nav_lead": {"desc": "Navigate to the directory referenced in the note (/opt/phoenix/config)", "done": False},
-            "list_lead": {"desc": "List the contents of the config directory using 'ls'", "done": False},
-            "read_target": {"desc": "Read the recovery configuration file 'phoenix.conf' for the grep clue", "done": False}
+            "nav_logs": {"desc": "Navigate to the system log directory (/var/log)", "done": False},
+            "list_logs": {"desc": "List the contents of the log directory", "done": False}
         }
     },
     4: {
         "title": "MISSION 4: Log Analysis",
-        "description": "Search the system logs using pattern matching as instructed in the config notes.",
+        "description": "Search the system logs using pattern matching to isolate the failed emergency service.",
         "tasks": {
-            "grep_logs": {"desc": "Filter /var/log/system.log for 'phoenix' using 'grep'", "done": False}
+            "grep_logs": {"desc": "Search system.log for service failure entries matching 'phoenix'", "done": False}
         }
     },
     5: {
-        "title": "MISSION 5: Deep Recovery Scan",
-        "description": "Scan across the /opt directory tree to find all configuration and recovery files.",
+        "title": "MISSION 5: Root Subsystem Scan",
+        "description": "Scan from root / or /opt to find recovery configuration files matching '*.conf'.",
         "tasks": {
-            "find_configs": {"desc": "Locate all '.conf' files across /opt using 'find'", "done": False}
+            "find_configs": {"desc": "Locate configuration files using a wildcard search pattern", "done": False}
         }
     }
 }
@@ -189,7 +192,7 @@ COMMAND_CARDS = {
         "│ NEW COMMAND DISCOVERED: find                             │\n"
         "│ Searches directory trees for files matching criteria.    │\n"
         "│ Syntax: find <path> -name \"<pattern>\"                    │\n"
-        "│ Example: find /opt -name \"*.conf\"                       │\n"
+        "│ Example: find / -name \"*.log\"                           │\n"
         "└──────────────────────────────────────────────────────────┘"
     )
 }
@@ -359,8 +362,8 @@ def cmd_ls(args):
     if current_mission == 1:
         MISSIONS[1]["tasks"]["list_contents"]["done"] = True
         check_mission_progress()
-    elif current_mission == 3 and current_path == ["opt", "phoenix", "config"]:
-        MISSIONS[3]["tasks"]["list_lead"]["done"] = True
+    elif current_mission == 3 and current_path == ["var", "log"]:
+        MISSIONS[3]["tasks"]["list_logs"]["done"] = True
         check_mission_progress()
 
 def cmd_cd(args):
@@ -400,8 +403,8 @@ def cmd_cd(args):
         if current_mission == 2 and current_path == ["home", "alice", "notes"]:
             MISSIONS[2]["tasks"]["cd_folder"]["done"] = True
             check_mission_progress()
-        elif current_mission == 3 and current_path == ["opt", "phoenix", "config"]:
-            MISSIONS[3]["tasks"]["nav_lead"]["done"] = True
+        elif current_mission == 3 and current_path == ["var", "log"]:
+            MISSIONS[3]["tasks"]["nav_logs"]["done"] = True
             check_mission_progress()
 
 def cmd_cat(args):
@@ -426,11 +429,8 @@ def cmd_cat(args):
             if current_mission == 1 and file_name == "readme.txt":
                 MISSIONS[1]["tasks"]["read_file"]["done"] = True
                 check_mission_progress()
-            elif current_mission == 2 and file_name == "network_alert.txt":
+            elif current_mission == 2 and file_name == "sysadmin_notes.txt":
                 MISSIONS[2]["tasks"]["read_new_file"]["done"] = True
-                check_mission_progress()
-            elif current_mission == 3 and file_name == "phoenix.conf":
-                MISSIONS[3]["tasks"]["read_target"]["done"] = True
                 check_mission_progress()
         else:
             print(f"cat: {target}: Is a directory")
@@ -504,7 +504,7 @@ def cmd_find(args):
             if name_pattern:
                 if fnmatch.fnmatch(filename, name_pattern):
                     print(path_str)
-                    if current_mission == 5 and "opt" in target_tokens and "*.conf" in name_pattern:
+                    if current_mission == 5 and (start_path_str in ["/", "/opt", "opt"]) and "*.conf" in name_pattern:
                         MISSIONS[5]["tasks"]["find_configs"]["done"] = True
                         check_mission_progress()
             else:
@@ -538,7 +538,7 @@ def main():
     print("MESSAGE OF THE DAY:")
     print("  " + filesystem["/"]["etc"]["motd"])
     print("=" * 60)
-    print("Type 'objectives' to check tasks, or explore your environment.\n")
+    print("Type 'help' to consult your manual or 'objectives' to check tasks.\n")
 
     while True:
         prompt_path = "~" if current_path == ["home", "alice"] else "/" + "/".join(current_path)
