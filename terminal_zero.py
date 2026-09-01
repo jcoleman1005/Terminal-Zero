@@ -1114,36 +1114,37 @@ class TerminalShell:
                 continue
 
 
-def run_repl(ctx: Optional[CommandContext] = None, command_table: Optional[Dict[str, Any]] = None):
-    if ctx is None:
+def main():
+    bus = EventBus()
+    state = load_game_state("savegame.json", bus)
+    if not state:
         root_node = build_default_vfs()
         vfs = VirtualFilesystem(root_node)
-        bus = EventBus()
         state = TerminalState(vfs, bus, ["home", "alice"])
-        ctx = CommandContext(vfs=vfs, state=state, bus=bus)
-    if command_table is None:
-        command_table = {
-            "tree": cmd_tree,
-            "cat": cmd_cat,
-            "head": cmd_head,
-            "tail": cmd_tail,
-            "grep": cmd_grep,
-            "find": cmd_find,
-            "pwd": cmd_pwd,
-            "cd": cmd_cd,
-            "ls": cmd_ls,
-            "chmod": cmd_chmod,
-            "man": cmd_man,
-            "decrypt": cmd_decrypt,
-            "sync": cmd_sync,
-        }
-    shell = TerminalShell(ctx, command_table)
+    else:
+        vfs = state.vfs
+
+    register_autosave_handler(bus, lambda: state)
+    ctx = CommandContext(vfs, state, bus)
+
+    commands = {
+        "pwd": cmd_pwd,
+        "cd": cmd_cd,
+        "ls": cmd_ls,
+        "cat": cmd_cat,
+        "head": cmd_head,
+        "tail": cmd_tail,
+        "grep": cmd_grep,
+        "find": cmd_find,
+        "chmod": cmd_chmod,
+        "man": cmd_man,
+        "decrypt": cmd_decrypt,
+        "sync": cmd_sync,
+        "tree": cmd_tree,
+    }
+
+    shell = TerminalShell(ctx, commands)
     shell.run()
-
-
-def main():
-    run_repl()
-
 
 if __name__ == "__main__":
     main()
