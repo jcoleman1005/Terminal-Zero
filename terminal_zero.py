@@ -230,7 +230,7 @@ def build_default_vfs() -> VFSNode:
     add_dir("/home/alice/notes")
 
     # Binaries (Standard in /bin)
-    for b in ["cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt"]:
+    for b in ["cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "chmod", "man"]:
         add_file(f"/bin/{b}", "ELF 64-bit LSB executable", perms="755")
 
     # Soft-Gated & Diegetic Tool Binaries
@@ -551,6 +551,210 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 
 # =====================================================================
+# DIEGETIC ADVISORY ENGINE (decrypt)
+# =====================================================================
+
+def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "decrypt", "args": args}))
+    last_err = ctx.state.last_stderr.strip()
+
+    if not last_err:
+        return ctx.result_factory(
+            stdout="[APOLLO-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
+        )
+
+    # Diagnostic Rule Mapping
+    diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
+    
+    if "No such file or directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+            "Target node does not exist in the active directory tree.\n"
+            "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
+        )
+    elif "Is a directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
+            "Target path resolves to a directory node, but the requested binary requires a file stream.\n"
+            "Action: Use 'cd' to traverse or 'ls' to inspect contents."
+        )
+    elif "Not a directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1C - INVALID TRAVERSAL]\n"
+            "Cannot traverse into a standard data file.\n"
+            "Action: Use 'cat', 'head', or 'tail' to read file contents."
+        )
+    elif "Permission denied" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "Node execution or read bits are disabled.\n"
+            "Action: Use 'chmod +x <target>' or 'chmod 755 <target>' to elevate node permissions."
+        )
+    elif "command not found" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x4F - BINARY UNREGISTERED]\n"
+            "Executable not located in standard search paths ($PATH).\n"
+            "Action: Check /opt/phoenix/recovery or inspect $PATH settings."
+        )
+    elif "missing file operand" in last_err or "missing pattern" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x05 - ARITY MISMATCH]\n"
+            "Command invoked without mandatory arguments.\n"
+            "Action: Run 'man <command>' to inspect supported syntax."
+        )
+
+    output = (
+        "┌──────────────────────────────────────────────────────────┐\n"
+        "│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │\n"
+        "└──────────────────────────────────────────────────────────┘\n"
+        f"SOURCE FAULT: {last_err}\n"
+        f"{diag}\n"
+    )
+    return ctx.result_factory(stdout=output)
+
+
+# =====================================================================
+# NAVIGATION & DIRECTORY UTILITIES (pwd, cd, ls)
+# =====================================================================
+
+def cmd_pwd(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "pwd"}))
+    return ctx.result_factory(stdout=ctx.state.cwd_str + "\n")
+
+
+def cmd_cd(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "cd", "args": args}))
+    if len(args) > 1:
+        return ctx.result_factory(stderr="bash: cd: too many arguments\n", exit_code=1)
+
+    target_dir = args[0] if args else "~"
+    target_node, resolved_parts = ctx.vfs.get_node(ctx.state.current_path, target_dir)
+
+    if not target_node:
+        return ctx.result_factory(stderr=f"bash: cd: {target_dir}: No such file or directory\n", exit_code=1)
+    if not target_node.is_dir():
+        return ctx.result_factory(stderr=f"bash: cd: {target_dir}: Not a directory\n", exit_code=1)
+
+    ctx.state.current_path = resolved_parts
+    return ctx.result_factory()
+
+
+def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "ls", "args": args}))
+    show_all = False
+    long_format = False
+    targets = []
+
+    for arg in args:
+        if arg.startswith("-"):
+            if "a" in arg: show_all = True
+            if "l" in arg: long_format = True
+        else:
+            targets.append(arg)
+
+    if not targets:
+        targets = ["."]
+
+    output_blocks = []
+    for target in targets:
+        node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
+        if not node:
+            return ctx.result_factory(stderr=f"ls: cannot access '{target}': No such file or directory\n", exit_code=2)
+
+        if node.is_file():
+            if long_format:
+                output_blocks.append(f"-rwxr-xr-x 1 {node.owner} {node.owner} 4096 {target}")
+            else:
+                output_blocks.append(target)
+            continue
+
+        entries = sorted(node.children.keys())
+        if show_all:
+            entries = [".", ".."] + entries
+
+        rendered = []
+        for name in entries:
+            if not show_all and name.startswith("."):
+                continue
+            if long_format:
+                if name in [".", ".."]:
+                    child_type = "d"
+                    perms = "rwxr-xr-x"
+                    owner = "root"
+                else:
+                    child = node.children[name]
+                    child_type = "d" if child.is_dir() else "-"
+                    perms = "rwxr-xr-x" if child.permissions == "755" else "rw-r--r--"
+                    owner = child.owner
+                rendered.append(f"{child_type}{perms} 1 {owner} {owner} 4096 {name}")
+            else:
+                rendered.append(name)
+
+        if len(targets) > 1:
+            output_blocks.append(f"{target}:\n" + "  ".join(rendered))
+        else:
+            joiner = "\n" if long_format else "  "
+            output_blocks.append(joiner.join(rendered))
+
+    return ctx.result_factory(stdout="\n".join(output_blocks) + "\n" if output_blocks else "")
+
+
+# =====================================================================
+# PERMISSIONS & SYSTEM UTILITIES (chmod, man)
+# =====================================================================
+
+def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "chmod", "args": args}))
+    if len(args) < 2:
+        return ctx.result_factory(stderr="chmod: missing operand\n", exit_code=1)
+
+    mode_str = args[0]
+    target_paths = args[1:]
+
+    for target in target_paths:
+        node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
+        if not node:
+            return ctx.result_factory(stderr=f"chmod: cannot access '{target}': No such file or directory\n", exit_code=1)
+
+        # Numeric mode support (e.g. 755, 644)
+        if mode_str.isdigit() and len(mode_str) == 3:
+            node.permissions = mode_str
+        # Symbolic mode support (+x, -x, u+x, etc.)
+        elif "+x" in mode_str:
+            node.permissions = "755"
+        elif "-x" in mode_str:
+            node.permissions = "644"
+        else:
+            return ctx.result_factory(stderr=f"chmod: invalid mode: '{mode_str}'\n", exit_code=1)
+
+    return ctx.result_factory()
+
+
+MAN_PAGES: Dict[str, str] = {
+    "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
+    "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
+    "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/readme.txt\n",
+    "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
+    "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n",
+    "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
+    "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
+    "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x /opt/phoenix/recovery/recovery.sh\n    chmod 755 /bin/tool\n",
+    "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n"
+}
+
+
+def cmd_man(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "man", "args": args}))
+    if not args:
+        return ctx.result_factory(stderr="What manual page do you want?\n", exit_code=1)
+
+    target_cmd = args[0]
+    if target_cmd in MAN_PAGES:
+        return ctx.result_factory(stdout=MAN_PAGES[target_cmd])
+    return ctx.result_factory(stderr=f"No manual entry for {target_cmd}\n", exit_code=1)
+
+
+# =====================================================================
 # 5. DIEGETIC AUTOCOMPLETER & ERGONOMIC DRIVERS
 # =====================================================================
 
@@ -803,6 +1007,12 @@ def run_repl(ctx: Optional[CommandContext] = None, command_table: Optional[Dict[
             "tail": cmd_tail,
             "grep": cmd_grep,
             "find": cmd_find,
+            "pwd": cmd_pwd,
+            "cd": cmd_cd,
+            "ls": cmd_ls,
+            "chmod": cmd_chmod,
+            "man": cmd_man,
+            "decrypt": cmd_decrypt,
         }
     shell = TerminalShell(ctx, command_table)
     shell.run()
