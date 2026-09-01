@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
+import datetime
 import fnmatch
+import json
 import os
+from pathlib import Path
 import re
 import shlex
 import sys
@@ -739,7 +742,8 @@ MAN_PAGES: Dict[str, str] = {
     "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
     "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
     "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x /opt/phoenix/recovery/recovery.sh\n    chmod 755 /bin/tool\n",
-    "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n"
+    "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
+    "sync": "NAME\n    sync - flush file system buffers\n\nSYNOPSIS\n    sync\n\nDESCRIPTION\n    Flushes in-memory buffers to persistent storage.\n"
 }
 
 
@@ -752,6 +756,124 @@ def cmd_man(ctx: CommandContext, args: List[str]) -> CommandResult:
     if target_cmd in MAN_PAGES:
         return ctx.result_factory(stdout=MAN_PAGES[target_cmd])
     return ctx.result_factory(stderr=f"No manual entry for {target_cmd}\n", exit_code=1)
+
+
+# =====================================================================
+# STATE SERIALIZATION & HYDRATION ENGINE
+# =====================================================================
+
+def serialize_vfs_node(node: VFSNode) -> Dict[str, Any]:
+    serialized: Dict[str, Any] = {
+        "type": node.type,
+        "permissions": node.permissions,
+        "owner": node.owner,
+    }
+    if node.is_file():
+        serialized["content"] = node.content if node.content is not None else ""
+    elif node.is_dir():
+        serialized["children"] = {
+            name: serialize_vfs_node(child) for name, child in node.children.items()
+        }
+    return serialized
+
+
+def deserialize_vfs_node(data: Dict[str, Any]) -> VFSNode:
+    node = VFSNode(
+        type=data.get("type", "file"),
+        permissions=data.get("permissions", "644"),
+        owner=data.get("owner", "root"),
+        content=data.get("content", None)
+    )
+    if node.is_dir() and "children" in data:
+        node.children = {
+            name: deserialize_vfs_node(child_data)
+            for name, child_data in data["children"].items()
+        }
+    return node
+
+
+def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> None:
+    payload = {
+        "version": "2.0.0",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "player": {
+            "current_directory": state.cwd_str,
+            "env": state.env,
+            "unlocked_ergonomics": state.unlocked_ergonomics
+        },
+        "system_flags": state.system_flags,
+        "process_table": [
+            {
+                "pid": p.pid,
+                "name": p.name,
+                "user": p.user,
+                "status": p.status,
+                "cpu": p.cpu,
+                "command": p.command
+            }
+            for p in state.process_table
+        ],
+        "virtual_fs": serialize_vfs_node(state.vfs.root)
+    }
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+
+def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = None) -> Optional[TerminalState]:
+    if not os.path.exists(filepath):
+        return None
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    event_bus = bus or EventBus()
+    root_node = deserialize_vfs_node(data["virtual_fs"])
+    vfs = VirtualFilesystem(root_node)
+
+    raw_cwd = data.get("player", {}).get("current_directory", "/home/alice")
+    cwd_parts = [p for p in raw_cwd.split("/") if p]
+
+    state = TerminalState(vfs, event_bus, cwd_parts)
+    state.env = data.get("player", {}).get("env", state.env)
+    state.unlocked_ergonomics = data.get("player", {}).get("unlocked_ergonomics", state.unlocked_ergonomics)
+    state.system_flags = data.get("system_flags", state.system_flags)
+    
+    loaded_processes = []
+    for p_data in data.get("process_table", []):
+        loaded_processes.append(
+            ProcessEntry(
+                pid=p_data["pid"],
+                name=p_data["name"],
+                user=p_data.get("user", "root"),
+                status=p_data.get("status", "running"),
+                cpu=p_data.get("cpu", 0.0),
+                command=p_data.get("command", "")
+            )
+        )
+    state.process_table = loaded_processes
+    return state
+
+
+# =====================================================================
+# DIEGETIC SYNC COMMAND & AUTOSAVE OBSERVER
+# =====================================================================
+
+def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "sync"}))
+    try:
+        save_game_state(ctx.state, "savegame.json")
+        return ctx.result_factory(stdout="[SYSTEM]: In-memory buffers flushed to persistent storage.\n")
+    except Exception as e:
+        return ctx.result_factory(stderr=f"sync: error writing blocks: {str(e)}\n", exit_code=1)
+
+
+def register_autosave_handler(bus: EventBus, get_state):
+    def on_event(event: Event):
+        if event.type == "flag_changed":
+            state = get_state()
+            if state:
+                save_game_state(state, "savegame.json")
+    bus.subscribe(on_event)
 
 
 # =====================================================================
@@ -1013,6 +1135,7 @@ def run_repl(ctx: Optional[CommandContext] = None, command_table: Optional[Dict[
             "chmod": cmd_chmod,
             "man": cmd_man,
             "decrypt": cmd_decrypt,
+            "sync": cmd_sync,
         }
     shell = TerminalShell(ctx, command_table)
     shell.run()
