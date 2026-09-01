@@ -34,7 +34,7 @@ def run_tests():
     kb = build_key_bindings(lambda: ctx)
     assert kb is not None, "KeyBindings instance failed creation"
 
-    print("✅ All Sprint 2 Acceptance Tests Passed.")
+    print("[PASS] All Sprint 2 Acceptance Tests Passed.")
 
 if __name__ == "__main__":
     run_tests()
