@@ -1,8 +1,8 @@
 {
   "version": "2.0.0",
-  "timestamp": "2026-09-01T20:15:31.751139+00:00",
+  "timestamp": "2026-09-01T21:40:30.076303+00:00",
   "player": {
-    "current_directory": "/mnt/recovery/bin",
+    "current_directory": "/opt/phoenix",
     "env": {
       "USER": "alice",
       "HOME": "/home/alice",
@@ -23,7 +23,7 @@
     "BUFFER_REPAIRED": true,
     "BASHRC_RESTORED": false,
     "MALWARE_TERMINATED": false,
-    "NETWORK_ONLINE": false,
+    "NETWORK_ONLINE": true,
     "PHOENIX_ONLINE": false
   },
   "process_table": [
@@ -61,7 +61,7 @@
       },
       "apollo0": {
         "ip": "10.0.42.15/24",
-        "state": "DOWN",
+        "state": "UP",
         "mac": "52:54:00:12:34:56"
       }
     },
@@ -440,7 +440,7 @@
             "children": {
               "README.txt": {
                 "type": "file",
-                "permissions": "755",
+                "permissions": "644",
                 "owner": "alice",
                 "content": "================================================================================\n                    APOLLO WORKSTATION RECOVERY TERMINAL\n================================================================================\nBASIC NAVIGATION CHEAT SHEET:\n  \u2022 ls             : Lists visible files in your current working directory.\n  \u2022 cat <filename> : Prints readable text inside a target file to screen.\n  \u2022 pwd            : Prints your current working directory location.\n  \u2022 decrypt        : Run after any error to get human-readable troubleshooting.\n  \u2022 sync           : Saves machine state to persistent disk.\n\nOPERATOR INCIDENT NOTE:\n  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n  2. Run /usr/bin/repair_buffer to restore history buffer.\n================================================================================\n"
               },
@@ -470,9 +470,9 @@
               },
               "TODO.txt": {
                 "type": "file",
-                "permissions": "755",
+                "permissions": "644",
                 "owner": "alice",
-                "content": "=== OPERATOR RECOVERY SCRATCHPAD ===\n[x] 0. Terminal line buffer desynced (run repair_buffer)\n[ ] 1. Shell config missing (restore ~/.bashrc)\n[ ] 2. Triage incident logs in /var/log\n[ ] 3. Audit runaway processes (ps / kill)\n[ ] 4. Bring network interface online (ip / ping)\n[ ] 5. Restore PHOENIX daemon in /etc/phoenix/\n"
+                "content": "=== OPERATOR RECOVERY SCRATCHPAD ===\n[x] 0. Terminal line buffer desynced (run repair_buffer)\n[ ] 1. Shell config missing (restore ~/.bashrc from /opt/backup/profiles/ using >)\n[ ] 2. Triage incident logs in /var/log\n[ ] 3. Audit runaway processes (ps / kill)\n[x] 4. Bring network interface online (ip / ping)\n[ ] 5. Restore PHOENIX daemon in /etc/phoenix/\n"
               }
             }
           }
@@ -533,7 +533,7 @@
                 "children": {
                   "recovery.sh": {
                     "type": "file",
-                    "permissions": "755",
+                    "permissions": "000",
                     "owner": "root",
                     "content": "#!/bin/bash\necho '[KERNEL]: Restoring signal trap vector...'\necho 'SIGINT handler online.'\n"
                   },
@@ -545,7 +545,7 @@
                   },
                   "apollo-net": {
                     "type": "file",
-                    "permissions": "755",
+                    "permissions": "000",
                     "owner": "root",
                     "content": "ELF 64-bit LSB executable [APOLLO-NET v1.0]"
                   },
@@ -557,7 +557,7 @@
                   },
                   "recovery-tool": {
                     "type": "file",
-                    "permissions": "755",
+                    "permissions": "000",
                     "owner": "root",
                     "content": "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]"
                   }
@@ -625,7 +625,7 @@
           },
           "phoenix": {
             "type": "dir",
-            "permissions": "700",
+            "permissions": "755",
             "owner": "root",
             "children": {
               "recovery": {

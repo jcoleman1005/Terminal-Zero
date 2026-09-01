@@ -259,6 +259,25 @@ class TerminalState:
 # 3. DIEGETIC ENVIRONMENT INITIALIZER & WORKSTATION VFS MAP
 # =====================================================================
 
+def get_primary_goal(flags: Dict[str, bool]) -> str:
+    if not flags.get("BUFFER_REPAIRED", False):
+        return "CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history."
+    elif not flags.get("BASHRC_RESTORED", False):
+        return "CURRENT MISSION: Morgan left a backup profile in '/opt/backup/profiles/'. Head there with 'cd /opt/backup/profiles' and restore your shell."
+    elif not flags.get("LOGS_AUDITED", False):
+        return "CURRENT MISSION: Investigate the security breach. Audit incident logs in '/var/log' using 'cat', 'head', 'tail', or 'grep'."
+    elif not (flags.get("RECOVERY_LOCATED", False) and flags.get("PERMISSIONS_RESTORED", False)):
+        return "CURRENT MISSION: Locate recovery tools in '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'."
+    elif not flags.get("MALWARE_TERMINATED", False):
+        return "CURRENT MISSION: Hunt down the rogue miner draining 98% CPU. Run 'ps aux' to find its PID, then terminate it with 'kill -9 104'."
+    elif not flags.get("NETWORK_ONLINE", False):
+        return "CURRENT MISSION: Network interface offline. Bring adapter 'apollo0' online with 'ip link set apollo0 up' and verify with 'ping'."
+    elif not flags.get("PHOENIX_ONLINE", False):
+        return "CURRENT MISSION: Final step! Append auth key from '/mnt/recovery/keys/phoenix.key' to '/etc/phoenix/phoenix.conf' and start 'phoenix_daemon'."
+    else:
+        return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO is fully restored."
+
+
 def get_todo_content(flags: Dict[str, bool]) -> str:
     m0 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
     m1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
@@ -268,13 +287,16 @@ def get_todo_content(flags: Dict[str, bool]) -> str:
     m6 = "x" if flags.get("NETWORK_ONLINE", False) else " "
     m7 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
     return (
-        "=== OPERATOR RECOVERY SCRATCHPAD ===\n"
-        f"[{m0}] 0. Terminal line buffer desynced (run repair_buffer)\n"
-        f"[{m1}] 1. Shell config missing (restore ~/.bashrc)\n"
-        f"[{m2}] 2. Triage incident logs in /var/log\n"
-        f"[{m5}] 3. Audit runaway processes (ps / kill)\n"
-        f"[{m6}] 4. Bring network interface online (ip / ping)\n"
-        f"[{m7}] 5. Restore PHOENIX daemon in /etc/phoenix/\n"
+        "================================================================================\n"
+        "               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
+        "================================================================================\n"
+        f"[{m0}] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'\n"
+        f"[{m1}] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc\n"
+        f"[{m2}] 2. TRIAGE BREACH     : Intruder left traces   -> Inspect incident logs in /var/log/\n"
+        f"[{m5}] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID with 'ps' & terminate with 'kill -9'\n"
+        f"[{m6}] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'\n"
+        f"[{m7}] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/\n"
+        "================================================================================\n"
     )
 
 
@@ -332,27 +354,26 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file(
         "/home/alice/README.txt",
         "================================================================================\n"
-        "                    APOLLO WORKSTATION RECOVERY TERMINAL\n"
+        "          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD\n"
         "================================================================================\n"
-        "BASIC NAVIGATION CHEAT SHEET:\n"
-        "  • ls             : Lists visible files in your current working directory.\n"
-        "  • cat <filename> : Prints readable text inside a target file to screen.\n"
-        "  • pwd            : Prints your current working directory location.\n"
-        "  • decrypt        : Run after any error to get human-readable troubleshooting.\n"
-        "  • sync           : Saves machine state to persistent disk.\n\n"
-        "OPERATOR INCIDENT NOTE:\n"
+        "QUICK NAVIGATION ACTIONS:\n"
+        "  • ls             : Look around (list visible files in current folder).\n"
+        "  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').\n"
+        "  • pwd            : Check what folder you are currently standing in.\n"
+        "  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.\n"
+        "  • sync           : Save workstation progress to persistent disk.\n\n"
+        "OPERATOR INCIDENT LOG:\n"
         "  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n"
-        "  2. Run /usr/bin/repair_buffer to restore history buffer.\n"
+        "  2. Run 'repair_buffer' to restore command history recall.\n"
         "================================================================================\n",
         perms="644",
         owner="alice"
     )
     add_file(
         "/home/alice/BOOT_FAIL.log",
-        "[KERNEL ALERT] Apollo Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
-        "[ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n"
-        "[DIAGNOSTIC] Interactive command recall (UP/DOWN keys) disabled to prevent buffer overflow.\n"
-        "[ACTION REQUIRED] Run the command 'repair_buffer' to recalibrate the TTY ring registers.\n",
+        "[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
+        "[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.\n"
+        "[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.\n",
         perms="644",
         owner="alice"
     )
@@ -360,19 +381,32 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 1: /opt/backup/profiles & /home/alice
     add_file(
         "/home/alice/.note.txt",
-        "Shell readline profile missing. Backup profiles stored in /opt/backup/profiles/.\n",
+        "// STICKY NOTE TAPED TO MONITOR:\n"
+        "Alice — your shell profile (.bashrc) got deleted during the incident.\n"
+        "I stored a backup template in /opt/backup/profiles/.\n"
+        "Head over there ('cd /opt/backup/profiles') and read my note to get your shortcuts back!\n"
+        "— Morgan\n",
         perms="644",
         owner="alice"
     )
-    add_file(
-        "/opt/backup/profiles/CHEAT_SHEET.txt",
-        "RESTORING SHELL PROFILES:\nUse stdout redirection to copy profile templates:\ncat <profile_src> > <target_path>\n",
-        perms="644",
-        owner="root"
+    morgan_note = (
+        "// MORGAN [03:42 AM] — INCIDENT OVERRIDE\n"
+        "Alice — during the breach, your shell profile was wiped out, which broke your\n"
+        "command search paths and shortcuts.\n\n"
+        "I left a clean backup template right here ('alice.bashrc').\n\n"
+        "To clone it back into your home directory, write it over with '>':\n"
+        "  cat alice.bashrc > /home/alice/.bashrc\n\n"
+        "(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)\n"
+        "Once that's in place, your tools and shortcuts will wake back up.\n"
     )
+    add_file("/opt/backup/profiles/NOTE_FROM_MORGAN.txt", morgan_note, perms="644", owner="root")
+    add_file("/opt/backup/profiles/CHEAT_SHEET.txt", morgan_note, perms="644", owner="root")
     add_file(
         "/opt/backup/profiles/alice.bashrc",
-        "# ALICE BASHRC TEMPLATE\nexport PATH=/bin:/usr/bin:/mnt/recovery/bin\nalias ll='ls -la'\n",
+        "# ALICE SHELL PROFILE TEMPLATE\n"
+        "# Clone to your home folder with: cat alice.bashrc > /home/alice/.bashrc\n"
+        "export PATH=/bin:/usr/bin:/mnt/recovery/bin\n"
+        "alias ll='ls -la'\n",
         perms="644",
         owner="root"
     )
@@ -878,7 +912,20 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
     
-    if "Authentication token missing" in last_err:
+    if "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
+            "Notice: The '<' and '>' in Morgan's notes represent placeholder names, not literal characters.\n"
+            "Action: Replace '<profile_src>' with 'alice.bashrc' and '<target_path>' with '/home/alice/.bashrc'.\n"
+            "Exact command: cat alice.bashrc > /home/alice/.bashrc"
+        )
+    elif "cannot execute text file" in last_err or ("Permission denied" in last_err and any(ext in last_err for ext in [".txt", ".log", ".conf", ".key"])):
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1E - NON-EXECUTABLE STREAM]\n"
+            "Target is a plain-text document, not an executable program.\n"
+            "Action: Use 'cat <file>' or 'head <file>' to view file contents."
+        )
+    elif "Authentication token missing" in last_err:
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
             "Daemon initialization aborted: Missing cryptographic authentication key in configuration.\n"
@@ -895,6 +942,12 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
             "[APOLLO-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
             "Required service configuration file missing from /etc/phoenix/.\n"
             "Action: Restore fallback template from /etc/phoenix/phoenix.conf.default or /opt/backup/phoenix.conf."
+        )
+    elif "Operation not permitted" in last_err and "phoenix" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2D - ACCESS RESTRICTED]\n"
+            "/opt/phoenix is locked by root system services.\n"
+            "Action: Investigate incident logs in /var/log/ to trace the breach before accessing system services."
         )
     elif "No such file or directory" in last_err:
         diag = (
@@ -1068,6 +1121,11 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
         node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
         if not node:
             return ctx.result_factory(stderr=f"chmod: cannot access '{target}': No such file or directory\n", exit_code=1)
+
+        # Prevent unauthorized modification of root-owned /opt/phoenix before incident logs are audited
+        clean_tgt = target.rstrip("/")
+        if (clean_tgt == "phoenix" or clean_tgt.endswith("/phoenix")) and not (ctx.state.system_flags.get("LOGS_AUDITED") or ctx.state.system_flags.get("RECOVERY_LOCATED")):
+            return ctx.result_factory(stderr=f"chmod: changing permissions of '{target}': Operation not permitted\n", exit_code=1)
 
         # Numeric mode support (e.g. 755, 644, 700, 777, 600)
         if mode_str.isdigit() and len(mode_str) == 3:
@@ -1317,7 +1375,9 @@ def cmd_repair_buffer(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "repair_buffer", "args": args}))
     ctx.state.system_flags["BUFFER_REPAIRED"] = True
     ctx.bus.publish(Event("flag_changed", {"flag": "BUFFER_REPAIRED", "value": True}))
-    return ctx.result_factory(stdout="[REPAIR PROTOCOL]: Ring buffer synchronized. Command history navigation enabled.\n")
+    return ctx.result_factory(
+        stdout="[!] ABILITY UNLOCKED: Command Memory Recall\nYou can now press [UP] and [DOWN] arrow keys to cycle through previous commands.\n"
+    )
 
 
 def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -1417,6 +1477,26 @@ class DebriefManager:
             "│ • SIGKILL (-9) immediately revokes kernel resources; use with care!    │\n"
             "└────────────────────────────────────────────────────────────────────────┘"
         ),
+        "SIGINT_UNLOCKED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You made recovery.sh executable and restored kernel signal traps.       │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │\n"
+            "│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "LOGS_AUDITED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You filtered security logs in /var/log to isolate the intrusion.       │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • 'grep -i' searches case-insensitively for key strings in logs.       │\n"
+            "│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
         "NETWORK_ONLINE": (
             "┌────────────────────────────────────────────────────────────────────────┐\n"
             "│ [TAKE IT TO LINUX]: Network Interface Management with 'ip'             │\n"
@@ -1449,6 +1529,8 @@ class DebriefManager:
             flag = event.data.get("flag")
             value = event.data.get("value")
             if value and flag in self.DEBRIEFS:
+                if flag == "BASHRC_RESTORED":
+                    self.output_writer("\n[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized\nCustom shortcuts active (try 'll' to list files).\n")
                 self.output_writer("\n" + self.DEBRIEFS[flag] + "\n")
 
 
@@ -1475,6 +1557,9 @@ MAN_PAGES: Dict[str, str] = {
     "phoenix_ctl": "NAME\n    phoenix_ctl - PHOENIX control utility\n\nSYNOPSIS\n    phoenix_ctl [COMMAND]\n",
     "apollo-net": "NAME\n    apollo-net - Apollo network interface diagnostic tool\n\nSYNOPSIS\n    apollo-net\n",
     "help": "NAME\n    help - display information about builtin recovery commands\n\nSYNOPSIS\n    help [command]\n\nDESCRIPTION\n    Provides emergency guidance and a list of essential shell utilities.\n",
+    "restore": "NAME\n    restore - diegetic profile recovery advisory\n\nSYNOPSIS\n    restore [file]\n\nDESCRIPTION\n    Advisory on using redirection to restore template profiles from /opt/backup/profiles/.\n",
+    "reboot": "NAME\n    reboot - restart workstation and reset recovery state\n\nSYNOPSIS\n    reboot\n\nDESCRIPTION\n    Flushes transient memory, removes save state, and restores workstation APOLLO to initial cold boot state.\n",
+    "reset": "NAME\n    reset - reinitialize terminal and workstation state\n\nSYNOPSIS\n    reset\n\nDESCRIPTION\n    Alias for reboot.\n",
 }
 
 
@@ -1489,6 +1574,19 @@ def cmd_man(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stderr=f"No manual entry for {target_cmd}\n", exit_code=1)
 
 
+def cmd_restore(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "restore", "args": args}))
+    return ctx.result_factory(
+        stderr=(
+            "[SHELL ADVISORY]: 'restore' is an incident objective, not a shell command.\n"
+            "• To restore shell profiles, copy a template using output redirection:\n"
+            "    cat /opt/backup/profiles/alice.bashrc > ~/.bashrc\n"
+            "• Use 'ls -a' to inspect hidden dotfiles in your current directory.\n"
+        ),
+        exit_code=1
+    )
+
+
 def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "help", "args": args}))
     flags = ctx.state.system_flags
@@ -1500,42 +1598,47 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(stderr=f"help: no help topics match `{target}'. Try 'man {target}'.\n", exit_code=1)
 
     lines = [
-        "┌──────────────────────────────────────────────────────────┐",
-        "│ APOLLO WORKSTATION RECOVERY SHELL — QUICK HELP           │",
-        "└──────────────────────────────────────────────────────────┘",
-        "Essential recovery commands available in degraded mode:\n",
-        "  • ls             : View files in current location.",
-        "  • cat <file>     : Read file contents (e.g. 'cat README.txt').",
-        "  • pwd            : Print current working directory.",
-        "  • decrypt        : Diagnose the last encountered error.",
-        "  • sync           : Save workstation state to storage."
+        "┌────────────────────────────────────────────────────────────────────────┐",
+        "│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │",
+        "├────────────────────────────────────────────────────────────────────────┤",
+        "│ BASIC SURVIVAL TOOLKIT:                                                │",
+        "│   • ls             : Look around (list visible files in current folder)│",
+        "│   • cat <file>     : Open and read a file's contents                   │",
+        "│   • pwd            : Check what folder you are currently standing in   │",
+        "│   • decrypt        : Ask APOLLO AI to diagnose your last error         │",
+        "│   • sync           : Save your game progress to persistent storage     │",
+        "│   • reboot / reset : Restart the game from cold boot                   │",
     ]
+
+    if not flags.get("BASHRC_RESTORED", False):
+        lines.append("│   • ls -a          : Reveal hidden files (starting with a dot .)       │")
+    lines.append("└────────────────────────────────────────────────────────────────────────┘")
 
     # Progressive / Discoverable entries unlocked as player restores subsystems
     discovered = []
     if flags.get("BUFFER_REPAIRED") or flags.get("BASHRC_RESTORED"):
-        discovered.append("  • cd <dir>       : Navigate directory tree (e.g. 'cd /var/log').")
+        discovered.append("  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').")
         discovered.append("  • man <command>  : Read complete utility manual.")
 
     if flags.get("LOGS_AUDITED"):
-        discovered.append("  • head / tail    : Inspect start/end of logs (e.g. 'tail -n 10 auth.log').")
-        discovered.append("  • grep <pattern> : Filter log streams (e.g. 'grep -i breach auth.log').")
+        discovered.append("  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').")
+        discovered.append("  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').")
 
     if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED"):
-        discovered.append("  • find <path>    : Search filesystem trees (e.g. 'find /mnt/recovery -name \"*.sh\"').")
-        discovered.append("  • chmod <mode>   : Update file permissions (e.g. 'chmod 755 <file>').")
+        discovered.append("  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name \"*.sh\"').")
+        discovered.append("  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').")
 
     if flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED"):
-        discovered.append("  • ps aux         : Audit running process table.")
-        discovered.append("  • kill -9 <PID>  : Force terminate rogue processes.")
+        discovered.append("  • ps aux         : Scan active background processes.")
+        discovered.append("  • kill -9 <PID>  : Terminate a runaway rogue process by PID.")
 
     if flags.get("NETWORK_ONLINE"):
-        discovered.append("  • ip addr / link : Manage network interfaces (e.g. 'ip link set apollo0 up').")
-        discovered.append("  • ss -tulpn      : Inspect active listening sockets.")
-        discovered.append("  • ping <host>    : Test ICMP reachability.")
+        discovered.append("  • ip addr / link : Manage network interface hardware (e.g. 'ip link set apollo0 up').")
+        discovered.append("  • ss -tulpn      : Inspect active listening network sockets.")
+        discovered.append("  • ping <host>    : Send ICMP echo packets to test gateway reachability.")
 
     if flags.get("PHOENIX_ONLINE"):
-        discovered.append("  • phoenix_daemon : PHOENIX emergency restoration service.")
+        discovered.append("  • phoenix_daemon : PHOENIX emergency restoration cluster service.")
 
     if discovered:
         lines.append("\nRECOVERED SUBSYSTEM UTILITIES:")
@@ -1559,7 +1662,11 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
     if hidden_count > 0:
         lines.append(f"\n[?] {hidden_count} subsystem toolset(s) offline / hidden until restored.")
 
-    lines.append("\nPRIMARY GOAL: Inspect 'README.txt' using 'cat README.txt' to begin recovery.")
+    # Location-aware extra tip if in /opt/backup/profiles
+    if ctx.state.cwd_str == "/opt/backup/profiles" and not flags.get("BASHRC_RESTORED", False):
+        lines.append("\nLOCATION TIP: You found the backup profiles! Read 'NOTE_FROM_MORGAN.txt' with 'cat NOTE_FROM_MORGAN.txt' to restore your shell.")
+
+    lines.append(f"\n{get_primary_goal(flags)}")
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
@@ -1718,6 +1825,39 @@ def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(stdout="[SYSTEM]: In-memory buffers flushed to persistent storage.\n")
     except Exception as e:
         return ctx.result_factory(stderr=f"sync: error writing blocks: {str(e)}\n", exit_code=1)
+
+
+def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "reboot", "args": args}))
+
+    if os.path.exists("savegame.json"):
+        try:
+            os.remove("savegame.json")
+        except Exception:
+            pass
+
+    fresh_root = build_default_vfs()
+    ctx.vfs.root = fresh_root
+
+    fresh_state = TerminalState(ctx.vfs, ctx.bus, ["home", "alice"])
+    ctx.state.current_path = list(fresh_state.current_path)
+    ctx.state.env = dict(fresh_state.env)
+    ctx.state.unlocked_ergonomics = dict(fresh_state.unlocked_ergonomics)
+    ctx.state.system_flags = dict(fresh_state.system_flags)
+    ctx.state.process_table = list(fresh_state.process_table)
+    ctx.state.network_interfaces = dict(fresh_state.network_interfaces)
+    ctx.state.listening_sockets = list(fresh_state.listening_sockets)
+    ctx.state.last_stderr = ""
+
+    reboot_banner = (
+        "\nBroadcast message from root@apollo (tty1) (system reboot):\n\n"
+        "The system is going down for reboot NOW!\n"
+        "Restarting system...\n\n"
+        "=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===\n"
+        "System degraded. Type 'help' for guidance or inspect 'README.txt'.\n"
+        "Type 'exit' to disconnect.\n"
+    )
+    return ctx.result_factory(stdout=reboot_banner)
 
 
 def register_autosave_handler(bus: EventBus, get_state):
@@ -1970,6 +2110,13 @@ class PipelineEngine:
                     break
 
         if vfs_node and vfs_node.is_file():
+            # Guard against executing text / log / config data files directly
+            if any(cmd_name.endswith(ext) for ext in [".txt", ".log", ".conf", ".key", ".md"]):
+                return ctx.result_factory(
+                    stderr=f"bash: {cmd_name}: cannot execute text file (use 'cat {cmd_name}' to read contents)\n",
+                    exit_code=126
+                )
+
             user = ctx.state.env.get("USER", "alice")
             allowed, _ = ctx.vfs.check_permissions(resolved_parts[:-1], user)
             if not allowed or vfs_node.permissions in ["000", "644", "600", "444"]:
@@ -1980,7 +2127,18 @@ class PipelineEngine:
             if base_name in self.commands:
                 return self.commands[base_name](ctx, args)
             elif base_name == "recovery.sh":
-                return ctx.result_factory(stdout="[RECOVERY]: Restoring core nodes...\nSystem synchronization complete.\n")
+                ctx.state.system_flags["PERMISSIONS_RESTORED"] = True
+                ctx.state.system_flags["SIGINT_UNLOCKED"] = True
+                ctx.state.unlocked_ergonomics["sigint"] = True
+                ctx.state.unlocked_ergonomics["sigint_trap"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "PERMISSIONS_RESTORED", "value": True}))
+                ctx.bus.publish(Event("flag_changed", {"flag": "SIGINT_UNLOCKED", "value": True}))
+                return ctx.result_factory(
+                    stdout=(
+                        "[!] ABILITY UNLOCKED: Emergency Signal Trapping (SIGINT)\n"
+                        "Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.\n"
+                    )
+                )
             else:
                 return ctx.result_factory(stdout=f"[EXEC]: Executed binary '{cmd_name}'\n")
 
@@ -2162,12 +2320,23 @@ COMMAND_TABLE = {
     "phoenix_ctl": cmd_phoenix_ctl,
     "phoenix_daemon": cmd_phoenix_daemon,
     "apollo-net": cmd_apollo_net,
+    "restore": cmd_restore,
+    "reboot": cmd_reboot,
+    "reset": cmd_reboot,
+    "restart": cmd_reboot,
 }
 
 
 def main():
     bus = EventBus()
-    state = load_game_state("savegame.json", bus)
+    reset_requested = any(arg in sys.argv for arg in ["--reset", "--new", "--fresh", "-r", "--restart"])
+    if reset_requested and os.path.exists("savegame.json"):
+        try:
+            os.remove("savegame.json")
+        except Exception:
+            pass
+
+    state = None if reset_requested else load_game_state("savegame.json", bus)
     if not state:
         root_node = build_default_vfs()
         vfs = VirtualFilesystem(root_node)
