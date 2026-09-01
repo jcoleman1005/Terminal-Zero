@@ -135,6 +135,17 @@ class VirtualFilesystem:
         _recurse(start_node, base_display, base_name)
         return results
 
+    def check_permissions(self, path_parts: List[str], user: str = "alice") -> Tuple[bool, str]:
+        """Checks traversal permissions for directory parts along path_parts."""
+        curr = self.root
+        for part in path_parts:
+            if not curr.is_dir() or part not in curr.children:
+                return True, ""
+            curr = curr.children[part]
+            if curr.is_dir() and curr.permissions in ["000", "700", "0700", "600", "644"] and curr.owner != user:
+                return False, "Permission denied"
+        return True, ""
+
     def walk(self, current_cwd: List[str], target_path: str = ".") -> List[Tuple[VFSNode, str, str]]:
         start_node, resolved_path = self.get_node(current_cwd, target_path)
         if not start_node:
@@ -205,6 +216,16 @@ class TerminalState:
         if todo_node:
             todo_node.content = get_todo_content(self.system_flags)
 
+        # Soft-gate /opt/phoenix based on initial system flags
+        if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
+            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
+            if ph_node:
+                ph_node.permissions = "755"
+        else:
+            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
+            if ph_node:
+                ph_node.permissions = "700"
+
     def _on_event(self, event: Event):
         if event.type == "flag_changed":
             flag = event.data.get("flag")
@@ -213,6 +234,10 @@ class TerminalState:
             todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
             if todo_node:
                 todo_node.content = get_todo_content(self.system_flags)
+            if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
+                ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
+                if ph_node:
+                    ph_node.permissions = "755"
             if flag == "BUFFER_REPAIRED" and val:
                 self.unlocked_ergonomics["history"] = True
                 self.unlocked_ergonomics["history_arrows"] = True
@@ -282,13 +307,17 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     # Standard POSIX & FHS Structure across all sectors
     dirs = [
-        "bin", "usr/bin", "home/alice", "var/log", "tmp", 
+        "bin", "usr/bin", "usr/share/doc", "home/alice", "var/log", "tmp", 
         "mnt/recovery/bin", "mnt/recovery/keys", "mnt/recovery/docs",
         "opt/backup", "opt/backup/profiles", "etc/network", "etc/phoenix",
-        "opt/phoenix/recovery", "opt/phoenix/config", "home/alice/notes"
+        "opt/phoenix", "opt/phoenix/recovery", "opt/phoenix/config"
     ]
     for d in dirs:
         add_dir("/" + d)
+
+    # Soft-Gate /opt/phoenix via Permissions (0700 until LOGS_AUDITED or RECOVERY_LOCATED is set)
+    phoenix_perms = "755" if (flags.get("LOGS_AUDITED", False) or flags.get("RECOVERY_LOCATED", False)) else "700"
+    add_dir("/opt/phoenix", perms=phoenix_perms, owner="root")
 
     # Standard Binaries in /bin and /usr/bin
     for b in [
@@ -315,12 +344,6 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n"
         "  2. Run /usr/bin/repair_buffer to restore history buffer.\n"
         "================================================================================\n",
-        perms="644",
-        owner="alice"
-    )
-    add_file(
-        "/home/alice/readme.txt",
-        "APOLLO WORKSTATION LOGON\n[SYSTEM ADVISORY]: Shell degraded. Diagnostics available via 'decrypt'.\n",
         perms="644",
         owner="alice"
     )
@@ -372,16 +395,16 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="alice"
     )
     add_file(
-        "/home/alice/notes/mapping_tool.txt",
+        "/usr/share/doc/mapping_tool.txt",
         "UTILITY RECOVERY NOTE:\nVisual hierarchy utility 'tree' preserved under /opt/phoenix/recovery/tree\n",
         perms="644",
-        owner="alice"
+        owner="root"
     )
     add_file(
-        "/home/alice/notes/sysadmin_notes.txt",
+        "/usr/share/doc/sysadmin_notes.txt",
         "SYSADMIN LOG - RECOVERY PROTOCOLS:\n1. Use 'grep' to search error streams.\n2. Ensure recovery binaries have execution permissions via 'chmod'.\n3. Bring interfaces up using 'ip link set <dev> up'.\n",
         perms="644",
-        owner="alice"
+        owner="root"
     )
 
     # Milestone 2: /var/log/
@@ -551,9 +574,15 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     output = []
     for filepath in args:
-        node, _ = ctx.vfs.get_node(ctx.state.current_path, filepath)
+        node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, filepath)
         if not node:
             return ctx.result_factory(stderr=f"cat: {filepath}: No such file or directory\n", exit_code=1)
+
+        user = ctx.state.env.get("USER", "alice")
+        allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
+        if not allowed or (node.permissions == "000" and node.owner != user):
+            return ctx.result_factory(stderr=f"cat: {filepath}: Permission denied\n", exit_code=1)
+
         if node.is_dir():
             return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
         output.append(node.content if node.content is not None else "")
@@ -590,9 +619,15 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     output = []
     for filepath in file_targets:
-        node, _ = ctx.vfs.get_node(ctx.state.current_path, filepath)
+        node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, filepath)
         if not node:
             return ctx.result_factory(stderr=f"head: cannot open '{filepath}': No such file or directory\n", exit_code=1)
+
+        user = ctx.state.env.get("USER", "alice")
+        allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
+        if not allowed or (node.permissions == "000" and node.owner != user):
+            return ctx.result_factory(stderr=f"head: cannot open '{filepath}': Permission denied\n", exit_code=1)
+
         if node.is_dir():
             return ctx.result_factory(stderr=f"head: error reading '{filepath}': Is a directory\n", exit_code=1)
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
@@ -647,9 +682,13 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     output = []
     for filepath in file_targets:
-        node, _ = ctx.vfs.get_node(ctx.state.current_path, filepath)
+        node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, filepath)
         if not node:
             return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': No such file or directory\n", exit_code=1)
+        user = ctx.state.env.get("USER", "alice")
+        allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
+        if not allowed or (node.permissions == "000" and node.owner != user):
+            return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': Permission denied\n", exit_code=1)
         if node.is_dir():
             return ctx.result_factory(stderr=f"tail: error reading '{filepath}': Is a directory\n", exit_code=1)
         lines = (node.content or "").splitlines(keepends=True)[-lines_count:]
@@ -729,6 +768,11 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"grep: {target}: No such file or directory\n", exit_code=2)
 
+        user = ctx.state.env.get("USER", "alice")
+        allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1] if node.is_file() else resolved_path, user)
+        if not allowed or (node.permissions == "000" and node.owner != user):
+            return ctx.result_factory(stderr=f"grep: {target}: Permission denied\n", exit_code=2)
+
         if node.is_dir():
             if not recursive:
                 return ctx.result_factory(stderr=f"grep: {target}: Is a directory\n", exit_code=2)
@@ -782,6 +826,11 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not start_node:
         return ctx.result_factory(stderr=f"find: '{search_path}': No such file or directory\n", exit_code=1)
 
+    user = ctx.state.env.get("USER", "alice")
+    allowed, _ = ctx.vfs.check_permissions(resolved_path, user)
+    if not allowed or (start_node.is_dir() and start_node.permissions in ["000", "700", "0700"] and start_node.owner != user):
+        return ctx.result_factory(stderr=f"find: '{search_path}': Permission denied\n", exit_code=1)
+
     display_prefix = search_path.rstrip("/")
     if not display_prefix:
         display_prefix = "/"
@@ -823,6 +872,7 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(
             stdout="[DECRYPT ADVISORY]: The command entered does not exist.\n"
                    "• Check spelling or type 'ls' to see available local files.\n"
+                   "• Type 'help' for guidance or inspect 'README.txt'.\n"
                    "• Standard utilities: pwd, ls, cd, cat, man, sync.\n"
         )
 
@@ -927,7 +977,10 @@ def cmd_cd(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(stderr=f"bash: cd: {target}: No such file or directory\n", exit_code=1)
     if not node.is_dir():
         return ctx.result_factory(stderr=f"bash: cd: {target}: Not a directory\n", exit_code=1)
-    if node.permissions == "000":
+    
+    user = ctx.state.env.get("USER", "alice")
+    allowed, _ = ctx.vfs.check_permissions(resolved_path, user)
+    if not allowed or (node.permissions in ["000", "700", "0700"] and node.owner != user):
         return ctx.result_factory(stderr=f"bash: cd: {target}: Permission denied\n", exit_code=1)
 
     ctx.state.current_path = resolved_path
@@ -952,9 +1005,14 @@ def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     output_blocks = []
     for target in targets:
-        node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
+        node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, target)
         if not node:
             return ctx.result_factory(stderr=f"ls: cannot access '{target}': No such file or directory\n", exit_code=2)
+
+        user = ctx.state.env.get("USER", "alice")
+        allowed, _ = ctx.vfs.check_permissions(resolved_path, user)
+        if not allowed or (node.is_dir() and node.permissions in ["000", "700", "0700"] and node.owner != user):
+            return ctx.result_factory(stderr=f"ls: cannot open directory '{target}': Permission denied\n", exit_code=2)
 
         if node.is_file():
             if long_format:
@@ -1397,7 +1455,7 @@ class DebriefManager:
 MAN_PAGES: Dict[str, str] = {
     "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
     "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
-    "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/readme.txt\n",
+    "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
     "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
     "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [-f] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n    tail -f /var/log/syslog\n",
     "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
@@ -1416,6 +1474,7 @@ MAN_PAGES: Dict[str, str] = {
     "phoenix_daemon": "NAME\n    phoenix_daemon - PHOENIX emergency restoration daemon\n\nSYNOPSIS\n    phoenix_daemon [start | --sync]\n",
     "phoenix_ctl": "NAME\n    phoenix_ctl - PHOENIX control utility\n\nSYNOPSIS\n    phoenix_ctl [COMMAND]\n",
     "apollo-net": "NAME\n    apollo-net - Apollo network interface diagnostic tool\n\nSYNOPSIS\n    apollo-net\n",
+    "help": "NAME\n    help - display information about builtin recovery commands\n\nSYNOPSIS\n    help [command]\n\nDESCRIPTION\n    Provides emergency guidance and a list of essential shell utilities.\n",
 }
 
 
@@ -1428,6 +1487,80 @@ def cmd_man(ctx: CommandContext, args: List[str]) -> CommandResult:
     if target_cmd in MAN_PAGES:
         return ctx.result_factory(stdout=MAN_PAGES[target_cmd])
     return ctx.result_factory(stderr=f"No manual entry for {target_cmd}\n", exit_code=1)
+
+
+def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "help", "args": args}))
+    flags = ctx.state.system_flags
+
+    if args:
+        target = args[0].lower()
+        if target in MAN_PAGES:
+            return ctx.result_factory(stdout=MAN_PAGES[target])
+        return ctx.result_factory(stderr=f"help: no help topics match `{target}'. Try 'man {target}'.\n", exit_code=1)
+
+    lines = [
+        "┌──────────────────────────────────────────────────────────┐",
+        "│ APOLLO WORKSTATION RECOVERY SHELL — QUICK HELP           │",
+        "└──────────────────────────────────────────────────────────┘",
+        "Essential recovery commands available in degraded mode:\n",
+        "  • ls             : View files in current location.",
+        "  • cat <file>     : Read file contents (e.g. 'cat README.txt').",
+        "  • pwd            : Print current working directory.",
+        "  • decrypt        : Diagnose the last encountered error.",
+        "  • sync           : Save workstation state to storage."
+    ]
+
+    # Progressive / Discoverable entries unlocked as player restores subsystems
+    discovered = []
+    if flags.get("BUFFER_REPAIRED") or flags.get("BASHRC_RESTORED"):
+        discovered.append("  • cd <dir>       : Navigate directory tree (e.g. 'cd /var/log').")
+        discovered.append("  • man <command>  : Read complete utility manual.")
+
+    if flags.get("LOGS_AUDITED"):
+        discovered.append("  • head / tail    : Inspect start/end of logs (e.g. 'tail -n 10 auth.log').")
+        discovered.append("  • grep <pattern> : Filter log streams (e.g. 'grep -i breach auth.log').")
+
+    if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED"):
+        discovered.append("  • find <path>    : Search filesystem trees (e.g. 'find /mnt/recovery -name \"*.sh\"').")
+        discovered.append("  • chmod <mode>   : Update file permissions (e.g. 'chmod 755 <file>').")
+
+    if flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED"):
+        discovered.append("  • ps aux         : Audit running process table.")
+        discovered.append("  • kill -9 <PID>  : Force terminate rogue processes.")
+
+    if flags.get("NETWORK_ONLINE"):
+        discovered.append("  • ip addr / link : Manage network interfaces (e.g. 'ip link set apollo0 up').")
+        discovered.append("  • ss -tulpn      : Inspect active listening sockets.")
+        discovered.append("  • ping <host>    : Test ICMP reachability.")
+
+    if flags.get("PHOENIX_ONLINE"):
+        discovered.append("  • phoenix_daemon : PHOENIX emergency restoration service.")
+
+    if discovered:
+        lines.append("\nRECOVERED SUBSYSTEM UTILITIES:")
+        lines.extend(discovered)
+
+    # Hidden / Locked entries indicator
+    hidden_count = 0
+    if not (flags.get("BUFFER_REPAIRED") or flags.get("BASHRC_RESTORED")):
+        hidden_count += 1
+    if not flags.get("LOGS_AUDITED"):
+        hidden_count += 1
+    if not (flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED")):
+        hidden_count += 1
+    if not (flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED")):
+        hidden_count += 1
+    if not flags.get("NETWORK_ONLINE"):
+        hidden_count += 1
+    if not flags.get("PHOENIX_ONLINE"):
+        hidden_count += 1
+
+    if hidden_count > 0:
+        lines.append(f"\n[?] {hidden_count} subsystem toolset(s) offline / hidden until restored.")
+
+    lines.append("\nPRIMARY GOAL: Inspect 'README.txt' using 'cat README.txt' to begin recovery.")
+    return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
 # =====================================================================
@@ -1543,6 +1676,15 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
     todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
     if todo_node:
         todo_node.content = get_todo_content(state.system_flags)
+
+    if state.system_flags.get("LOGS_AUDITED") or state.system_flags.get("RECOVERY_LOCATED"):
+        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
+        if ph_node:
+            ph_node.permissions = "755"
+    else:
+        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
+        if ph_node:
+            ph_node.permissions = "700"
 
     loaded_processes = []
     for p_data in data.get("process_table", []):
@@ -1816,18 +1958,21 @@ class PipelineEngine:
             return self.commands[cmd_name](ctx, args)
 
         # Check in VFS paths or relative/absolute path execution
-        vfs_node, _ = ctx.vfs.get_node(ctx.state.current_path, cmd_name)
+        vfs_node, resolved_parts = ctx.vfs.get_node(ctx.state.current_path, cmd_name)
         if not vfs_node and "/" not in cmd_name:
             # Check $PATH directories
             path_env = ctx.state.env.get("PATH", "/bin:/usr/bin")
             for p_dir in path_env.split(":"):
-                cand_node, _ = ctx.vfs.get_node([], f"{p_dir}/{cmd_name}")
+                cand_node, cand_parts = ctx.vfs.get_node([], f"{p_dir}/{cmd_name}")
                 if cand_node:
                     vfs_node = cand_node
+                    resolved_parts = cand_parts
                     break
 
         if vfs_node and vfs_node.is_file():
-            if vfs_node.permissions in ["000", "644", "600", "444"]:
+            user = ctx.state.env.get("USER", "alice")
+            allowed, _ = ctx.vfs.check_permissions(resolved_parts[:-1], user)
+            if not allowed or vfs_node.permissions in ["000", "644", "600", "444"]:
                 return ctx.result_factory(stderr=f"bash: {cmd_name}: Permission denied\n", exit_code=126)
             
             # Executable file dispatch
@@ -1975,6 +2120,7 @@ class TerminalShell:
 
     def run(self):
         print("=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===")
+        print("System degraded. Type 'help' for guidance or inspect 'README.txt'.")
         print("Type 'exit' to disconnect.\n")
         while True:
             try:
@@ -2000,6 +2146,8 @@ COMMAND_TABLE = {
     "find": cmd_find,
     "chmod": cmd_chmod,
     "man": cmd_man,
+    "help": cmd_help,
+    "?": cmd_help,
     "decrypt": cmd_decrypt,
     "apollo-diagnostics": cmd_decrypt,
     "sync": cmd_sync,

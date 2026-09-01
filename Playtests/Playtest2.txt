@@ -1,0 +1,10 @@
+=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===
+Type 'exit' to disconnect.
+
+alice@apollo:/home/alice$ hello
+bash: hello: command not found
+alice@apollo:/home/alice$ what do I do?
+bash: what: command not found
+alice@apollo:/home/alice$ bash
+bash: bash: command not found
+alice@apollo:/home/alice$ exit
