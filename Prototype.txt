@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import datetime
 import fnmatch
 import json
@@ -17,30 +17,33 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.styles import Style
 
-# =====================================================================
-# 1. CORE EVENT BUS
-# =====================================================================
 
+# --- events.py ---
 @dataclass
 class Event:
     type: str
     data: Dict[str, Any] = field(default_factory=dict)
 
+
 class EventBus:
     def __init__(self):
-        self._listeners = []
+        self._subscribers: Dict[str, List[Callable[[Event], None]]] = {}
 
-    def subscribe(self, callback):
-        self._listeners.append(callback)
+    def subscribe(self, callback: Callable[[Event], None], event_type: str = "*"):
+        if event_type not in self._subscribers:
+            self._subscribers[event_type] = []
+        self._subscribers[event_type].append(callback)
 
     def publish(self, event: Event):
-        for listener in list(self._listeners):
-            listener(event)
+        for cb in self._subscribers.get(event.type, []):
+            cb(event)
+        for cb in self._subscribers.get("*", []):
+            cb(event)
 
 
-# =====================================================================
-# 2. POSIX VIRTUAL FILESYSTEM & PROCESS LAYER
-# =====================================================================
+# --- vfs.py ---
+from typing import Dict, List, Optional, Tuple
+
 
 @dataclass
 class VFSNode:
@@ -156,109 +159,7 @@ class VirtualFilesystem:
         return self.find_nodes(start_node, display_prefix, resolved_path[-1] if resolved_path else "")
 
 
-@dataclass
-class ProcessEntry:
-    pid: int
-    name: str
-    user: str = "root"
-    status: str = "running"
-    cpu: float = 0.0
-    command: str = ""
-
-
-class TerminalState:
-    def __init__(self, vfs: VirtualFilesystem, event_bus: EventBus, initial_path: List[str]):
-        self.vfs = vfs
-        self.bus = event_bus
-        self.current_path = initial_path
-        self.env: Dict[str, str] = {
-            "USER": "alice",
-            "HOME": "/home/alice",
-            "HOST": "apollo",
-            "TERM": "xterm-256color",
-            "PATH": "/bin:/usr/bin"
-        }
-        self.unlocked_ergonomics: Dict[str, bool] = {
-            "history": False,
-            "autocomplete": False,
-            "sigint": False,
-            "history_arrows": False,
-            "tab_completion": False,
-            "sigint_trap": False
-        }
-        self.system_flags: Dict[str, bool] = {
-            "BUFFER_REPAIRED": False,
-            "BASHRC_RESTORED": False,
-            "MALWARE_TERMINATED": False,
-            "NETWORK_ONLINE": False,
-            "PHOENIX_ONLINE": False
-        }
-        self.process_table: List[ProcessEntry] = [
-            ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
-            ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),
-            ProcessEntry(pid=210, name="sshd", user="root", cpu=0.0, command="/usr/sbin/sshd -D")
-        ]
-        self.network_interfaces: Dict[str, Dict[str, Any]] = {
-            "lo": {"ip": "127.0.0.1/8", "state": "UP", "mac": "00:00:00:00:00:00"},
-            "apollo0": {"ip": "10.0.42.15/24", "state": "DOWN", "mac": "52:54:00:12:34:56"}
-        }
-        # Initial state: only sshd listening (port 8080 binds dynamically when phoenix_daemon starts)
-        self.listening_sockets: List[Dict[str, Any]] = [
-            {"proto": "tcp", "local": "0.0.0.0:22", "peer": "0.0.0.0:*", "state": "LISTEN", "pid": 210, "proc": "sshd"}
-        ]
-        self.last_stderr: str = ""
-
-        # Hook state observer for ergonomic flags synchronization
-        self.bus.subscribe(self._on_event)
-
-        # Update dynamic TODO.txt if present in VFS
-        todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
-        if todo_node:
-            todo_node.content = get_todo_content(self.system_flags)
-
-        # Soft-gate /opt/phoenix based on initial system flags
-        if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
-            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
-            if ph_node:
-                ph_node.permissions = "755"
-        else:
-            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
-            if ph_node:
-                ph_node.permissions = "700"
-
-    def _on_event(self, event: Event):
-        if event.type == "flag_changed":
-            flag = event.data.get("flag")
-            val = bool(event.data.get("value"))
-            self.system_flags[flag] = val
-            todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
-            if todo_node:
-                todo_node.content = get_todo_content(self.system_flags)
-            if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
-                ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
-                if ph_node:
-                    ph_node.permissions = "755"
-            if flag == "BUFFER_REPAIRED" and val:
-                self.unlocked_ergonomics["history"] = True
-                self.unlocked_ergonomics["history_arrows"] = True
-            elif flag == "BASHRC_RESTORED" and val:
-                self.unlocked_ergonomics["autocomplete"] = True
-                self.unlocked_ergonomics["tab_completion"] = True
-            elif (flag == "MALWARE_TERMINATED" or flag == "SIGINT_REPAIRED") and val:
-                self.unlocked_ergonomics["sigint"] = True
-                self.unlocked_ergonomics["sigint_trap"] = True
-
-    @property
-    def cwd_str(self) -> str:
-        if not self.current_path:
-            return "/"
-        return "/" + "/".join(self.current_path)
-
-
-# =====================================================================
-# 3. DIEGETIC ENVIRONMENT INITIALIZER & WORKSTATION VFS MAP
-# =====================================================================
-
+# --- narrative.py ---
 def get_primary_goal(flags: Dict[str, bool]) -> str:
     if not flags.get("BUFFER_REPAIRED", False):
         return "CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history."
@@ -300,6 +201,7 @@ def get_todo_content(flags: Dict[str, bool]) -> str:
     )
 
 
+# --- initial_vfs.py ---
 def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     if flags is None:
         flags = {}
@@ -546,9 +448,109 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     return root
 
 
-# =====================================================================
-# 4. COMMAND CONTEXT & RESULT SCHEMAS & UTILITIES
-# =====================================================================
+# --- state.py ---
+@dataclass
+class ProcessEntry:
+    pid: int
+    name: str
+    user: str = "root"
+    status: str = "running"
+    cpu: float = 0.0
+    command: str = ""
+
+
+class TerminalState:
+    def __init__(self, vfs: VirtualFilesystem, event_bus: EventBus, initial_path: List[str]):
+        self.vfs = vfs
+        self.bus = event_bus
+        self.current_path = initial_path
+        self.env: Dict[str, str] = {
+            "USER": "alice",
+            "HOME": "/home/alice",
+            "HOST": "apollo",
+            "TERM": "xterm-256color",
+            "PATH": "/bin:/usr/bin"
+        }
+        self.unlocked_ergonomics: Dict[str, bool] = {
+            "history": False,
+            "autocomplete": False,
+            "sigint": False,
+            "history_arrows": False,
+            "tab_completion": False,
+            "sigint_trap": False
+        }
+        self.system_flags: Dict[str, bool] = {
+            "BUFFER_REPAIRED": False,
+            "BASHRC_RESTORED": False,
+            "MALWARE_TERMINATED": False,
+            "NETWORK_ONLINE": False,
+            "PHOENIX_ONLINE": False
+        }
+        self.process_table: List[ProcessEntry] = [
+            ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
+            ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),
+            ProcessEntry(pid=210, name="sshd", user="root", cpu=0.0, command="/usr/sbin/sshd -D")
+        ]
+        self.network_interfaces: Dict[str, Dict[str, Any]] = {
+            "lo": {"ip": "127.0.0.1/8", "state": "UP", "mac": "00:00:00:00:00:00"},
+            "apollo0": {"ip": "10.0.42.15/24", "state": "DOWN", "mac": "52:54:00:12:34:56"}
+        }
+        # Initial state: only sshd listening (port 8080 binds dynamically when phoenix_daemon starts)
+        self.listening_sockets: List[Dict[str, Any]] = [
+            {"proto": "tcp", "local": "0.0.0.0:22", "peer": "0.0.0.0:*", "state": "LISTEN", "pid": 210, "proc": "sshd"}
+        ]
+        self.last_stderr: str = ""
+
+        # Hook state observer for ergonomic flags synchronization
+        self.bus.subscribe(self._on_event)
+
+        # Update dynamic TODO.txt if present in VFS
+        self._sync_todo()
+
+        # Soft-gate /opt/phoenix based on initial system flags
+        self._sync_phoenix_perms()
+
+    def _sync_todo(self):
+        try:
+            todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
+            if todo_node:
+                todo_node.content = get_todo_content(self.system_flags)
+        except ImportError:
+            pass
+
+    def _sync_phoenix_perms(self):
+        if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
+            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
+            if ph_node:
+                ph_node.permissions = "755"
+        else:
+            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
+            if ph_node:
+                ph_node.permissions = "700"
+
+    def _on_event(self, event: Event):
+        if event.type == "flag_changed":
+            flag = event.data.get("flag")
+            val = bool(event.data.get("value"))
+            self.system_flags[flag] = val
+            self._sync_todo()
+            self._sync_phoenix_perms()
+            if flag == "BUFFER_REPAIRED" and val:
+                self.unlocked_ergonomics["history"] = True
+                self.unlocked_ergonomics["history_arrows"] = True
+            elif flag == "BASHRC_RESTORED" and val:
+                self.unlocked_ergonomics["autocomplete"] = True
+                self.unlocked_ergonomics["tab_completion"] = True
+            elif (flag == "MALWARE_TERMINATED" or flag == "SIGINT_REPAIRED") and val:
+                self.unlocked_ergonomics["sigint"] = True
+                self.unlocked_ergonomics["sigint_trap"] = True
+
+    @property
+    def cwd_str(self) -> str:
+        if not self.current_path:
+            return "/"
+        return "/" + "/".join(self.current_path)
+
 
 @dataclass
 class CommandResult:
@@ -566,6 +568,40 @@ class CommandContext:
 
     def result_factory(self, stdout: str = "", stderr: str = "", exit_code: int = 0) -> CommandResult:
         return CommandResult(stdout=stdout, stderr=stderr, exit_code=exit_code)
+
+
+# --- man_pages.py ---
+MAN_PAGES: Dict[str, str] = {
+    "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
+    "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
+    "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
+    "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
+    "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [-f] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n    tail -f /var/log/syslog\n",
+    "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
+    "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
+    "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x /opt/phoenix/recovery/recovery.sh\n    chmod 755 /bin/tool\n",
+    "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
+    "apollo-diagnostics": "NAME\n    apollo-diagnostics - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    apollo-diagnostics\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
+    "sync": "NAME\n    sync - flush file system buffers\n\nSYNOPSIS\n    sync\n\nDESCRIPTION\n    Flushes in-memory buffers to persistent storage.\n",
+    "ps": "NAME\n    ps - report a snapshot of the current processes\n\nSYNOPSIS\n    ps [aux] [-ef]\n\nEXAMPLES\n    ps aux\n    ps aux | grep miner\n",
+    "kill": "NAME\n    kill - send a signal to a process\n\nSYNOPSIS\n    kill [-s sigspec | -n signum | -sigspec] pid...\n\nEXAMPLES\n    kill 104\n    kill -9 104\n    kill -15 210\n",
+    "ip": "NAME\n    ip - show / manipulate routing, network devices, interfaces and tunnels\n\nSYNOPSIS\n    ip [addr | link | route] [COMMAND]\n\nEXAMPLES\n    ip addr\n    ip link set apollo0 up\n    ip route\n",
+    "ss": "NAME\n    ss - another utility to investigate sockets\n\nSYNOPSIS\n    ss [-tulpn] [-t] [-u] [-l]\n\nEXAMPLES\n    ss -tulpn\n    ss -l\n",
+    "ping": "NAME\n    ping - send ICMP ECHO_REQUEST to network hosts\n\nSYNOPSIS\n    ping [-c count] destination\n\nEXAMPLES\n    ping 10.0.42.1\n    ping -c 4 10.0.42.1\n",
+    "echo": "NAME\n    echo - display a line of text\n\nSYNOPSIS\n    echo [STRING]...\n",
+    "repair_buffer": "NAME\n    repair_buffer - patch terminal input ring buffer\n\nSYNOPSIS\n    repair_buffer\n",
+    "phoenix_daemon": "NAME\n    phoenix_daemon - PHOENIX emergency restoration daemon\n\nSYNOPSIS\n    phoenix_daemon [start | --sync]\n",
+    "phoenix_ctl": "NAME\n    phoenix_ctl - PHOENIX control utility\n\nSYNOPSIS\n    phoenix_ctl [COMMAND]\n",
+    "apollo-net": "NAME\n    apollo-net - Apollo network interface diagnostic tool\n\nSYNOPSIS\n    apollo-net\n",
+    "help": "NAME\n    help - display information about builtin recovery commands\n\nSYNOPSIS\n    help [command]\n\nDESCRIPTION\n    Provides emergency guidance and a list of essential shell utilities.\n",
+    "restore": "NAME\n    restore - diegetic profile recovery advisory\n\nSYNOPSIS\n    restore [file]\n\nDESCRIPTION\n    Advisory on using redirection to restore template profiles from /opt/backup/profiles/.\n",
+    "reboot": "NAME\n    reboot - restart workstation and reset recovery state\n\nSYNOPSIS\n    reboot\n\nDESCRIPTION\n    Flushes transient memory, removes save state, and restores workstation APOLLO to initial cold boot state.\n",
+    "reset": "NAME\n    reset - reinitialize terminal and workstation state\n\nSYNOPSIS\n    reset\n\nDESCRIPTION\n    Alias for reboot.\n",
+}
+
+
+# --- posix.py ---
+from typing import Any, List, Optional
 
 
 def cmd_tree(ctx: Any, args: List[str]) -> Any:
@@ -589,10 +625,6 @@ def cmd_tree(ctx: Any, args: List[str]) -> Any:
     recurse_tree(start_node)
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
-
-# =====================================================================
-# STREAM & INSPECTION UTILITIES (cat, head, tail, grep, find, echo)
-# =====================================================================
 
 def cmd_echo(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "echo", "args": args}))
@@ -890,128 +922,6 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stdout=output)
 
 
-# =====================================================================
-# DIAGNOSTIC ENGINE (decrypt / apollo-diagnostics)
-# =====================================================================
-
-def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "decrypt", "args": args}))
-    last_err = ctx.state.last_stderr.strip()
-    if not last_err:
-        return ctx.result_factory(
-            stdout="[APOLLO-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
-        )
-
-    if "command not found" in last_err:
-        return ctx.result_factory(
-            stdout="[DECRYPT ADVISORY]: The command entered does not exist.\n"
-                   "• Check spelling or type 'ls' to see available local files.\n"
-                   "• Type 'help' for guidance or inspect 'README.txt'.\n"
-                   "• Standard utilities: pwd, ls, cd, cat, man, sync.\n"
-        )
-
-    diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
-    
-    if "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
-            "Notice: The '<' and '>' in Morgan's notes represent placeholder names, not literal characters.\n"
-            "Action: Replace '<profile_src>' with 'alice.bashrc' and '<target_path>' with '/home/alice/.bashrc'.\n"
-            "Exact command: cat alice.bashrc > /home/alice/.bashrc"
-        )
-    elif "cannot execute text file" in last_err or ("Permission denied" in last_err and any(ext in last_err for ext in [".txt", ".log", ".conf", ".key"])):
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1E - NON-EXECUTABLE STREAM]\n"
-            "Target is a plain-text document, not an executable program.\n"
-            "Action: Use 'cat <file>' or 'head <file>' to view file contents."
-        )
-    elif "Authentication token missing" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
-            "Daemon initialization aborted: Missing cryptographic authentication key in configuration.\n"
-            "Action: Retrieve key from /mnt/recovery/keys/phoenix.key and append to /etc/phoenix/phoenix.conf via '>>'."
-        )
-    elif "Insecure permissions" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
-            "Configuration file permissions rejected by daemon security audit (mode must be 0644).\n"
-            "Action: Run 'chmod 644 /etc/phoenix/phoenix.conf' to secure configuration permissions."
-        )
-    elif "Missing configuration file" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
-            "Required service configuration file missing from /etc/phoenix/.\n"
-            "Action: Restore fallback template from /etc/phoenix/phoenix.conf.default or /opt/backup/phoenix.conf."
-        )
-    elif "Operation not permitted" in last_err and "phoenix" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2D - ACCESS RESTRICTED]\n"
-            "/opt/phoenix is locked by root system services.\n"
-            "Action: Investigate incident logs in /var/log/ to trace the breach before accessing system services."
-        )
-    elif "No such file or directory" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
-            "Target node does not exist in the active directory tree.\n"
-            "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
-        )
-    elif "Is a directory" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
-            "Target path resolves to a directory node, but the requested binary requires a file stream.\n"
-            "Action: Use 'cd' to traverse or 'ls' to inspect contents."
-        )
-    elif "Not a directory" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1C - INVALID TRAVERSAL]\n"
-            "Cannot traverse into a standard data file.\n"
-            "Action: Use 'cat', 'head', or 'tail' to read file contents."
-        )
-    elif "Permission denied" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
-            "Node execution or read/write bits are disabled.\n"
-            "Action: Use 'chmod +x <target>' or 'chmod 755 <target>' to elevate node permissions."
-        )
-    elif "Network is unreachable" in last_err or "network unreachable" in last_err.lower() or "network gateway unreachable" in last_err.lower():
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x3D - NETWORK OFFLINE]\n"
-            "Virtual network interface link state is DOWN.\n"
-            "Action: Run 'ip link set apollo0 up' to activate the network adapter and verify routing."
-        )
-    elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]\n"
-            "Process ID not active or signal invalid.\n"
-            "Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'."
-        )
-    elif any(k in last_err.lower() for k in ["missing file operand", "missing pattern", "missing argument", "option requires", "invalid line count", "invalid count", "invalid mode"]):
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x05 - ARITY MISMATCH]\n"
-            "Command invoked without mandatory arguments or with malformed options.\n"
-            "Action: Run 'man <command>' to inspect supported syntax."
-        )
-    else:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]\n"
-            "Subsystem failure registered in execution pipeline.\n"
-            "Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'."
-        )
-
-    output = (
-        "┌──────────────────────────────────────────────────────────┐\n"
-        "│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │\n"
-        "└──────────────────────────────────────────────────────────┘\n"
-        f"SOURCE FAULT: {last_err}\n"
-        f"{diag}\n"
-    )
-    return ctx.result_factory(stdout=output)
-
-
-# =====================================================================
-# NAVIGATION & DIRECTORY UTILITIES (pwd, cd, ls)
-# =====================================================================
-
 def cmd_pwd(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "pwd"}))
     return ctx.result_factory(stdout=ctx.state.cwd_str + "\n")
@@ -1105,10 +1015,6 @@ def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stdout="\n".join(output_blocks) + "\n" if output_blocks else "")
 
 
-# =====================================================================
-# PERMISSIONS & SYSTEM UTILITIES (chmod, man, ps, kill, ip, ss, ping)
-# =====================================================================
-
 def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "chmod", "args": args}))
     if len(args) < 2:
@@ -1150,10 +1056,6 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     return ctx.result_factory()
 
-
-# =====================================================================
-# PROCESS MANAGEMENT SUITE (ps, kill)
-# =====================================================================
 
 def cmd_ps(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ps", "args": args}))
@@ -1219,10 +1121,6 @@ def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != target_pid]
     return ctx.result_factory(stdout=f"Process {target_pid} terminated.\n")
 
-
-# =====================================================================
-# NETWORK OPERATIONS SUITE (ip, ss, ping)
-# =====================================================================
 
 def cmd_ip(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ip", "args": args}))
@@ -1367,84 +1265,7 @@ def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
-# =====================================================================
-# DIEGETIC RECOVERY PROTOCOL COMMANDS (repair_buffer, phoenix_daemon, phoenix_ctl, apollo-net)
-# =====================================================================
-
-def cmd_repair_buffer(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "repair_buffer", "args": args}))
-    ctx.state.system_flags["BUFFER_REPAIRED"] = True
-    ctx.bus.publish(Event("flag_changed", {"flag": "BUFFER_REPAIRED", "value": True}))
-    return ctx.result_factory(
-        stdout="[!] ABILITY UNLOCKED: Command Memory Recall\nYou can now press [UP] and [DOWN] arrow keys to cycle through previous commands.\n"
-    )
-
-
-def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "phoenix_daemon", "args": args}))
-
-    # 1. Validate Network State
-    if not ctx.state.system_flags.get("NETWORK_ONLINE", False):
-        return ctx.result_factory(
-            stderr="[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.\n", 
-            exit_code=1
-        )
-
-    # 2. Resolve Config Node
-    conf_node, _ = ctx.vfs.get_node([], "/etc/phoenix/phoenix.conf")
-    if not conf_node or not conf_node.is_file():
-        return ctx.result_factory(
-            stderr="[PHOENIX ERROR]: Missing configuration file /etc/phoenix/phoenix.conf\n", 
-            exit_code=1
-        )
-
-    # 3. Check File Permissions (Must be 0644 / 644)
-    if conf_node.permissions not in ["644", "0644"]:
-        return ctx.result_factory(
-            stderr=f"[PHOENIX ERROR]: Insecure permissions on /etc/phoenix/phoenix.conf (mode: {conf_node.permissions}). Required: 0644\n", 
-            exit_code=1
-        )
-
-    # 4. Check Cryptographic Token Presence
-    if "PX-KEY-7701-ALPHA" not in (conf_node.content or ""):
-        return ctx.result_factory(
-            stderr="[PHOENIX ERROR]: Authentication token missing or invalid in /etc/phoenix/phoenix.conf\n", 
-            exit_code=1
-        )
-
-    # Success State Transition
-    ctx.state.system_flags["PHOENIX_ONLINE"] = True
-
-    # Dynamically bind port 8080 upon launch (if not already present)
-    if not any(s.get("local") == "127.0.0.1:8080" for s in ctx.state.listening_sockets):
-        ctx.state.listening_sockets.append({
-            "proto": "tcp", "local": "127.0.0.1:8080", "peer": "0.0.0.0:*", 
-            "state": "LISTEN", "pid": 500, "proc": "phoenix_daemon"
-        })
-
-    ctx.bus.publish(Event("flag_changed", {"flag": "PHOENIX_ONLINE", "value": True}))
-    return ctx.result_factory(
-        stdout="[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway ONLINE.\n"
-    )
-
-
-def cmd_phoenix_ctl(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "phoenix_ctl", "args": args}))
-    return cmd_phoenix_daemon(ctx, args)
-
-
-def cmd_apollo_net(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "apollo-net", "args": args}))
-    iface_state = ctx.state.network_interfaces.get("apollo0", {}).get("state", "DOWN")
-    return ctx.result_factory(
-        stdout=f"[APOLLO-NET v1.0]: Subnet link state is {iface_state}. Gateway 10.0.42.1\n"
-    )
-
-
-# =====================================================================
-# PEDAGOGICAL DEBRIEF MANAGER ("Take It to Linux")
-# =====================================================================
-
+# --- debriefs.py ---
 class DebriefManager:
     DEBRIEFS: Dict[str, str] = {
         "BUFFER_REPAIRED": (
@@ -1534,33 +1355,387 @@ class DebriefManager:
                 self.output_writer("\n" + self.DEBRIEFS[flag] + "\n")
 
 
-MAN_PAGES: Dict[str, str] = {
-    "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
-    "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
-    "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
-    "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
-    "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [-f] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n    tail -f /var/log/syslog\n",
-    "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
-    "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
-    "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x /opt/phoenix/recovery/recovery.sh\n    chmod 755 /bin/tool\n",
-    "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
-    "apollo-diagnostics": "NAME\n    apollo-diagnostics - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    apollo-diagnostics\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
-    "sync": "NAME\n    sync - flush file system buffers\n\nSYNOPSIS\n    sync\n\nDESCRIPTION\n    Flushes in-memory buffers to persistent storage.\n",
-    "ps": "NAME\n    ps - report a snapshot of the current processes\n\nSYNOPSIS\n    ps [aux] [-ef]\n\nEXAMPLES\n    ps aux\n    ps aux | grep miner\n",
-    "kill": "NAME\n    kill - send a signal to a process\n\nSYNOPSIS\n    kill [-s sigspec | -n signum | -sigspec] pid...\n\nEXAMPLES\n    kill 104\n    kill -9 104\n    kill -15 210\n",
-    "ip": "NAME\n    ip - show / manipulate routing, network devices, interfaces and tunnels\n\nSYNOPSIS\n    ip [addr | link | route] [COMMAND]\n\nEXAMPLES\n    ip addr\n    ip link set apollo0 up\n    ip route\n",
-    "ss": "NAME\n    ss - another utility to investigate sockets\n\nSYNOPSIS\n    ss [-tulpn] [-t] [-u] [-l]\n\nEXAMPLES\n    ss -tulpn\n    ss -l\n",
-    "ping": "NAME\n    ping - send ICMP ECHO_REQUEST to network hosts\n\nSYNOPSIS\n    ping [-c count] destination\n\nEXAMPLES\n    ping 10.0.42.1\n    ping -c 4 10.0.42.1\n",
-    "echo": "NAME\n    echo - display a line of text\n\nSYNOPSIS\n    echo [STRING]...\n",
-    "repair_buffer": "NAME\n    repair_buffer - patch terminal input ring buffer\n\nSYNOPSIS\n    repair_buffer\n",
-    "phoenix_daemon": "NAME\n    phoenix_daemon - PHOENIX emergency restoration daemon\n\nSYNOPSIS\n    phoenix_daemon [start | --sync]\n",
-    "phoenix_ctl": "NAME\n    phoenix_ctl - PHOENIX control utility\n\nSYNOPSIS\n    phoenix_ctl [COMMAND]\n",
-    "apollo-net": "NAME\n    apollo-net - Apollo network interface diagnostic tool\n\nSYNOPSIS\n    apollo-net\n",
-    "help": "NAME\n    help - display information about builtin recovery commands\n\nSYNOPSIS\n    help [command]\n\nDESCRIPTION\n    Provides emergency guidance and a list of essential shell utilities.\n",
-    "restore": "NAME\n    restore - diegetic profile recovery advisory\n\nSYNOPSIS\n    restore [file]\n\nDESCRIPTION\n    Advisory on using redirection to restore template profiles from /opt/backup/profiles/.\n",
-    "reboot": "NAME\n    reboot - restart workstation and reset recovery state\n\nSYNOPSIS\n    reboot\n\nDESCRIPTION\n    Flushes transient memory, removes save state, and restores workstation APOLLO to initial cold boot state.\n",
-    "reset": "NAME\n    reset - reinitialize terminal and workstation state\n\nSYNOPSIS\n    reset\n\nDESCRIPTION\n    Alias for reboot.\n",
-}
+# --- persistence.py ---
+from typing import Any, Dict, Optional
+
+
+def serialize_vfs_node(node: VFSNode) -> Dict[str, Any]:
+    serialized: Dict[str, Any] = {
+        "type": node.type,
+        "permissions": node.permissions,
+        "owner": node.owner,
+    }
+    if node.is_file():
+        serialized["content"] = node.content if node.content is not None else ""
+    elif node.is_dir():
+        serialized["children"] = {
+            name: serialize_vfs_node(child) for name, child in node.children.items()
+        }
+    return serialized
+
+
+def deserialize_vfs_node(data: Dict[str, Any]) -> VFSNode:
+    node = VFSNode(
+        type=data.get("type", "file"),
+        permissions=data.get("permissions", "644"),
+        owner=data.get("owner", "root"),
+        content=data.get("content", None)
+    )
+    if node.is_dir() and "children" in data:
+        node.children = {
+            name: deserialize_vfs_node(child_data)
+            for name, child_data in data["children"].items()
+        }
+    return node
+
+
+def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> None:
+    # Ensure ergonomics aliases are synchronized
+    ergo = dict(state.unlocked_ergonomics)
+    hist = ergo.get("history", False) or ergo.get("history_arrows", False)
+    auto = ergo.get("autocomplete", False) or ergo.get("tab_completion", False)
+    sig = ergo.get("sigint", False) or ergo.get("sigint_trap", False)
+    
+    ergo["history"] = hist
+    ergo["history_arrows"] = hist
+    ergo["autocomplete"] = auto
+    ergo["tab_completion"] = auto
+    ergo["sigint"] = sig
+    ergo["sigint_trap"] = sig
+
+    payload = {
+        "version": "2.0.0",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "player": {
+            "current_directory": state.cwd_str,
+            "env": state.env,
+            "unlocked_ergonomics": ergo
+        },
+        "system_flags": state.system_flags,
+        "process_table": [
+            {
+                "pid": p.pid,
+                "name": p.name,
+                "user": p.user,
+                "status": p.status,
+                "cpu": p.cpu,
+                "command": p.command
+            }
+            for p in state.process_table
+        ],
+        "network": {
+            "interfaces": state.network_interfaces,
+            "listening_sockets": state.listening_sockets
+        },
+        "virtual_fs": serialize_vfs_node(state.vfs.root)
+    }
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+
+def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = None) -> Optional[TerminalState]:
+    if not os.path.exists(filepath):
+        return None
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    event_bus = bus or EventBus()
+    root_node = deserialize_vfs_node(data["virtual_fs"])
+    vfs = VirtualFilesystem(root_node)
+
+    raw_cwd = data.get("player", {}).get("current_directory", "/home/alice")
+    cwd_parts = [p for p in raw_cwd.split("/") if p]
+
+    state = TerminalState(vfs, event_bus, cwd_parts)
+    state.env = data.get("player", {}).get("env", state.env)
+    
+    loaded_ergo = data.get("player", {}).get("unlocked_ergonomics", {})
+    hist = bool(loaded_ergo.get("history") or loaded_ergo.get("history_arrows"))
+    auto = bool(loaded_ergo.get("autocomplete") or loaded_ergo.get("tab_completion"))
+    sig = bool(loaded_ergo.get("sigint") or loaded_ergo.get("sigint_trap"))
+
+    state.unlocked_ergonomics = {
+        "history": hist,
+        "history_arrows": hist,
+        "autocomplete": auto,
+        "tab_completion": auto,
+        "sigint": sig,
+        "sigint_trap": sig
+    }
+
+    state.system_flags = data.get("system_flags", state.system_flags)
+    try:
+        todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
+        if todo_node:
+            todo_node.content = get_todo_content(state.system_flags)
+    except ImportError:
+        pass
+
+    if state.system_flags.get("LOGS_AUDITED") or state.system_flags.get("RECOVERY_LOCATED"):
+        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
+        if ph_node:
+            ph_node.permissions = "755"
+    else:
+        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
+        if ph_node:
+            ph_node.permissions = "700"
+
+    loaded_processes = []
+    for p_data in data.get("process_table", []):
+        loaded_processes.append(
+            ProcessEntry(
+                pid=p_data["pid"],
+                name=p_data["name"],
+                user=p_data.get("user", "root"),
+                status=p_data.get("status", "running"),
+                cpu=p_data.get("cpu", 0.0),
+                command=p_data.get("command", "")
+            )
+        )
+    state.process_table = loaded_processes
+
+    if "network" in data:
+        state.network_interfaces = data["network"].get("interfaces", state.network_interfaces)
+        state.listening_sockets = data["network"].get("listening_sockets", state.listening_sockets)
+
+    return state
+
+
+def register_autosave_handler(bus: EventBus, get_state):
+    def on_event(event: Event):
+        if event.type == "flag_changed":
+            state = get_state()
+            if state:
+                save_game_state(state, "savegame.json")
+    bus.subscribe(on_event)
+
+
+# --- diegetic.py ---
+def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "decrypt", "args": args}))
+    last_err = ctx.state.last_stderr.strip()
+    if not last_err:
+        return ctx.result_factory(
+            stdout="[APOLLO-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
+        )
+
+    if "command not found" in last_err:
+        return ctx.result_factory(
+            stdout="[DECRYPT ADVISORY]: The command entered does not exist.\n"
+                   "• Check spelling or type 'ls' to see available local files.\n"
+                   "• Type 'help' for guidance or inspect 'README.txt'.\n"
+                   "• Standard utilities: pwd, ls, cd, cat, man, sync.\n"
+        )
+
+    diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
+    
+    if "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
+            "Notice: The '<' and '>' in Morgan's notes represent placeholder names, not literal characters.\n"
+            "Action: Replace '<profile_src>' with 'alice.bashrc' and '<target_path>' with '/home/alice/.bashrc'.\n"
+            "Exact command: cat alice.bashrc > /home/alice/.bashrc"
+        )
+    elif "cannot execute text file" in last_err or ("Permission denied" in last_err and any(ext in last_err for ext in [".txt", ".log", ".conf", ".key"])):
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1E - NON-EXECUTABLE STREAM]\n"
+            "Target is a plain-text document, not an executable program.\n"
+            "Action: Use 'cat <file>' or 'head <file>' to view file contents."
+        )
+    elif "Authentication token missing" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
+            "Daemon initialization aborted: Missing cryptographic authentication key in configuration.\n"
+            "Action: Retrieve key from /mnt/recovery/keys/phoenix.key and append to /etc/phoenix/phoenix.conf via '>>'."
+        )
+    elif "Insecure permissions" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "Configuration file permissions rejected by daemon security audit (mode must be 0644).\n"
+            "Action: Run 'chmod 644 /etc/phoenix/phoenix.conf' to secure configuration permissions."
+        )
+    elif "Missing configuration file" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
+            "Required service configuration file missing from /etc/phoenix/.\n"
+            "Action: Restore fallback template from /etc/phoenix/phoenix.conf.default or /opt/backup/phoenix.conf."
+        )
+    elif "Operation not permitted" in last_err and "phoenix" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2D - ACCESS RESTRICTED]\n"
+            "/opt/phoenix is locked by root system services.\n"
+            "Action: Investigate incident logs in /var/log/ to trace the breach before accessing system services."
+        )
+    elif "No such file or directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+            "Target node does not exist in the active directory tree.\n"
+            "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
+        )
+    elif "Is a directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
+            "Target path resolves to a directory node, but the requested binary requires a file stream.\n"
+            "Action: Use 'cd' to traverse or 'ls' to inspect contents."
+        )
+    elif "Not a directory" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x1C - INVALID TRAVERSAL]\n"
+            "Cannot traverse into a standard data file.\n"
+            "Action: Use 'cat', 'head', or 'tail' to read file contents."
+        )
+    elif "Permission denied" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "Node execution or read/write bits are disabled.\n"
+            "Action: Use 'chmod +x <target>' or 'chmod 755 <target>' to elevate node permissions."
+        )
+    elif "Network is unreachable" in last_err or "network unreachable" in last_err.lower() or "network gateway unreachable" in last_err.lower():
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x3D - NETWORK OFFLINE]\n"
+            "Virtual network interface link state is DOWN.\n"
+            "Action: Run 'ip link set apollo0 up' to activate the network adapter and verify routing."
+        )
+    elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]\n"
+            "Process ID not active or signal invalid.\n"
+            "Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'."
+        )
+    elif any(k in last_err.lower() for k in ["missing file operand", "missing pattern", "missing argument", "option requires", "invalid line count", "invalid count", "invalid mode"]):
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x05 - ARITY MISMATCH]\n"
+            "Command invoked without mandatory arguments or with malformed options.\n"
+            "Action: Run 'man <command>' to inspect supported syntax."
+        )
+    else:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]\n"
+            "Subsystem failure registered in execution pipeline.\n"
+            "Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'."
+        )
+
+    output = (
+        "┌──────────────────────────────────────────────────────────┐\n"
+        "│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │\n"
+        "└──────────────────────────────────────────────────────────┘\n"
+        f"SOURCE FAULT: {last_err}\n"
+        f"{diag}\n"
+    )
+    return ctx.result_factory(stdout=output)
+
+
+def cmd_repair_buffer(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "repair_buffer", "args": args}))
+    ctx.state.system_flags["BUFFER_REPAIRED"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "BUFFER_REPAIRED", "value": True}))
+    return ctx.result_factory(
+        stdout="[!] ABILITY UNLOCKED: Command Memory Recall\nYou can now press [UP] and [DOWN] arrow keys to cycle through previous commands.\n"
+    )
+
+
+def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "phoenix_daemon", "args": args}))
+
+    # 1. Validate Network State
+    if not ctx.state.system_flags.get("NETWORK_ONLINE", False):
+        return ctx.result_factory(
+            stderr="[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.\n", 
+            exit_code=1
+        )
+
+    # 2. Resolve Config Node
+    conf_node, _ = ctx.vfs.get_node([], "/etc/phoenix/phoenix.conf")
+    if not conf_node or not conf_node.is_file():
+        return ctx.result_factory(
+            stderr="[PHOENIX ERROR]: Missing configuration file /etc/phoenix/phoenix.conf\n", 
+            exit_code=1
+        )
+
+    # 3. Check File Permissions (Must be 0644 / 644)
+    if conf_node.permissions not in ["644", "0644"]:
+        return ctx.result_factory(
+            stderr=f"[PHOENIX ERROR]: Insecure permissions on /etc/phoenix/phoenix.conf (mode: {conf_node.permissions}). Required: 0644\n", 
+            exit_code=1
+        )
+
+    # 4. Check Cryptographic Token Presence
+    if "PX-KEY-7701-ALPHA" not in (conf_node.content or ""):
+        return ctx.result_factory(
+            stderr="[PHOENIX ERROR]: Authentication token missing or invalid in /etc/phoenix/phoenix.conf\n", 
+            exit_code=1
+        )
+
+    # Success State Transition
+    ctx.state.system_flags["PHOENIX_ONLINE"] = True
+
+    # Dynamically bind port 8080 upon launch (if not already present)
+    if not any(s.get("local") == "127.0.0.1:8080" for s in ctx.state.listening_sockets):
+        ctx.state.listening_sockets.append({
+            "proto": "tcp", "local": "127.0.0.1:8080", "peer": "0.0.0.0:*", 
+            "state": "LISTEN", "pid": 500, "proc": "phoenix_daemon"
+        })
+
+    ctx.bus.publish(Event("flag_changed", {"flag": "PHOENIX_ONLINE", "value": True}))
+    return ctx.result_factory(
+        stdout="[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway ONLINE.\n"
+    )
+
+
+def cmd_phoenix_ctl(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "phoenix_ctl", "args": args}))
+    return cmd_phoenix_daemon(ctx, args)
+
+
+def cmd_apollo_net(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "apollo-net", "args": args}))
+    iface_state = ctx.state.network_interfaces.get("apollo0", {}).get("state", "DOWN")
+    return ctx.result_factory(
+        stdout=f"[APOLLO-NET v1.0]: Subnet link state is {iface_state}. Gateway 10.0.42.1\n"
+    )
+
+
+def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "sync"}))
+    try:
+        save_game_state(ctx.state, "savegame.json")
+        return ctx.result_factory(stdout="[SYSTEM]: In-memory buffers flushed to persistent storage.\n")
+    except Exception as e:
+        return ctx.result_factory(stderr=f"sync: error writing blocks: {str(e)}\n", exit_code=1)
+
+
+def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "reboot", "args": args}))
+
+    if os.path.exists("savegame.json"):
+        try:
+            os.remove("savegame.json")
+        except Exception:
+            pass
+
+    fresh_root = build_default_vfs()
+    ctx.vfs.root = fresh_root
+
+    fresh_state = TerminalState(ctx.vfs, ctx.bus, ["home", "alice"])
+    ctx.state.current_path = list(fresh_state.current_path)
+    ctx.state.env = dict(fresh_state.env)
+    ctx.state.unlocked_ergonomics = dict(fresh_state.unlocked_ergonomics)
+    ctx.state.system_flags = dict(fresh_state.system_flags)
+    ctx.state.process_table = list(fresh_state.process_table)
+    ctx.state.network_interfaces = dict(fresh_state.network_interfaces)
+    ctx.state.listening_sockets = list(fresh_state.listening_sockets)
+    ctx.state.last_stderr = ""
+
+    reboot_banner = (
+        "\nBroadcast message from root@apollo (tty1) (system reboot):\n\n"
+        "The system is going down for reboot NOW!\n"
+        "Restarting system...\n\n"
+        "=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===\n"
+        "System degraded. Type 'help' for guidance or inspect 'README.txt'.\n"
+        "Type 'exit' to disconnect.\n"
+    )
+    return ctx.result_factory(stdout=reboot_banner)
 
 
 def cmd_man(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -1670,308 +1845,84 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
-# =====================================================================
-# STATE SERIALIZATION & HYDRATION ENGINE
-# =====================================================================
-
-def serialize_vfs_node(node: VFSNode) -> Dict[str, Any]:
-    serialized: Dict[str, Any] = {
-        "type": node.type,
-        "permissions": node.permissions,
-        "owner": node.owner,
-    }
-    if node.is_file():
-        serialized["content"] = node.content if node.content is not None else ""
-    elif node.is_dir():
-        serialized["children"] = {
-            name: serialize_vfs_node(child) for name, child in node.children.items()
-        }
-    return serialized
-
-
-def deserialize_vfs_node(data: Dict[str, Any]) -> VFSNode:
-    node = VFSNode(
-        type=data.get("type", "file"),
-        permissions=data.get("permissions", "644"),
-        owner=data.get("owner", "root"),
-        content=data.get("content", None)
-    )
-    if node.is_dir() and "children" in data:
-        node.children = {
-            name: deserialize_vfs_node(child_data)
-            for name, child_data in data["children"].items()
-        }
-    return node
+# --- __init__.py ---
+from typing import Any, Callable, Dict
+    cmd_pwd,
+    cmd_cd,
+    cmd_ls,
+    cmd_cat,
+    cmd_head,
+    cmd_tail,
+    cmd_grep,
+    cmd_find,
+    cmd_chmod,
+    cmd_ps,
+    cmd_kill,
+    cmd_ip,
+    cmd_ss,
+    cmd_ping,
+    cmd_echo,
+    cmd_tree,
+)
+    cmd_decrypt,
+    cmd_repair_buffer,
+    cmd_phoenix_daemon,
+    cmd_phoenix_ctl,
+    cmd_apollo_net,
+    cmd_sync,
+    cmd_reboot,
+    cmd_man,
+    cmd_restore,
+    cmd_help,
+)
 
 
-def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> None:
-    # Ensure ergonomics aliases are synchronized
-    ergo = dict(state.unlocked_ergonomics)
-    hist = ergo.get("history", False) or ergo.get("history_arrows", False)
-    auto = ergo.get("autocomplete", False) or ergo.get("tab_completion", False)
-    sig = ergo.get("sigint", False) or ergo.get("sigint_trap", False)
-    
-    ergo["history"] = hist
-    ergo["history_arrows"] = hist
-    ergo["autocomplete"] = auto
-    ergo["tab_completion"] = auto
-    ergo["sigint"] = sig
-    ergo["sigint_trap"] = sig
-
-    payload = {
-        "version": "2.0.0",
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "player": {
-            "current_directory": state.cwd_str,
-            "env": state.env,
-            "unlocked_ergonomics": ergo
-        },
-        "system_flags": state.system_flags,
-        "process_table": [
-            {
-                "pid": p.pid,
-                "name": p.name,
-                "user": p.user,
-                "status": p.status,
-                "cpu": p.cpu,
-                "command": p.command
-            }
-            for p in state.process_table
-        ],
-        "network": {
-            "interfaces": state.network_interfaces,
-            "listening_sockets": state.listening_sockets
-        },
-        "virtual_fs": serialize_vfs_node(state.vfs.root)
-    }
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
-
-
-def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = None) -> Optional[TerminalState]:
-    if not os.path.exists(filepath):
-        return None
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    event_bus = bus or EventBus()
-    root_node = deserialize_vfs_node(data["virtual_fs"])
-    vfs = VirtualFilesystem(root_node)
-
-    raw_cwd = data.get("player", {}).get("current_directory", "/home/alice")
-    cwd_parts = [p for p in raw_cwd.split("/") if p]
-
-    state = TerminalState(vfs, event_bus, cwd_parts)
-    state.env = data.get("player", {}).get("env", state.env)
-    
-    loaded_ergo = data.get("player", {}).get("unlocked_ergonomics", {})
-    hist = bool(loaded_ergo.get("history") or loaded_ergo.get("history_arrows"))
-    auto = bool(loaded_ergo.get("autocomplete") or loaded_ergo.get("tab_completion"))
-    sig = bool(loaded_ergo.get("sigint") or loaded_ergo.get("sigint_trap"))
-
-    state.unlocked_ergonomics = {
-        "history": hist,
-        "history_arrows": hist,
-        "autocomplete": auto,
-        "tab_completion": auto,
-        "sigint": sig,
-        "sigint_trap": sig
+def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandResult]]:
+    return {
+        "pwd": cmd_pwd,
+        "cd": cmd_cd,
+        "ls": cmd_ls,
+        "cat": cmd_cat,
+        "head": cmd_head,
+        "tail": cmd_tail,
+        "grep": cmd_grep,
+        "find": cmd_find,
+        "chmod": cmd_chmod,
+        "man": cmd_man,
+        "help": cmd_help,
+        "?": cmd_help,
+        "decrypt": cmd_decrypt,
+        "apollo-diagnostics": cmd_decrypt,
+        "sync": cmd_sync,
+        "tree": cmd_tree,
+        "ps": cmd_ps,
+        "kill": cmd_kill,
+        "ip": cmd_ip,
+        "ss": cmd_ss,
+        "ping": cmd_ping,
+        "echo": cmd_echo,
+        "repair_buffer": cmd_repair_buffer,
+        "phoenix_ctl": cmd_phoenix_ctl,
+        "phoenix_daemon": cmd_phoenix_daemon,
+        "apollo-net": cmd_apollo_net,
+        "restore": cmd_restore,
+        "reboot": cmd_reboot,
+        "reset": cmd_reboot,
+        "restart": cmd_reboot,
     }
 
-    state.system_flags = data.get("system_flags", state.system_flags)
-    todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
-    if todo_node:
-        todo_node.content = get_todo_content(state.system_flags)
 
-    if state.system_flags.get("LOGS_AUDITED") or state.system_flags.get("RECOVERY_LOCATED"):
-        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
-        if ph_node:
-            ph_node.permissions = "755"
-    else:
-        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
-        if ph_node:
-            ph_node.permissions = "700"
+COMMAND_TABLE = build_command_table()
 
-    loaded_processes = []
-    for p_data in data.get("process_table", []):
-        loaded_processes.append(
-            ProcessEntry(
-                pid=p_data["pid"],
-                name=p_data["name"],
-                user=p_data.get("user", "root"),
-                status=p_data.get("status", "running"),
-                cpu=p_data.get("cpu", 0.0),
-                command=p_data.get("command", "")
-            )
-        )
-    state.process_table = loaded_processes
-
-    if "network" in data:
-        state.network_interfaces = data["network"].get("interfaces", state.network_interfaces)
-        state.listening_sockets = data["network"].get("listening_sockets", state.listening_sockets)
-
-    return state
+__all__ = [
+    "build_command_table",
+    "COMMAND_TABLE",
+]
 
 
-# =====================================================================
-# DIEGETIC SYNC COMMAND & AUTOSAVE OBSERVER
-# =====================================================================
+# --- pipeline.py ---
+from typing import Any, Dict, List, Optional, Tuple
 
-def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "sync"}))
-    try:
-        save_game_state(ctx.state, "savegame.json")
-        return ctx.result_factory(stdout="[SYSTEM]: In-memory buffers flushed to persistent storage.\n")
-    except Exception as e:
-        return ctx.result_factory(stderr=f"sync: error writing blocks: {str(e)}\n", exit_code=1)
-
-
-def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "reboot", "args": args}))
-
-    if os.path.exists("savegame.json"):
-        try:
-            os.remove("savegame.json")
-        except Exception:
-            pass
-
-    fresh_root = build_default_vfs()
-    ctx.vfs.root = fresh_root
-
-    fresh_state = TerminalState(ctx.vfs, ctx.bus, ["home", "alice"])
-    ctx.state.current_path = list(fresh_state.current_path)
-    ctx.state.env = dict(fresh_state.env)
-    ctx.state.unlocked_ergonomics = dict(fresh_state.unlocked_ergonomics)
-    ctx.state.system_flags = dict(fresh_state.system_flags)
-    ctx.state.process_table = list(fresh_state.process_table)
-    ctx.state.network_interfaces = dict(fresh_state.network_interfaces)
-    ctx.state.listening_sockets = list(fresh_state.listening_sockets)
-    ctx.state.last_stderr = ""
-
-    reboot_banner = (
-        "\nBroadcast message from root@apollo (tty1) (system reboot):\n\n"
-        "The system is going down for reboot NOW!\n"
-        "Restarting system...\n\n"
-        "=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===\n"
-        "System degraded. Type 'help' for guidance or inspect 'README.txt'.\n"
-        "Type 'exit' to disconnect.\n"
-    )
-    return ctx.result_factory(stdout=reboot_banner)
-
-
-def register_autosave_handler(bus: EventBus, get_state):
-    def on_event(event: Event):
-        if event.type == "flag_changed":
-            state = get_state()
-            if state:
-                save_game_state(state, "savegame.json")
-    bus.subscribe(on_event)
-
-
-# =====================================================================
-# 5. DIEGETIC AUTOCOMPLETER & ERGONOMIC DRIVERS
-# =====================================================================
-
-class VFSCompleter(Completer):
-    def __init__(self, get_context):
-        self.get_context = get_context
-
-    def get_completions(self, document, complete_event):
-        ctx: CommandContext = self.get_context()
-        if not (ctx.state.unlocked_ergonomics.get("tab_completion", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
-            return
-
-        text = document.text_before_cursor
-        tokens = text.split()
-        word = document.get_word_before_cursor()
-
-        # Command completion (first token)
-        if len(tokens) == 0 or (len(tokens) == 1 and not text.endswith(" ")):
-            path_var = ctx.state.env.get("PATH", "/bin:/usr/bin")
-            for bin_dir in path_var.split(":"):
-                node, _ = ctx.vfs.get_node([], bin_dir)
-                if node and node.is_dir():
-                    for name in node.children.keys():
-                        if name.lower().startswith(word.lower()):
-                            yield Completion(name, start_position=-len(word))
-
-            # Also complete local CWD entries for first token
-            dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, ".")
-            if dir_node and dir_node.is_dir():
-                for child_name, child_node in dir_node.children.items():
-                    if child_name.lower().startswith(word.lower()):
-                        display_name = child_name + ("/" if child_node.is_dir() else "")
-                        yield Completion(display_name, start_position=-len(word))
-            return
-
-        # Path / Argument completion
-        target_path = word if word else "."
-        if "/" in target_path:
-            parent_path, prefix = target_path.rsplit("/", 1)
-            search_dir = "/" if parent_path == "" else parent_path
-        else:
-            search_dir = "."
-            prefix = target_path
-
-        dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, search_dir)
-        if dir_node and dir_node.is_dir():
-            for child_name, child_node in dir_node.children.items():
-                if child_name.lower().startswith(prefix.lower()):
-                    display_name = child_name + ("/" if child_node.is_dir() else "")
-                    yield Completion(display_name, start_position=-len(prefix))
-
-
-def build_key_bindings(get_context):
-    kb = KeyBindings()
-
-    @kb.add("c-c")
-    def handle_sigint(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("sigint_trap", False) or ctx.state.unlocked_ergonomics.get("sigint", False)):
-            sys.stdout.write("\n[SIGNAL FAULT]: Process signal traps unconfigured. SIGINT ignored.\n")
-            event.app.output.flush()
-        else:
-            sys.stdout.write("^C\n")
-            event.app.output.flush()
-            event.app.current_buffer.reset()
-
-    @kb.add("up")
-    def handle_up_arrow(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("history_arrows", False) or ctx.state.unlocked_ergonomics.get("history", False)):
-            sys.stdout.write("\n[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled.\n")
-            event.app.output.flush()
-        else:
-            event.app.current_buffer.auto_up()
-
-    @kb.add("down")
-    def handle_down_arrow(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("history_arrows", False) or ctx.state.unlocked_ergonomics.get("history", False)):
-            sys.stdout.write("\n[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled.\n")
-            event.app.output.flush()
-        else:
-            event.app.current_buffer.auto_down()
-
-    @kb.add("tab")
-    def handle_tab(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("tab_completion", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
-            sys.stdout.write("\n[DRIVER MISSING]: libreadline unit offline. Tab autocompletion unavailable.\n")
-            event.app.output.flush()
-        else:
-            event.app.current_buffer.start_completion()
-
-    return kb
-
-
-create_key_bindings = build_key_bindings
-
-
-# =====================================================================
-# 6. PIPELINE PARSER & EXECUTION ENGINE & WRITE HOOKS
-# =====================================================================
 
 def check_bashrc_restoration(vfs: VirtualFilesystem, state: TerminalState, bus: EventBus, target_path: Optional[str] = None):
     if target_path is not None and not target_path.endswith(".bashrc"):
@@ -2222,10 +2173,104 @@ class PipelineEngine:
         return last_result
 
 
-# =====================================================================
-# 7. REPL SHELL RUNNER
-# =====================================================================
+# --- keybindings.py ---
+class VFSCompleter(Completer):
+    def __init__(self, get_context):
+        self.get_context = get_context
 
+    def get_completions(self, document, complete_event):
+        ctx: CommandContext = self.get_context()
+        if not (ctx.state.unlocked_ergonomics.get("tab_completion", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
+            return
+
+        text = document.text_before_cursor
+        tokens = text.split()
+        word = document.get_word_before_cursor()
+
+        # Command completion (first token)
+        if len(tokens) == 0 or (len(tokens) == 1 and not text.endswith(" ")):
+            path_var = ctx.state.env.get("PATH", "/bin:/usr/bin")
+            for bin_dir in path_var.split(":"):
+                node, _ = ctx.vfs.get_node([], bin_dir)
+                if node and node.is_dir():
+                    for name in node.children.keys():
+                        if name.lower().startswith(word.lower()):
+                            yield Completion(name, start_position=-len(word))
+
+            # Also complete local CWD entries for first token
+            dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, ".")
+            if dir_node and dir_node.is_dir():
+                for child_name, child_node in dir_node.children.items():
+                    if child_name.lower().startswith(word.lower()):
+                        display_name = child_name + ("/" if child_node.is_dir() else "")
+                        yield Completion(display_name, start_position=-len(word))
+            return
+
+        # Path / Argument completion
+        target_path = word if word else "."
+        if "/" in target_path:
+            parent_path, prefix = target_path.rsplit("/", 1)
+            search_dir = "/" if parent_path == "" else parent_path
+        else:
+            search_dir = "."
+            prefix = target_path
+
+        dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, search_dir)
+        if dir_node and dir_node.is_dir():
+            for child_name, child_node in dir_node.children.items():
+                if child_name.lower().startswith(prefix.lower()):
+                    display_name = child_name + ("/" if child_node.is_dir() else "")
+                    yield Completion(display_name, start_position=-len(prefix))
+
+
+def build_key_bindings(get_context):
+    kb = KeyBindings()
+
+    @kb.add("c-c")
+    def handle_sigint(event):
+        ctx = get_context()
+        if not (ctx.state.unlocked_ergonomics.get("sigint_trap", False) or ctx.state.unlocked_ergonomics.get("sigint", False)):
+            sys.stdout.write("\n[SIGNAL FAULT]: Process signal traps unconfigured. SIGINT ignored.\n")
+            event.app.output.flush()
+        else:
+            sys.stdout.write("^C\n")
+            event.app.output.flush()
+            event.app.current_buffer.reset()
+
+    @kb.add("up")
+    def handle_up_arrow(event):
+        ctx = get_context()
+        if not (ctx.state.unlocked_ergonomics.get("history_arrows", False) or ctx.state.unlocked_ergonomics.get("history", False)):
+            sys.stdout.write("\n[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled.\n")
+            event.app.output.flush()
+        else:
+            event.app.current_buffer.auto_up()
+
+    @kb.add("down")
+    def handle_down_arrow(event):
+        ctx = get_context()
+        if not (ctx.state.unlocked_ergonomics.get("history_arrows", False) or ctx.state.unlocked_ergonomics.get("history", False)):
+            sys.stdout.write("\n[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled.\n")
+            event.app.output.flush()
+        else:
+            event.app.current_buffer.auto_down()
+
+    @kb.add("tab")
+    def handle_tab(event):
+        ctx = get_context()
+        if not (ctx.state.unlocked_ergonomics.get("tab_completion", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
+            sys.stdout.write("\n[DRIVER MISSING]: libreadline unit offline. Tab autocompletion unavailable.\n")
+            event.app.output.flush()
+        else:
+            event.app.current_buffer.start_completion()
+
+    return kb
+
+
+create_key_bindings = build_key_bindings
+
+
+# --- repl.py ---
 class TerminalShell:
     def __init__(self, ctx: CommandContext, command_table: Dict[str, Any], **session_kwargs):
         self.ctx = ctx
@@ -2293,40 +2338,7 @@ class TerminalShell:
                 continue
 
 
-COMMAND_TABLE = {
-    "pwd": cmd_pwd,
-    "cd": cmd_cd,
-    "ls": cmd_ls,
-    "cat": cmd_cat,
-    "head": cmd_head,
-    "tail": cmd_tail,
-    "grep": cmd_grep,
-    "find": cmd_find,
-    "chmod": cmd_chmod,
-    "man": cmd_man,
-    "help": cmd_help,
-    "?": cmd_help,
-    "decrypt": cmd_decrypt,
-    "apollo-diagnostics": cmd_decrypt,
-    "sync": cmd_sync,
-    "tree": cmd_tree,
-    "ps": cmd_ps,
-    "kill": cmd_kill,
-    "ip": cmd_ip,
-    "ss": cmd_ss,
-    "ping": cmd_ping,
-    "echo": cmd_echo,
-    "repair_buffer": cmd_repair_buffer,
-    "phoenix_ctl": cmd_phoenix_ctl,
-    "phoenix_daemon": cmd_phoenix_daemon,
-    "apollo-net": cmd_apollo_net,
-    "restore": cmd_restore,
-    "reboot": cmd_reboot,
-    "reset": cmd_reboot,
-    "restart": cmd_reboot,
-}
-
-
+# --- __main__.py ---
 def main():
     bus = EventBus()
     reset_requested = any(arg in sys.argv for arg in ["--reset", "--new", "--fresh", "-r", "--restart"])

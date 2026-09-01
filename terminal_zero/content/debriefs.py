@@ -1,0 +1,92 @@
+import sys
+from typing import Dict
+from terminal_zero.core.events import Event, EventBus
+
+
+class DebriefManager:
+    DEBRIEFS: Dict[str, str] = {
+        "BUFFER_REPAIRED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You just repaired the input ring buffer to restore command history.   │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • The kernel TTY line discipline handles cooked vs raw input modes.    │\n"
+            "│ • Libraries like GNU Readline manage arrow key navigation and history. │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "BASHRC_RESTORED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Shell Startup Profiles & Environment Variables    │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You restored ~/.bashrc to re-enable tab autocompletion and $PATH.     │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • ~/.bashrc runs for interactive non-login shells.                     │\n"
+            "│ • The $PATH variable defines directory search order for executables.   │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "MALWARE_TERMINATED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Real-World Process Administration & Signals        │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You just used 'kill -9' to terminate a rogue process.                  │\n"
+            "│ In production Linux environments:                                      │\n"
+            "│ • SIGTERM (-15) allows processes to clean up sockets & open files.     │\n"
+            "│ • SIGKILL (-9) immediately revokes kernel resources; use with care!    │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "SIGINT_UNLOCKED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You made recovery.sh executable and restored kernel signal traps.       │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │\n"
+            "│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "LOGS_AUDITED": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You filtered security logs in /var/log to isolate the intrusion.       │\n"
+            "│ In real Linux systems:                                                 │\n"
+            "│ • 'grep -i' searches case-insensitively for key strings in logs.       │\n"
+            "│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "NETWORK_ONLINE": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Network Interface Management with 'ip'             │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You used 'ip link set apollo0 up' to bring the network online.        │\n"
+            "│ In modern Linux distributions:                                         │\n"
+            "│ • The 'ip' tool (iproute2) replaced the legacy 'ifconfig' utility.     │\n"
+            "│ • 'ip addr' inspects subnets, while 'ip route' controls IP gateways.  │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        ),
+        "PHOENIX_ONLINE": (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [TAKE IT TO LINUX]: Daemon Sockets & Service Orchestration             │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ You restored the PHOENIX daemon and verified listening sockets.        │\n"
+            "│ In enterprise Linux environments:                                      │\n"
+            "│ • 'ss -tulpn' audits TCP/UDP sockets and binds to specific interfaces. │\n"
+            "│ • Systemd unit files manage auto-restart and target state transitions. │\n"
+            "└────────────────────────────────────────────────────────────────────────┘"
+        )
+    }
+
+    def __init__(self, bus: EventBus, output_writer=None):
+        self.bus = bus
+        self.output_writer = output_writer or sys.stdout.write
+        self.bus.subscribe(self.handle_event)
+
+    def handle_event(self, event: Event):
+        if event.type == "flag_changed":
+            flag = event.data.get("flag")
+            value = event.data.get("value")
+            if value and flag in self.DEBRIEFS:
+                if flag == "BASHRC_RESTORED":
+                    self.output_writer("\n[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized\nCustom shortcuts active (try 'll' to list files).\n")
+                self.output_writer("\n" + self.DEBRIEFS[flag] + "\n")

@@ -1,8 +1,8 @@
 {
   "version": "2.0.0",
-  "timestamp": "2026-09-01T21:40:30.076303+00:00",
+  "timestamp": "2026-09-01T22:43:03.703946+00:00",
   "player": {
-    "current_directory": "/opt/phoenix",
+    "current_directory": "/opt/backup/profiles",
     "env": {
       "USER": "alice",
       "HOME": "/home/alice",
@@ -12,18 +12,18 @@
     },
     "unlocked_ergonomics": {
       "history": true,
-      "autocomplete": false,
+      "autocomplete": true,
       "sigint": false,
       "history_arrows": true,
-      "tab_completion": false,
+      "tab_completion": true,
       "sigint_trap": false
     }
   },
   "system_flags": {
     "BUFFER_REPAIRED": true,
-    "BASHRC_RESTORED": false,
+    "BASHRC_RESTORED": true,
     "MALWARE_TERMINATED": false,
-    "NETWORK_ONLINE": true,
+    "NETWORK_ONLINE": false,
     "PHOENIX_ONLINE": false
   },
   "process_table": [
@@ -61,7 +61,7 @@
       },
       "apollo0": {
         "ip": "10.0.42.15/24",
-        "state": "UP",
+        "state": "DOWN",
         "mac": "52:54:00:12:34:56"
       }
     },
@@ -442,25 +442,25 @@
                 "type": "file",
                 "permissions": "644",
                 "owner": "alice",
-                "content": "================================================================================\n                    APOLLO WORKSTATION RECOVERY TERMINAL\n================================================================================\nBASIC NAVIGATION CHEAT SHEET:\n  \u2022 ls             : Lists visible files in your current working directory.\n  \u2022 cat <filename> : Prints readable text inside a target file to screen.\n  \u2022 pwd            : Prints your current working directory location.\n  \u2022 decrypt        : Run after any error to get human-readable troubleshooting.\n  \u2022 sync           : Saves machine state to persistent disk.\n\nOPERATOR INCIDENT NOTE:\n  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n  2. Run /usr/bin/repair_buffer to restore history buffer.\n================================================================================\n"
+                "content": "================================================================================\n          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD\n================================================================================\nQUICK NAVIGATION ACTIONS:\n  \u2022 ls             : Look around (list visible files in current folder).\n  \u2022 cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').\n  \u2022 pwd            : Check what folder you are currently standing in.\n  \u2022 decrypt        : Ask APOLLO AI to diagnose your last error in plain language.\n  \u2022 sync           : Save workstation progress to persistent disk.\n\nOPERATOR INCIDENT LOG:\n  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n  2. Run 'repair_buffer' to restore command history recall.\n================================================================================\n"
               },
               "BOOT_FAIL.log": {
                 "type": "file",
                 "permissions": "644",
                 "owner": "alice",
-                "content": "[KERNEL ALERT] Apollo Core Subsystem Degraded (Boot ID: 0x42-INIT).\n[ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n[DIAGNOSTIC] Interactive command recall (UP/DOWN keys) disabled to prevent buffer overflow.\n[ACTION REQUIRED] Run the command 'repair_buffer' to recalibrate the TTY ring registers.\n"
+                "content": "[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.\n[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.\n"
               },
               ".note.txt": {
                 "type": "file",
                 "permissions": "644",
                 "owner": "alice",
-                "content": "Shell readline profile missing. Backup profiles stored in /opt/backup/profiles/.\n"
+                "content": "// STICKY NOTE TAPED TO MONITOR:\nAlice \u2014 your shell profile (.bashrc) got deleted during the incident.\nI stored a backup template in /opt/backup/profiles/.\nHead over there ('cd /opt/backup/profiles') and read my note to get your shortcuts back!\n\u2014 Morgan\n"
               },
               ".bashrc": {
                 "type": "file",
                 "permissions": "644",
                 "owner": "alice",
-                "content": ""
+                "content": "# ALICE SHELL PROFILE TEMPLATE\n# Clone to your home folder with: cat alice.bashrc > /home/alice/.bashrc\nexport PATH=/bin:/usr/bin:/mnt/recovery/bin\nalias ll='ls -la'\n"
               },
               ".bash_history": {
                 "type": "file",
@@ -472,7 +472,7 @@
                 "type": "file",
                 "permissions": "644",
                 "owner": "alice",
-                "content": "=== OPERATOR RECOVERY SCRATCHPAD ===\n[x] 0. Terminal line buffer desynced (run repair_buffer)\n[ ] 1. Shell config missing (restore ~/.bashrc from /opt/backup/profiles/ using >)\n[ ] 2. Triage incident logs in /var/log\n[ ] 3. Audit runaway processes (ps / kill)\n[x] 4. Bring network interface online (ip / ping)\n[ ] 5. Restore PHOENIX daemon in /etc/phoenix/\n"
+                "content": "================================================================================\n               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n================================================================================\n[x] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'\n[x] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc\n[ ] 2. TRIAGE BREACH     : Intruder left traces   -> Inspect incident logs in /var/log/\n[ ] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID with 'ps' & terminate with 'kill -9'\n[ ] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'\n[ ] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/\n================================================================================\n"
               }
             }
           }
@@ -601,17 +601,23 @@
                 "permissions": "755",
                 "owner": "root",
                 "children": {
+                  "NOTE_FROM_MORGAN.txt": {
+                    "type": "file",
+                    "permissions": "644",
+                    "owner": "root",
+                    "content": "// MORGAN [03:42 AM] \u2014 INCIDENT OVERRIDE\nAlice \u2014 during the breach, your shell profile was wiped out, which broke your\ncommand search paths and shortcuts.\n\nI left a clean backup template right here ('alice.bashrc').\n\nTo clone it back into your home directory, write it over with '>':\n  cat alice.bashrc > /home/alice/.bashrc\n\n(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)\nOnce that's in place, your tools and shortcuts will wake back up.\n"
+                  },
                   "CHEAT_SHEET.txt": {
                     "type": "file",
                     "permissions": "644",
                     "owner": "root",
-                    "content": "RESTORING SHELL PROFILES:\nUse stdout redirection to copy profile templates:\ncat <profile_src> > <target_path>\n"
+                    "content": "// MORGAN [03:42 AM] \u2014 INCIDENT OVERRIDE\nAlice \u2014 during the breach, your shell profile was wiped out, which broke your\ncommand search paths and shortcuts.\n\nI left a clean backup template right here ('alice.bashrc').\n\nTo clone it back into your home directory, write it over with '>':\n  cat alice.bashrc > /home/alice/.bashrc\n\n(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)\nOnce that's in place, your tools and shortcuts will wake back up.\n"
                   },
                   "alice.bashrc": {
                     "type": "file",
                     "permissions": "644",
                     "owner": "root",
-                    "content": "# ALICE BASHRC TEMPLATE\nexport PATH=/bin:/usr/bin:/mnt/recovery/bin\nalias ll='ls -la'\n"
+                    "content": "# ALICE SHELL PROFILE TEMPLATE\n# Clone to your home folder with: cat alice.bashrc > /home/alice/.bashrc\nexport PATH=/bin:/usr/bin:/mnt/recovery/bin\nalias ll='ls -la'\n"
                   }
                 }
               },
@@ -625,7 +631,7 @@
           },
           "phoenix": {
             "type": "dir",
-            "permissions": "755",
+            "permissions": "700",
             "owner": "root",
             "children": {
               "recovery": {

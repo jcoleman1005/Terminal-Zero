@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Terminal Zero - Interactive POSIX incident recovery game."""
+"""Main entry point for Terminal Zero."""
 
 from terminal_zero.__main__ import main
 

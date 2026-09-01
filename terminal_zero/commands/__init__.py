@@ -1,0 +1,75 @@
+from typing import Any, Callable, Dict
+from terminal_zero.core.state import CommandContext, CommandResult
+from terminal_zero.commands.posix import (
+    cmd_pwd,
+    cmd_cd,
+    cmd_ls,
+    cmd_cat,
+    cmd_head,
+    cmd_tail,
+    cmd_grep,
+    cmd_find,
+    cmd_chmod,
+    cmd_ps,
+    cmd_kill,
+    cmd_ip,
+    cmd_ss,
+    cmd_ping,
+    cmd_echo,
+    cmd_tree,
+)
+from terminal_zero.commands.diegetic import (
+    cmd_decrypt,
+    cmd_repair_buffer,
+    cmd_phoenix_daemon,
+    cmd_phoenix_ctl,
+    cmd_apollo_net,
+    cmd_sync,
+    cmd_reboot,
+    cmd_man,
+    cmd_restore,
+    cmd_help,
+)
+
+
+def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandResult]]:
+    return {
+        "pwd": cmd_pwd,
+        "cd": cmd_cd,
+        "ls": cmd_ls,
+        "cat": cmd_cat,
+        "head": cmd_head,
+        "tail": cmd_tail,
+        "grep": cmd_grep,
+        "find": cmd_find,
+        "chmod": cmd_chmod,
+        "man": cmd_man,
+        "help": cmd_help,
+        "?": cmd_help,
+        "decrypt": cmd_decrypt,
+        "apollo-diagnostics": cmd_decrypt,
+        "sync": cmd_sync,
+        "tree": cmd_tree,
+        "ps": cmd_ps,
+        "kill": cmd_kill,
+        "ip": cmd_ip,
+        "ss": cmd_ss,
+        "ping": cmd_ping,
+        "echo": cmd_echo,
+        "repair_buffer": cmd_repair_buffer,
+        "phoenix_ctl": cmd_phoenix_ctl,
+        "phoenix_daemon": cmd_phoenix_daemon,
+        "apollo-net": cmd_apollo_net,
+        "restore": cmd_restore,
+        "reboot": cmd_reboot,
+        "reset": cmd_reboot,
+        "restart": cmd_reboot,
+    }
+
+
+COMMAND_TABLE = build_command_table()
+
+__all__ = [
+    "build_command_table",
+    "COMMAND_TABLE",
+]
