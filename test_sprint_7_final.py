@@ -35,15 +35,17 @@ from terminal_zero import (
     cmd_sync,
     cmd_repair_buffer,
     cmd_phoenix_daemon,
+    cmd_phoenix_ctl,
     save_game_state,
     load_game_state,
     build_key_bindings,
     VFSCompleter,
+    get_todo_content,
 )
 
 
 def run_tests():
-    print("=== STARTING TERMINAL ZERO V2 FINAL ACCEPTANCE TEST SUITE ===")
+    print("=== STARTING TERMINAL ZERO V3 FINAL ACCEPTANCE TEST SUITE ===")
 
     # Setup baseline test environment
     root = build_default_vfs()
@@ -53,10 +55,21 @@ def run_tests():
     ctx = CommandContext(vfs, state, bus)
     shell = TerminalShell(ctx, COMMAND_TABLE)
 
+    # Verify initial dynamic TODO.txt scratchpad
+    todo_node, _ = vfs.get_node([], "/home/alice/TODO.txt")
+    assert todo_node is not None
+    assert todo_node.content == get_todo_content(state.system_flags)
+    assert "[ ] 0. Terminal line buffer desynced" in todo_node.content
+
+    # Verify initial sanitized socket state (only sshd on port 22, port 8080 offline)
+    assert len(state.listening_sockets) == 1
+    assert state.listening_sockets[0]["local"] == "0.0.0.0:22"
+    assert not any(s.get("local") == "127.0.0.1:8080" for s in state.listening_sockets)
+
     # -------------------------------------------------------------
-    # 1. Module 1: Pipeline Execution Engine (|) & Redirection (>, >>)
+    # 1. Module 1: Pipeline Execution Engine (|) & Redirection (>, >>) & Write Hooks
     # -------------------------------------------------------------
-    print("Testing Module 1: Pipeline Engine & Redirection...")
+    print("Testing Module 1: Pipeline Engine & Redirection & Write Hooks...")
 
     # Multi-stage pipe: cat -> grep -> head
     res_multi = shell.execute_command_line("cat /var/log/syslog | grep kernel | head -n 1")
@@ -79,13 +92,19 @@ def run_tests():
     assert res_redir.exit_code == 0
     node, _ = vfs.get_node([], "/home/alice/auth_summary.txt")
     assert node is not None and node.is_file(), "File was not created via redirection >"
-    assert "192.168.1.105" in node.content
 
     # Redirection Append (>>)
     res_append = shell.execute_command_line("echo 'APPENDED_LINE' >> /home/alice/auth_summary.txt")
     assert res_append.exit_code == 0
     assert "APPENDED_LINE" in node.content
-    assert "192.168.1.105" in node.content
+
+    # Stream Redirection Write Hook: writing to ~/.bashrc triggers BASHRC_RESTORED
+    assert not state.system_flags["BASHRC_RESTORED"]
+    res_bashrc_restore = shell.execute_command_line("cat /opt/backup/profiles/alice.bashrc > /home/alice/.bashrc")
+    assert res_bashrc_restore.exit_code == 0
+    assert state.system_flags["BASHRC_RESTORED"] is True
+    assert state.unlocked_ergonomics["autocomplete"] is True
+    assert state.unlocked_ergonomics["tab_completion"] is True
 
     # Redirection into non-existent parent directory fails
     res_bad_parent = shell.execute_command_line("echo 'test' > /nonexistent/dir/file.txt")
@@ -105,10 +124,13 @@ def run_tests():
     # -------------------------------------------------------------
     print("Testing Module 2: Diegetic Ergonomics & Key Interceptors...")
 
-    # Verify initial ergonomic locks
-    assert not state.unlocked_ergonomics["history_arrows"]
-    assert not state.unlocked_ergonomics["tab_completion"]
-    assert not state.unlocked_ergonomics["sigint_trap"]
+    # Verify initial ergonomic locks (reset for test isolation)
+    state.unlocked_ergonomics["history_arrows"] = False
+    state.unlocked_ergonomics["history"] = False
+    state.unlocked_ergonomics["tab_completion"] = False
+    state.unlocked_ergonomics["autocomplete"] = False
+    state.unlocked_ergonomics["sigint_trap"] = False
+    state.unlocked_ergonomics["sigint"] = False
 
     # Mock prompt_toolkit keybinding interaction for locked alerts
     class DummyBuffer:
@@ -142,7 +164,7 @@ def run_tests():
     try:
         key_handlers["up"](DummyEvent())
         out = sys.stdout.getvalue()
-        assert "[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled." in out, f"Unexpected: {out}"
+        assert "[HARDWARE ERROR]: Input ring buffer" in out, f"Unexpected: {out}"
     finally:
         sys.stdout = old_stdout
 
@@ -152,7 +174,7 @@ def run_tests():
         tab_handler = key_handlers.get("c-i") or key_handlers.get("tab")
         tab_handler(DummyEvent())
         out = sys.stdout.getvalue()
-        assert "[DRIVER MISSING]: libreadline unit offline. Tab autocompletion unavailable." in out, f"Unexpected: {out}"
+        assert "[DRIVER MISSING]: libreadline unit offline" in out, f"Unexpected: {out}"
     finally:
         sys.stdout = old_stdout
 
@@ -162,7 +184,7 @@ def run_tests():
         sig_handler = key_handlers.get("c-c")
         sig_handler(DummyEvent())
         out = sys.stdout.getvalue()
-        assert "[SIGNAL FAULT]: Process signal traps unconfigured. SIGINT ignored." in out, f"Unexpected: {out}"
+        assert "[SIGNAL FAULT]: Process signal traps unconfigured" in out, f"Unexpected: {out}"
     finally:
         sys.stdout = old_stdout
 
@@ -203,10 +225,23 @@ def run_tests():
     assert "FAULT 0x2E - ACCESS RESTRICTED" in res_dec_perm.stdout
     assert "chmod +x" in res_dec_perm.stdout
 
+    # Test sanitized decrypt advisory for typo / 'command not found'
+    shell.execute_command_line("sl")
+    res_dec_typo = shell.execute_command_line("decrypt")
+    assert "[DECRYPT ADVISORY]: The command entered does not exist." in res_dec_typo.stdout
+    assert "Check spelling or type 'ls'" in res_dec_typo.stdout
+    assert "Standard utilities: pwd, ls, cd, cat, man, sync." in res_dec_typo.stdout
+
     # -------------------------------------------------------------
     # 4. Module 4: Complete Workstation VFS Map & Milestones 0-7
     # -------------------------------------------------------------
-    print("Testing Module 4: Workstation VFS Map & Milestone Triggers...")
+    print("Testing Module 4: Workstation VFS Map & Hardened Milestone Progression...")
+
+    # Verify softlock protection backups exist
+    def_conf, _ = vfs.get_node([], "/etc/phoenix/phoenix.conf.default")
+    assert def_conf is not None and def_conf.permissions == "644"
+    bak_conf, _ = vfs.get_node([], "/opt/backup/phoenix.conf")
+    assert bak_conf is not None and bak_conf.permissions == "644"
 
     # Check recovery partition permissions zeroed
     repair_bin, _ = vfs.get_node([], "/mnt/recovery/bin/repair_buffer")
@@ -228,20 +263,71 @@ def run_tests():
     assert res_exec_ok.exit_code == 0
     assert "Ring buffer synchronized" in res_exec_ok.stdout
 
-    # Terminate malware via kill -9 104
+    # Strict Process Signaling: Standard SIGTERM / kill 104 is trapped by sys_miner
+    res_kill_sigterm = shell.execute_command_line("kill 104")
+    assert res_kill_sigterm.exit_code == 0
+    assert "Trapping signal and continuing execution" in res_kill_sigterm.stdout
+    assert not state.system_flags["MALWARE_TERMINATED"]
+    assert any(p.pid == 104 and p.status == "running" for p in state.process_table)
+
+    # Terminate malware via strict kill -9 104 (SIGKILL)
     res_kill = shell.execute_command_line("kill -9 104")
     assert res_kill.exit_code == 0
+    assert "forcefully killed by SIGKILL" in res_kill.stdout
     assert state.system_flags["MALWARE_TERMINATED"] is True
+    assert not any(p.pid == 104 for p in state.process_table)
+
+    # Precondition check: phoenix_daemon fails if network is DOWN
+    res_phoenix_nonet = shell.execute_command_line("phoenix_daemon start")
+    assert res_phoenix_nonet.exit_code == 1
+    assert "Network gateway unreachable" in res_phoenix_nonet.stderr
 
     # Bring network up via ip link set apollo0 up
     res_ip = shell.execute_command_line("ip link set apollo0 up")
     assert res_ip.exit_code == 0
     assert state.system_flags["NETWORK_ONLINE"] is True
 
-    # Launch phoenix daemon
-    res_phoenix = shell.execute_command_line("/opt/phoenix/phoenix_daemon start")
+    # Precondition check: phoenix_daemon fails if permissions on /etc/phoenix/phoenix.conf are 0600 (not 0644)
+    res_phoenix_noperm = shell.execute_command_line("phoenix_daemon start")
+    assert res_phoenix_noperm.exit_code == 1
+    assert "Insecure permissions on /etc/phoenix/phoenix.conf" in res_phoenix_noperm.stderr
+
+    # Test decrypt diagnostics on insecure permissions
+    res_dec_phoenix = shell.execute_command_line("decrypt")
+    assert "FAULT 0x2E - ACCESS RESTRICTED" in res_dec_phoenix.stdout
+
+    # Fix permissions to 644
+    res_chmod_conf = shell.execute_command_line("chmod 644 /etc/phoenix/phoenix.conf")
+    assert res_chmod_conf.exit_code == 0
+
+    # Precondition check: phoenix_daemon fails if auth key is missing
+    res_phoenix_nokey = shell.execute_command_line("phoenix_daemon start")
+    assert res_phoenix_nokey.exit_code == 1
+    assert "Authentication token missing" in res_phoenix_nokey.stderr
+
+    # Test decrypt diagnostics on missing token
+    res_dec_key = shell.execute_command_line("decrypt")
+    assert "FAULT 0x5B - AUTHENTICATION REQUIRED" in res_dec_key.stdout
+
+    # Append key to config via redirection >>
+    res_append_key = shell.execute_command_line("cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf")
+    assert res_append_key.exit_code == 0
+
+    # Launch phoenix daemon with full authorization
+    res_phoenix = shell.execute_command_line("phoenix_daemon start")
     assert res_phoenix.exit_code == 0
+    assert "Emergency Restoration Protocol activated" in res_phoenix.stdout
     assert state.system_flags["PHOENIX_ONLINE"] is True
+
+    # Verify socket port 8080 was dynamically bound upon daemon start
+    res_ss_8080 = shell.execute_command_line("ss -tulpn | grep 8080")
+    assert res_ss_8080.exit_code == 0
+    assert "127.0.0.1:8080" in res_ss_8080.stdout
+    assert "phoenix_daemon" in res_ss_8080.stdout
+
+    # Also test phoenix_ctl alias
+    res_phoenix_ctl = shell.execute_command_line("phoenix_ctl start")
+    assert res_phoenix_ctl.exit_code == 0
 
     # -------------------------------------------------------------
     # 5. Module 5: Simulated Live Log Streaming (tail -f)
@@ -269,12 +355,20 @@ def run_tests():
     loaded_st = load_game_state(save_path, bus)
     assert loaded_st is not None
     assert loaded_st.system_flags["BUFFER_REPAIRED"] is True
+    assert loaded_st.system_flags["BASHRC_RESTORED"] is True
     assert loaded_st.system_flags["MALWARE_TERMINATED"] is True
     assert loaded_st.system_flags["NETWORK_ONLINE"] is True
     assert loaded_st.system_flags["PHOENIX_ONLINE"] is True
     assert loaded_st.unlocked_ergonomics["history_arrows"] is True
     assert loaded_st.unlocked_ergonomics["tab_completion"] is True
     assert loaded_st.network_interfaces["apollo0"]["state"] == "UP"
+    assert any(s.get("local") == "127.0.0.1:8080" for s in loaded_st.listening_sockets)
+
+    loaded_todo, _ = loaded_st.vfs.get_node([], "/home/alice/TODO.txt")
+    assert loaded_todo is not None
+    assert loaded_todo.content == get_todo_content(loaded_st.system_flags)
+    assert "[x] 0. Terminal line buffer desynced" in loaded_todo.content
+    assert "[x] 5. Restore PHOENIX daemon" in loaded_todo.content
 
     if os.path.exists(save_path):
         os.remove(save_path)

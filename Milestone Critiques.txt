@@ -1,0 +1,77 @@
+These critiques identify critical discrepancies between the design specification and the underlying runtime engine. The primary issues center on state evaluation bypasses, unrecoverable file mutation softlocks, accidental premature disclosures, and over-prescriptive clue text.
+
+Below is the concrete revision and patch plan to address each critique across the codebase and design specifications.
+
+1. Concrete Engine & Handler Patches
+
+Patch 1: Robust phoenix_daemon Precondition & Permission Validation
+
+Replace the unconditional flag assignment in cmd_phoenix_daemon with checks on network interface state, file permissions, and cryptographic token presence:
+
+Patch 2: Sanitizing Initial Socket State (TerminalState)
+
+Remove phoenix_daemon on port 8080 from boot initialization in TerminalState.__init__:
+
+Patch 3: VFS Write Hook for Milestone 1 Stream Redirection
+
+Ensure BASHRC_RESTORED triggers dynamically on stream redirection (>) or file mutation to /home/alice/.bashrc, rather than relying solely on a command execution handler:
+
+Patch 4: Strict Signal Evaluation in cmd_kill
+
+Update cmd_kill so sys_miner (PID 104) ignores default arguments and SIGTERM (-15), requiring explicit -9 (SIGKILL):
+
+2. VFS Manifest Additions (Softlock Protection)
+
+Add clean backup templates directly into the initial VFS structure in build_default_vfs():
+
+/etc/phoenix/phoenix.conf.default (0644, root:root):
+
+/opt/backup/phoenix.conf (0644, root:root): Redundant cold storage fallback.
+
+3. Clue Syntax & Pacing Adjustments
+
+To eliminate transcription friction and encourage active deduction, Morgan's notes now supply generic syntax templates rather than direct copy-paste target strings:
+
+Milestone 1 (/opt/backup/profiles/CHEAT_SHEET.txt):
+
+Previous: cat /opt/backup/profiles/alice.bashrc > /home/alice/.bashrc
+
+Updated:
+
+Milestone 7 (/etc/phoenix/NOTE.txt):
+
+Previous: cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf
+
+Updated:
+
+Summary of State Changes
+
+Component / FilePre-Patch StatePost-Patch Statecmd_phoenix_daemon
+
+Unconditional flag trigger
+
+Validates NETWORK_ONLINE, permissions (0644), and AUTH_TOKEN
+
+listening_sockets
+
+Included port 8080 at boot
+
+Initialized with port 22 only; 8080 bound upon daemon start
+
+build_default_vfs
+
+Missing M7 backup config
+
+Added /etc/phoenix/phoenix.conf.default and /opt/backup/ templates
+
+cmd_kill
+
+Permissive PID deletion
+
+Strict signal validation (-9 required for PID 104)
+
+CHEAT_SHEET.txt
+
+Direct literal commands
+
+Syntax templates requiring path deduction

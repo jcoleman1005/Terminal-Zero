@@ -99,58 +99,50 @@ class VirtualFilesystem:
         node, resolved_path = self.get_node(current_cwd, target_path)
         if node:
             if node.is_dir():
-                return False, f"{target_path}: Is a directory"
-            if node.permissions == "000" or node.permissions.startswith("4"):
-                return False, f"{target_path}: Permission denied"
+                return False, "Is a directory"
+            if node.permissions in ["000", "444"]:
+                return False, "Permission denied"
             if append:
                 node.content = (node.content or "") + content
             else:
                 node.content = content
             return True, ""
-
-        if "/" in target_path:
-            parent_path, filename = target_path.rsplit("/", 1)
-            if not parent_path:
-                parent_path = "/"
-        else:
-            parent_path, filename = ".", target_path
-
-        if not filename:
-            return False, f"{target_path}: Invalid filename"
-
-        parent_node, _ = self.get_node(current_cwd, parent_path)
+        
+        # Create new file: parent directory must exist
+        parent_parts = resolved_path[:-1]
+        filename = resolved_path[-1] if resolved_path else target_path.split("/")[-1]
+        parent_node = self.resolve_path(parent_parts)
         if not parent_node or not parent_node.is_dir():
-            return False, f"{target_path}: No such file or directory"
-
+            return False, "No such file or directory"
         if parent_node.permissions == "000":
-            return False, f"{target_path}: Permission denied"
+            return False, "Permission denied"
 
         new_node = VFSNode(type="file", permissions="644", owner=owner, content=content)
         parent_node.children[filename] = new_node
         return True, ""
 
-    def walk(self, current_cwd: List[str], target_path: str = ".") -> List[Tuple[str, VFSNode, str]]:
-        """
-        Recursively walks the VFS starting from target_path.
-        Returns a list of tuples: (display_path, node, filename).
-        """
-        start_node, resolved_path = self.get_node(current_cwd, target_path)
-        if not start_node:
-            return []
+    def find_nodes(self, start_node: VFSNode, base_display: str = "", base_name: str = "") -> List[Tuple[VFSNode, str, str]]:
+        """Returns list of (VFSNode, display_path, filename)."""
+        results: List[Tuple[VFSNode, str, str]] = []
 
-        results: List[Tuple[str, VFSNode, str]] = []
-        base_display = target_path if target_path != "." else "."
-        base_name = target_path.split("/")[-1] if target_path != "." else "."
-
-        def _recurse(node: VFSNode, curr_display: str, name: str):
-            results.append((curr_display, node, name))
+        def _recurse(node: VFSNode, cur_disp: str, cur_name: str):
+            results.append((node, cur_disp, cur_name))
             if node.is_dir():
                 for child_name, child_node in sorted(node.children.items()):
-                    sub_display = f"{curr_display}/{child_name}" if curr_display != "/" else f"/{child_name}"
+                    sub_display = f"{cur_disp.rstrip('/')}/{child_name}" if cur_disp else child_name
                     _recurse(child_node, sub_display, child_name)
 
         _recurse(start_node, base_display, base_name)
         return results
+
+    def walk(self, current_cwd: List[str], target_path: str = ".") -> List[Tuple[VFSNode, str, str]]:
+        start_node, resolved_path = self.get_node(current_cwd, target_path)
+        if not start_node:
+            return []
+        display_prefix = target_path.rstrip("/")
+        if not display_prefix:
+            display_prefix = "/"
+        return self.find_nodes(start_node, display_prefix, resolved_path[-1] if resolved_path else "")
 
 
 @dataclass
@@ -199,20 +191,28 @@ class TerminalState:
             "lo": {"ip": "127.0.0.1/8", "state": "UP", "mac": "00:00:00:00:00:00"},
             "apollo0": {"ip": "10.0.42.15/24", "state": "DOWN", "mac": "52:54:00:12:34:56"}
         }
+        # Initial state: only sshd listening (port 8080 binds dynamically when phoenix_daemon starts)
         self.listening_sockets: List[Dict[str, Any]] = [
-            {"proto": "tcp", "local": "0.0.0.0:22", "peer": "0.0.0.0:*", "state": "LISTEN", "pid": 210, "proc": "sshd"},
-            {"proto": "tcp", "local": "127.0.0.1:8080", "peer": "0.0.0.0:*", "state": "LISTEN", "pid": 500, "proc": "phoenix_daemon"}
+            {"proto": "tcp", "local": "0.0.0.0:22", "peer": "0.0.0.0:*", "state": "LISTEN", "pid": 210, "proc": "sshd"}
         ]
         self.last_stderr: str = ""
 
         # Hook state observer for ergonomic flags synchronization
         self.bus.subscribe(self._on_event)
 
+        # Update dynamic TODO.txt if present in VFS
+        todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
+        if todo_node:
+            todo_node.content = get_todo_content(self.system_flags)
+
     def _on_event(self, event: Event):
         if event.type == "flag_changed":
             flag = event.data.get("flag")
             val = bool(event.data.get("value"))
             self.system_flags[flag] = val
+            todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
+            if todo_node:
+                todo_node.content = get_todo_content(self.system_flags)
             if flag == "BUFFER_REPAIRED" and val:
                 self.unlocked_ergonomics["history"] = True
                 self.unlocked_ergonomics["history_arrows"] = True
@@ -231,10 +231,31 @@ class TerminalState:
 
 
 # =====================================================================
-# 3. DIEGETIC ENVIRONMENT INITIALIZER
+# 3. DIEGETIC ENVIRONMENT INITIALIZER & WORKSTATION VFS MAP
 # =====================================================================
 
-def build_default_vfs() -> VFSNode:
+def get_todo_content(flags: Dict[str, bool]) -> str:
+    m0 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
+    m1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
+    m2 = "x" if flags.get("LOGS_AUDITED", False) else " "
+    m3 = "x" if flags.get("RECOVERY_LOCATED", False) else " "
+    m5 = "x" if flags.get("MALWARE_TERMINATED", False) else " "
+    m6 = "x" if flags.get("NETWORK_ONLINE", False) else " "
+    m7 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+    return (
+        "=== OPERATOR RECOVERY SCRATCHPAD ===\n"
+        f"[{m0}] 0. Terminal line buffer desynced (run repair_buffer)\n"
+        f"[{m1}] 1. Shell config missing (restore ~/.bashrc)\n"
+        f"[{m2}] 2. Triage incident logs in /var/log\n"
+        f"[{m5}] 3. Audit runaway processes (ps / kill)\n"
+        f"[{m6}] 4. Bring network interface online (ip / ping)\n"
+        f"[{m7}] 5. Restore PHOENIX daemon in /etc/phoenix/\n"
+    )
+
+
+def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
+    if flags is None:
+        flags = {}
     root = VFSNode(type="dir", permissions="755", owner="root")
 
     def add_dir(path: str, perms: str = "755", owner: str = "root") -> VFSNode:
@@ -259,51 +280,82 @@ def build_default_vfs() -> VFSNode:
         parent.children[filename] = node
         return node
 
-    # Standard POSIX & FHS Structure
-    add_dir("/bin")
-    add_dir("/usr/bin")
-    add_dir("/var/log")
-    add_dir("/etc")
-    add_dir("/mnt/recovery/bin")
-    add_dir("/opt/phoenix/recovery")
-    add_dir("/opt/phoenix/config")
-    add_dir("/home/alice/notes")
+    # Standard POSIX & FHS Structure across all sectors
+    dirs = [
+        "bin", "usr/bin", "home/alice", "var/log", "tmp", 
+        "mnt/recovery/bin", "mnt/recovery/keys", "mnt/recovery/docs",
+        "opt/backup", "opt/backup/profiles", "etc/network", "etc/phoenix",
+        "opt/phoenix/recovery", "opt/phoenix/config", "home/alice/notes"
+    ]
+    for d in dirs:
+        add_dir("/" + d)
 
-    # Binaries (Standard in /bin)
+    # Standard Binaries in /bin and /usr/bin
     for b in [
         "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "apollo-diagnostics",
         "chmod", "man", "ps", "kill", "ip", "ss", "ping", "head", "tail", "grep", "find",
-        "repair_buffer", "phoenix_ctl", "phoenix_daemon"
+        "repair_buffer", "phoenix_ctl", "phoenix_daemon", "apollo-net", "tree"
     ]:
         add_file(f"/bin/{b}", "ELF 64-bit LSB executable", perms="755")
+        add_file(f"/usr/bin/{b}", "ELF 64-bit LSB executable", perms="755")
 
-    # Soft-Gated & Diegetic Tool Binaries
-    add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/grep", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/find", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/recovery.sh", "#!/bin/bash\necho 'Restoring core nodes...'", perms="755")
-    add_file("/opt/phoenix/phoenix_daemon", "ELF 64-bit LSB executable [PHOENIX-DAEMON v2.5]", perms="755")
-
-    # Recovery Partition Binaries (Permissions zeroed - need chmod)
-    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]", perms="000")
-    add_file("/mnt/recovery/bin/repair_buffer", "ELF 64-bit LSB executable [REPAIR-BUFFER v1.2]", perms="000")
-    add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]", perms="000")
-    add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]", perms="000")
-
-    # Environmental Lore, Configs & Clue Nodes
+    # Milestone 0: /home/alice & /usr/bin
     add_file(
-        "/opt/phoenix/phoenix.conf",
-        "# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG\nSERVICE_ENABLED=1\nLISTEN_PORT=8080\nGATEWAY_IP=10.0.42.1\nRECOVERY_KEY=0x7F_PHOENIX_INIT_2042\n",
-        perms="644"
+        "/home/alice/README.txt",
+        "================================================================================\n"
+        "                    APOLLO WORKSTATION RECOVERY TERMINAL\n"
+        "================================================================================\n"
+        "BASIC NAVIGATION CHEAT SHEET:\n"
+        "  • ls             : Lists visible files in your current working directory.\n"
+        "  • cat <filename> : Prints readable text inside a target file to screen.\n"
+        "  • pwd            : Prints your current working directory location.\n"
+        "  • decrypt        : Run after any error to get human-readable troubleshooting.\n"
+        "  • sync           : Saves machine state to persistent disk.\n\n"
+        "OPERATOR INCIDENT NOTE:\n"
+        "  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.\n"
+        "  2. Run /usr/bin/repair_buffer to restore history buffer.\n"
+        "================================================================================\n",
+        perms="644",
+        owner="alice"
     )
     add_file(
-        "/opt/phoenix/config/phoenix.conf",
-        "# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG\nSERVICE_ENABLED=1\nLISTEN_PORT=8080\nGATEWAY_IP=10.0.42.1\nRECOVERY_KEY=0x7F_PHOENIX_INIT_2042\n",
-        perms="644"
+        "/home/alice/readme.txt",
+        "APOLLO WORKSTATION LOGON\n[SYSTEM ADVISORY]: Shell degraded. Diagnostics available via 'decrypt'.\n",
+        perms="644",
+        owner="alice"
+    )
+    add_file(
+        "/home/alice/BOOT_FAIL.log",
+        "[KERNEL ALERT] Apollo Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
+        "[ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n"
+        "[DIAGNOSTIC] Interactive command recall (UP/DOWN keys) disabled to prevent buffer overflow.\n"
+        "[ACTION REQUIRED] Run the command 'repair_buffer' to recalibrate the TTY ring registers.\n",
+        perms="644",
+        owner="alice"
+    )
+
+    # Milestone 1: /opt/backup/profiles & /home/alice
+    add_file(
+        "/home/alice/.note.txt",
+        "Shell readline profile missing. Backup profiles stored in /opt/backup/profiles/.\n",
+        perms="644",
+        owner="alice"
+    )
+    add_file(
+        "/opt/backup/profiles/CHEAT_SHEET.txt",
+        "RESTORING SHELL PROFILES:\nUse stdout redirection to copy profile templates:\ncat <profile_src> > <target_path>\n",
+        perms="644",
+        owner="root"
+    )
+    add_file(
+        "/opt/backup/profiles/alice.bashrc",
+        "# ALICE BASHRC TEMPLATE\nexport PATH=/bin:/usr/bin:/mnt/recovery/bin\nalias ll='ls -la'\n",
+        perms="644",
+        owner="root"
     )
     add_file(
         "/home/alice/.bashrc",
-        "# Workstation Shell Configuration\n# Corrupted ring-buffer hooks detected.\nexport PATH=$PATH:/opt/phoenix/recovery:/mnt/recovery/bin\n",
+        "",
         perms="644",
         owner="alice"
     )
@@ -315,13 +367,7 @@ def build_default_vfs() -> VFSNode:
     )
     add_file(
         "/home/alice/TODO.txt",
-        "=== OPERATOR RECOVERY SCRATCHPAD ===\n1. [x] Terminal line buffer patched.\n2. [x] Shell config (.bashrc) restored.\n3. [ ] Audit running processes - runaway miner consuming CPU (check ps / kill).\n4. [ ] Check recovery partition in /mnt/recovery/bin/ (permissions damaged).\n5. [ ] Bring network uplink (apollo0) online and verify gateway (10.0.42.1).\n6. [ ] Reconfigure and restore PHOENIX daemon in /opt/phoenix/.\n",
-        perms="644",
-        owner="alice"
-    )
-    add_file(
-        "/home/alice/readme.txt",
-        "APOLLO WORKSTATION LOGON\n[SYSTEM ADVISORY]: Shell degraded. Diagnostics available via 'decrypt'.\n",
+        get_todo_content(flags),
         perms="644",
         owner="alice"
     )
@@ -337,20 +383,107 @@ def build_default_vfs() -> VFSNode:
         perms="644",
         owner="alice"
     )
+
+    # Milestone 2: /var/log/
+    auth_content = (
+        "[INFO]: System boot complete.\n"
+        + (" [WARN]: Normal PAM session.\n" * 20)
+        + "03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218\n"
+        "03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2\n"
+        "03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2\n"
+        "03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status\n"
+        "[ALERT]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
+        "[ALERT]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
+    )
+    add_file("/var/log/auth.log", auth_content, perms="640", owner="root")
     add_file(
         "/var/log/syslog",
-        "03:40:01 apollo systemd[1]: Starting System Logging Service...\n03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)\n03:40:12 apollo kernel: [SECURITY FAULT] Interface apollo0 link state degraded: DOWN\n03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0\n03:42:19 apollo systemd[1]: phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.\n",
-        perms="644"
-    )
-    add_file(
-        "/var/log/auth.log",
-        "03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218\n03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2\n03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2\n03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status\n",
+        "03:40:01 apollo systemd[1]: Starting System Logging Service...\n"
+        "03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)\n"
+        "03:40:12 apollo kernel: [SECURITY FAULT] Interface apollo0 link state degraded: DOWN\n"
+        "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0\n"
+        "03:42:19 apollo systemd[1]: phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
+        "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.\n",
         perms="644"
     )
     add_file(
         "/var/log/system.log",
         "03:40:12 apollo kernel: eth0 link down\n03:42:19 apollo systemd: phoenix-sync terminated\n",
         perms="644"
+    )
+
+    # Milestone 3 & 4: /mnt/recovery/
+    add_file(
+        "/mnt/recovery/bin/recovery.sh",
+        "#!/bin/bash\necho '[KERNEL]: Restoring signal trap vector...'\necho 'SIGINT handler online.'\n",
+        perms="000",
+        owner="root"
+    )
+    add_file("/mnt/recovery/bin/repair_buffer", "ELF 64-bit LSB executable [REPAIR-BUFFER v1.2]", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]", perms="000", owner="root")
+    add_file("/mnt/recovery/keys/phoenix.key", "PX-KEY-7701-ALPHA\n", perms="600", owner="root")
+
+    # Soft-Gated & Diegetic Tool Binaries
+    add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable", perms="755")
+    add_file("/opt/phoenix/recovery/grep", "ELF 64-bit LSB executable", perms="755")
+    add_file("/opt/phoenix/recovery/find", "ELF 64-bit LSB executable", perms="755")
+    add_file("/opt/phoenix/recovery/recovery.sh", "#!/bin/bash\necho 'Restoring core nodes...'", perms="755")
+    add_file("/opt/phoenix/phoenix_daemon", "ELF 64-bit LSB executable [PHOENIX-DAEMON v2.5]", perms="755")
+    add_file(
+        "/opt/phoenix/phoenix.conf",
+        "# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG\nSERVICE_ENABLED=1\nLISTEN_PORT=8080\nGATEWAY_IP=10.0.42.1\nRECOVERY_KEY=0x7F_PHOENIX_INIT_2042\n",
+        perms="644"
+    )
+    add_file(
+        "/opt/phoenix/config/phoenix.conf",
+        "# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG\nSERVICE_ENABLED=1\nLISTEN_PORT=8080\nGATEWAY_IP=10.0.42.1\nRECOVERY_KEY=0x7F_PHOENIX_INIT_2042\n",
+        perms="644"
+    )
+
+    # Milestone 6: /etc/network/interfaces & NOTE.txt
+    add_file(
+        "/etc/network/interfaces",
+        "auto lo\niface lo inet loopback\n\nauto apollo0\niface apollo0 inet static\n  address 10.0.42.15/24\n  gateway 10.0.42.1\n",
+        perms="644",
+        owner="root"
+    )
+    add_file(
+        "/etc/network/NOTE.txt",
+        "NETWORK CONFIGURATION NOTE:\nUplink device 'apollo0' disabled after anomalous packets detected.\nUse 'ip link set apollo0 up' and verify via 'ping 10.0.42.1'.\n",
+        perms="644",
+        owner="root"
+    )
+
+    # Milestone 7: /etc/phoenix/ & Fallback Backups
+    initial_conf = "[PHOENIX_DAEMON_CONFIG]\nLISTEN_PORT=8080\nGATEWAY=10.0.42.1\n"
+    add_file("/etc/phoenix/phoenix.conf", initial_conf, perms="600", owner="root")
+    add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="644", owner="root")
+    add_file("/opt/backup/phoenix.conf", initial_conf, perms="644", owner="root")
+    add_file(
+        "/etc/phoenix/NOTE.txt",
+        "[MORGAN'S FINAL LOG - 07:40 AM]\nFinal hurdle: bringing the PHOENIX cluster restoration daemon online.\n"
+        "1. Retrieve key from /mnt/recovery/keys/phoenix.key and append it to /etc/phoenix/phoenix.conf using '>>'.\n"
+        "2. Secure config permissions: chmod 644 /etc/phoenix/phoenix.conf.\n"
+        "3. Start daemon: 'phoenix_daemon start' (or 'phoenix_ctl start').\n"
+        "4. Verify socket on port 8080: 'ss -tulpn | grep 8080'.\n",
+        perms="644",
+        owner="root"
+    )
+    add_file(
+        "/etc/phoenix/CHEAT_SHEET.txt",
+        "================================================================================\n"
+        "                    OPERATOR TRAIL: SYNTHESIS & ORCHESTRATION\n"
+        "================================================================================\n"
+        "PRACTICAL PIPELINE:\n"
+        "  1. cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf\n"
+        "  2. chmod 644 /etc/phoenix/phoenix.conf\n"
+        "  3. phoenix_daemon start\n"
+        "  4. ss -tulpn | grep 8080\n"
+        "================================================================================\n",
+        perms="644",
+        owner="root"
     )
 
     return root
@@ -451,8 +584,8 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     if not file_targets:
         if ctx.stdin:
-            selected = ctx.stdin.splitlines(keepends=True)[:lines_count]
-            return ctx.result_factory(stdout="".join(selected))
+            lines = ctx.stdin.splitlines(keepends=True)[:lines_count]
+            return ctx.result_factory(stdout="".join(lines))
         return ctx.result_factory(stderr="head: missing file operand\n", exit_code=1)
 
     output = []
@@ -489,45 +622,26 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
                 return ctx.result_factory(stderr="tail: invalid line count\n", exit_code=1)
             lines_count = int(val)
             idx += 1
+        elif args[idx].startswith("-") and "f" in args[idx]:
+            follow_mode = True
+            idx += 1
         else:
             file_targets.append(args[idx])
             idx += 1
 
-    def generate_simulated_stream() -> str:
-        net_online = ctx.state.system_flags.get("NETWORK_ONLINE", False)
-        malware_dead = ctx.state.system_flags.get("MALWARE_TERMINATED", False)
-        phoenix_online = ctx.state.system_flags.get("PHOENIX_ONLINE", False)
-
-        stream_lines = [
-            "[LOG STREAM ACTIVE - Press Ctrl+C to abort]",
-            "[STREAM ACTIVE - Press Ctrl+C to exit]"
-        ]
-        if net_online:
-            stream_lines.append("03:45:01 apollo kernel: [NETWORK] Interface apollo0 link state UP - carrier 1000Mbps")
-            stream_lines.append("03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state change detected")
-        else:
-            stream_lines.append("03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state degraded: DOWN")
-
-        if malware_dead:
-            stream_lines.append("03:45:02 apollo systemd[1]: Process 104 (sys_miner) terminated - CPU utilization normalized (1.2%)")
-        else:
-            stream_lines.append("03:45:02 apollo sys_miner[104]: CPU allocation 98.2% on core 0 - hash rate 42.1 MH/s")
-
-        if phoenix_online:
-            stream_lines.append("03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080")
-            stream_lines.append("03:45:05 apollo systemd[1]: Reached target Phoenix Recovery Subsystem (Online).")
-            stream_lines.append("03:45:05 apollo systemd[1]: Reached target Network (Online).")
-        else:
-            stream_lines.append("03:45:05 apollo systemd[1]: phoenix-sync.service: Service offline. Waiting for operator dispatch.")
-
-        return "\n".join(stream_lines) + "\n"
-
     if not file_targets:
         if ctx.stdin:
-            selected = ctx.stdin.splitlines(keepends=True)[-lines_count:]
-            output = "".join(selected)
+            lines = ctx.stdin.splitlines(keepends=True)[-lines_count:]
+            output = "".join(lines)
             if follow_mode:
-                output += generate_simulated_stream()
+                output += (
+                    "\n[LOG STREAM ACTIVE - Press Ctrl+C to abort]\n"
+                    "[STREAM ACTIVE - Press Ctrl+C to exit]\n"
+                    "03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state change detected: Interface apollo0 link state UP\n"
+                    "03:45:01 apollo kernel: Process 104 (sys_miner) terminated\n"
+                    "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
+                    "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
+                )
             return ctx.result_factory(stdout=output)
         return ctx.result_factory(stderr="tail: missing file operand\n", exit_code=1)
 
@@ -543,7 +657,14 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     result_text = "".join(output)
     if follow_mode:
-        result_text += generate_simulated_stream()
+        result_text += (
+            "\n[LOG STREAM ACTIVE - Press Ctrl+C to abort]\n"
+            "[STREAM ACTIVE - Press Ctrl+C to exit]\n"
+            "03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state change detected: Interface apollo0 link state UP\n"
+            "03:45:01 apollo kernel: Process 104 (sys_miner) terminated\n"
+            "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
+            "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
+        )
 
     return ctx.result_factory(stdout=result_text)
 
@@ -561,7 +682,7 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
     files: List[str] = []
 
     for arg in args:
-        if arg.startswith("-") and pattern is None and arg != "-":
+        if arg.startswith("-") and pattern is None:
             if "i" in arg: ignore_case = True
             if "v" in arg: invert_match = True
             if "n" in arg: line_number = True
@@ -659,50 +780,73 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     start_node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, search_path)
     if not start_node:
-        return ctx.result_factory(stderr=f"find: ‘{search_path}’: No such file or directory\n", exit_code=1)
+        return ctx.result_factory(stderr=f"find: '{search_path}': No such file or directory\n", exit_code=1)
 
-    matches = []
+    display_prefix = search_path.rstrip("/")
+    if not display_prefix:
+        display_prefix = "/"
 
-    def recurse_find(node: VFSNode, current_str_path: str, filename: str):
-        type_match = True
-        if target_type == "f" and not node.is_file(): type_match = False
-        if target_type == "d" and not node.is_dir(): type_match = False
+    all_nodes = ctx.vfs.find_nodes(start_node, display_prefix, resolved_path[-1] if resolved_path else "")
 
-        name_match = True
+    results = []
+    for node, path_str, name in all_nodes:
+        # Check type filter
+        if target_type == "f" and not node.is_file():
+            continue
+        if target_type == "d" and not node.is_dir():
+            continue
+
+        # Check name pattern filter
         if pattern:
-            name_match = fnmatch.fnmatch(filename, pattern)
+            if not fnmatch.fnmatch(name, pattern):
+                continue
 
-        if type_match and name_match:
-            matches.append(current_str_path)
+        results.append(path_str)
 
-        if node.is_dir():
-            for child_name, child_node in sorted(node.children.items()):
-                sub_path = f"{current_str_path}/{child_name}" if current_str_path != "/" else f"/{child_name}"
-                recurse_find(child_node, sub_path, child_name)
-
-    base_display = search_path if search_path != "." else "."
-    base_name = search_path.split("/")[-1] if search_path != "." else "."
-    recurse_find(start_node, base_display, base_name)
-
-    return ctx.result_factory(stdout="\n".join(matches) + ("\n" if matches else ""))
+    output = "\n".join(results) + ("\n" if results else "")
+    return ctx.result_factory(stdout=output)
 
 
 # =====================================================================
-# DIEGETIC ADVISORY ENGINE (decrypt / apollo-diagnostics)
+# DIAGNOSTIC ENGINE (decrypt / apollo-diagnostics)
 # =====================================================================
 
 def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "decrypt", "args": args}))
     last_err = ctx.state.last_stderr.strip()
-
     if not last_err:
         return ctx.result_factory(
             stdout="[APOLLO-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
         )
 
+    if "command not found" in last_err:
+        return ctx.result_factory(
+            stdout="[DECRYPT ADVISORY]: The command entered does not exist.\n"
+                   "• Check spelling or type 'ls' to see available local files.\n"
+                   "• Standard utilities: pwd, ls, cd, cat, man, sync.\n"
+        )
+
     diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
     
-    if "No such file or directory" in last_err:
+    if "Authentication token missing" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
+            "Daemon initialization aborted: Missing cryptographic authentication key in configuration.\n"
+            "Action: Retrieve key from /mnt/recovery/keys/phoenix.key and append to /etc/phoenix/phoenix.conf via '>>'."
+        )
+    elif "Insecure permissions" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "Configuration file permissions rejected by daemon security audit (mode must be 0644).\n"
+            "Action: Run 'chmod 644 /etc/phoenix/phoenix.conf' to secure configuration permissions."
+        )
+    elif "Missing configuration file" in last_err:
+        diag = (
+            "[APOLLO-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
+            "Required service configuration file missing from /etc/phoenix/.\n"
+            "Action: Restore fallback template from /etc/phoenix/phoenix.conf.default or /opt/backup/phoenix.conf."
+        )
+    elif "No such file or directory" in last_err:
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
             "Target node does not exist in the active directory tree.\n"
@@ -726,23 +870,17 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
             "Node execution or read/write bits are disabled.\n"
             "Action: Use 'chmod +x <target>' or 'chmod 755 <target>' to elevate node permissions."
         )
-    elif "Network is unreachable" in last_err or "network unreachable" in last_err.lower():
+    elif "Network is unreachable" in last_err or "network unreachable" in last_err.lower() or "network gateway unreachable" in last_err.lower():
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x3D - NETWORK OFFLINE]\n"
             "Virtual network interface link state is DOWN.\n"
             "Action: Run 'ip link set apollo0 up' to activate the network adapter and verify routing."
         )
-    elif "No such process" in last_err or "invalid signal specification" in last_err:
+    elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err:
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]\n"
             "Process ID not active or signal invalid.\n"
             "Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'."
-        )
-    elif "command not found" in last_err.lower():
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x4F - BINARY UNREGISTERED]\n"
-            "Executable not located in standard search paths ($PATH).\n"
-            "Action: Check /opt/phoenix/recovery or /mnt/recovery/bin, or inspect $PATH settings."
         )
     elif any(k in last_err.lower() for k in ["missing file operand", "missing pattern", "missing argument", "option requires", "invalid line count", "invalid count", "invalid mode"]):
         diag = (
@@ -778,18 +916,21 @@ def cmd_pwd(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_cd(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "cd", "args": args}))
-    if len(args) > 1:
-        return ctx.result_factory(stderr="bash: cd: too many arguments\n", exit_code=1)
+    if not args or args[0] == "~":
+        ctx.state.current_path = ["home", "alice"]
+        return ctx.result_factory()
 
-    target_dir = args[0] if args else "~"
-    target_node, resolved_parts = ctx.vfs.get_node(ctx.state.current_path, target_dir)
+    target = args[0]
+    node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, target)
 
-    if not target_node:
-        return ctx.result_factory(stderr=f"bash: cd: {target_dir}: No such file or directory\n", exit_code=1)
-    if not target_node.is_dir():
-        return ctx.result_factory(stderr=f"bash: cd: {target_dir}: Not a directory\n", exit_code=1)
+    if not node:
+        return ctx.result_factory(stderr=f"bash: cd: {target}: No such file or directory\n", exit_code=1)
+    if not node.is_dir():
+        return ctx.result_factory(stderr=f"bash: cd: {target}: Not a directory\n", exit_code=1)
+    if node.permissions == "000":
+        return ctx.result_factory(stderr=f"bash: cd: {target}: Permission denied\n", exit_code=1)
 
-    ctx.state.current_path = resolved_parts
+    ctx.state.current_path = resolved_path
     return ctx.result_factory()
 
 
@@ -870,9 +1011,11 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"chmod: cannot access '{target}': No such file or directory\n", exit_code=1)
 
-        # Numeric mode support (e.g. 755, 644, 700, 777)
+        # Numeric mode support (e.g. 755, 644, 700, 777, 600)
         if mode_str.isdigit() and len(mode_str) == 3:
             node.permissions = mode_str
+        elif mode_str.isdigit() and len(mode_str) == 4 and mode_str.startswith("0"):
+            node.permissions = mode_str[1:]
         # Symbolic mode support (+x, -x, u+x, etc.)
         elif "+x" in mode_str:
             node.permissions = "755"
@@ -912,59 +1055,53 @@ def cmd_ps(ctx: CommandContext, args: List[str]) -> CommandResult:
 def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "kill", "args": args}))
     if not args:
-        return ctx.result_factory(stderr="kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ...\n", exit_code=1)
+        return ctx.result_factory(
+            stderr="kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ...\n", 
+            exit_code=1
+        )
 
-    sig = 15
-    pid_idx = 0
+    sig = "15"
+    pid_str = None
 
-    if args[0].startswith("-"):
-        arg0 = args[0]
-        if arg0 in ["-9", "-SIGKILL", "-KILL"]:
-            sig = 9
-            pid_idx = 1
-        elif arg0 in ["-15", "-SIGTERM", "-TERM"]:
-            sig = 15
-            pid_idx = 1
-        elif arg0 == "-s" and len(args) > 1:
-            sig_spec = args[1].upper()
-            if sig_spec in ["9", "KILL", "SIGKILL"]:
-                sig = 9
-            elif sig_spec in ["15", "TERM", "SIGTERM"]:
-                sig = 15
-            else:
-                sig = 15
-            pid_idx = 2
-        elif arg0[1:].isdigit():
-            sig = int(arg0[1:])
-            pid_idx = 1
+    idx = 0
+    while idx < len(args):
+        if args[idx].startswith("-"):
+            sig = args[idx].lstrip("-")
+            idx += 1
+        elif args[idx] == "-s" and idx + 1 < len(args):
+            sig = args[idx + 1]
+            idx += 2
         else:
-            return ctx.result_factory(stderr=f"kill: {arg0}: invalid signal specification\n", exit_code=1)
+            pid_str = args[idx]
+            idx += 1
 
-    if pid_idx >= len(args):
-        return ctx.result_factory(stderr="kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ...\n", exit_code=1)
+    if not pid_str or not pid_str.isdigit():
+        return ctx.result_factory(stderr="kill: invalid pid or signal specification\n", exit_code=1)
 
-    pid_str = args[pid_idx]
-    if not pid_str.isdigit():
-        return ctx.result_factory(stderr=f"kill: {pid_str}: arguments must be process or job IDs\n", exit_code=1)
+    target_pid = int(pid_str)
 
-    pid = int(pid_str)
-    target_proc = None
-    for p in ctx.state.process_table:
-        if p.pid == pid and p.status == "running":
-            target_proc = p
-            break
+    # Locate Process
+    proc = next((p for p in ctx.state.process_table if p.pid == target_pid and p.status == "running"), None)
+    if not proc:
+        return ctx.result_factory(stderr=f"kill: ({target_pid}) - No such process\n", exit_code=1)
 
-    if not target_proc:
-        return ctx.result_factory(stderr=f"kill: ({pid}) - No such process\n", exit_code=1)
+    # Special Handling for sys_miner (PID 104)
+    if target_pid == 104 or proc.name == "sys_miner":
+        if sig.upper() in ["9", "KILL", "SIGKILL"]:
+            proc.status = "terminated"
+            ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != target_pid]
+            ctx.state.system_flags["MALWARE_TERMINATED"] = True
+            ctx.bus.publish(Event("flag_changed", {"flag": "MALWARE_TERMINATED", "value": True}))
+            return ctx.result_factory(stdout="[KERNEL]: Process 104 (sys_miner) forcefully killed by SIGKILL.\n")
+        else:
+            return ctx.result_factory(
+                stdout="[sys_miner]: Caught SIGTERM signal. Trapping signal and continuing execution... (Use SIGKILL / -9 to force termination)\n"
+            )
 
-    proc_name = target_proc.name
-    ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != pid]
-
-    if (pid == 104 or proc_name == "sys_miner") and sig in [9, 15]:
-        ctx.state.system_flags["MALWARE_TERMINATED"] = True
-        ctx.bus.publish(Event("flag_changed", {"flag": "MALWARE_TERMINATED", "value": True}))
-
-    return ctx.result_factory(stdout=f"Process {pid} ({proc_name}) terminated by signal {sig}.\n")
+    # Default process termination for other PIDs
+    proc.status = "terminated"
+    ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != target_pid]
+    return ctx.result_factory(stdout=f"Process {target_pid} terminated.\n")
 
 
 # =====================================================================
@@ -1127,14 +1264,50 @@ def cmd_repair_buffer(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "phoenix_daemon", "args": args}))
-    action = args[0] if args else "start"
-    if action in ["start", "--sync", "-d", "status"]:
-        ctx.state.system_flags["PHOENIX_ONLINE"] = True
-        ctx.bus.publish(Event("flag_changed", {"flag": "PHOENIX_ONLINE", "value": True}))
+
+    # 1. Validate Network State
+    if not ctx.state.system_flags.get("NETWORK_ONLINE", False):
         return ctx.result_factory(
-            stdout="[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway online.\n"
+            stderr="[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.\n", 
+            exit_code=1
         )
-    return ctx.result_factory(stdout=f"[PHOENIX-DAEMON]: Service status verified for action '{action}'.\n")
+
+    # 2. Resolve Config Node
+    conf_node, _ = ctx.vfs.get_node([], "/etc/phoenix/phoenix.conf")
+    if not conf_node or not conf_node.is_file():
+        return ctx.result_factory(
+            stderr="[PHOENIX ERROR]: Missing configuration file /etc/phoenix/phoenix.conf\n", 
+            exit_code=1
+        )
+
+    # 3. Check File Permissions (Must be 0644 / 644)
+    if conf_node.permissions not in ["644", "0644"]:
+        return ctx.result_factory(
+            stderr=f"[PHOENIX ERROR]: Insecure permissions on /etc/phoenix/phoenix.conf (mode: {conf_node.permissions}). Required: 0644\n", 
+            exit_code=1
+        )
+
+    # 4. Check Cryptographic Token Presence
+    if "PX-KEY-7701-ALPHA" not in (conf_node.content or ""):
+        return ctx.result_factory(
+            stderr="[PHOENIX ERROR]: Authentication token missing or invalid in /etc/phoenix/phoenix.conf\n", 
+            exit_code=1
+        )
+
+    # Success State Transition
+    ctx.state.system_flags["PHOENIX_ONLINE"] = True
+
+    # Dynamically bind port 8080 upon launch (if not already present)
+    if not any(s.get("local") == "127.0.0.1:8080" for s in ctx.state.listening_sockets):
+        ctx.state.listening_sockets.append({
+            "proto": "tcp", "local": "127.0.0.1:8080", "peer": "0.0.0.0:*", 
+            "state": "LISTEN", "pid": 500, "proc": "phoenix_daemon"
+        })
+
+    ctx.bus.publish(Event("flag_changed", {"flag": "PHOENIX_ONLINE", "value": True}))
+    return ctx.result_factory(
+        stdout="[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway ONLINE.\n"
+    )
 
 
 def cmd_phoenix_ctl(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -1367,6 +1540,9 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
     }
 
     state.system_flags = data.get("system_flags", state.system_flags)
+    todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
+    if todo_node:
+        todo_node.content = get_todo_content(state.system_flags)
 
     loaded_processes = []
     for p_data in data.get("process_table", []):
@@ -1435,14 +1611,14 @@ class VFSCompleter(Completer):
                 node, _ = ctx.vfs.get_node([], bin_dir)
                 if node and node.is_dir():
                     for name in node.children.keys():
-                        if name.startswith(word):
+                        if name.lower().startswith(word.lower()):
                             yield Completion(name, start_position=-len(word))
 
             # Also complete local CWD entries for first token
             dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, ".")
             if dir_node and dir_node.is_dir():
                 for child_name, child_node in dir_node.children.items():
-                    if child_name.startswith(word):
+                    if child_name.lower().startswith(word.lower()):
                         display_name = child_name + ("/" if child_node.is_dir() else "")
                         yield Completion(display_name, start_position=-len(word))
             return
@@ -1459,7 +1635,7 @@ class VFSCompleter(Completer):
         dir_node, _ = ctx.vfs.get_node(ctx.state.current_path, search_dir)
         if dir_node and dir_node.is_dir():
             for child_name, child_node in dir_node.children.items():
-                if child_name.startswith(prefix):
+                if child_name.lower().startswith(prefix.lower()):
                     display_name = child_name + ("/" if child_node.is_dir() else "")
                     yield Completion(display_name, start_position=-len(prefix))
 
@@ -1512,8 +1688,20 @@ create_key_bindings = build_key_bindings
 
 
 # =====================================================================
-# 6. PIPELINE PARSER & EXECUTION ENGINE
+# 6. PIPELINE PARSER & EXECUTION ENGINE & WRITE HOOKS
 # =====================================================================
+
+def check_bashrc_restoration(vfs: VirtualFilesystem, state: TerminalState, bus: EventBus, target_path: Optional[str] = None):
+    if target_path is not None and not target_path.endswith(".bashrc"):
+        return
+    node, _ = vfs.get_node([], "/home/alice/.bashrc")
+    if node and node.is_file() and node.content and len(node.content.strip()) > 0:
+        if not state.system_flags.get("BASHRC_RESTORED", False):
+            state.system_flags["BASHRC_RESTORED"] = True
+            state.unlocked_ergonomics["autocomplete"] = True
+            state.unlocked_ergonomics["tab_completion"] = True
+            bus.publish(Event("flag_changed", {"flag": "BASHRC_RESTORED", "value": True}))
+
 
 def split_unquoted(text: str, delimiter: str) -> List[str]:
     """Splits a string by delimiter only when not enclosed in quotes."""
@@ -1720,6 +1908,9 @@ class PipelineEngine:
                     )
                     if not success:
                         return CommandResult(stderr=f"bash: {redirect_target}: {w_err}\n", exit_code=1)
+
+                # Automatic write hook evaluation for .bashrc
+                check_bashrc_restoration(state.vfs, state, self.bus, redirect_target)
 
                 # Output was consumed by file redirection
                 current_stdin = ""

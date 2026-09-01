@@ -1,0 +1,139 @@
+=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===
+Type 'exit' to disconnect.
+
+alice@apollo:/home/alice$ j
+bash: j: command not found
+alice@apollo:/home/alice$ ls
+BOOT_FAIL.log  README.txt  TODO.txt  notes  readme.txt
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+                    APOLLO WORKSTATION RECOVERY TERMINAL
+================================================================================
+BASIC NAVIGATION CHEAT SHEET:
+  • ls             : Lists visible files in your current working directory.
+  • cat <filename> : Prints readable text inside a target file to screen.
+  • pwd            : Prints your current working directory location.
+  • decrypt        : Run after any error to get human-readable troubleshooting.
+  • sync           : Saves machine state to persistent disk.
+
+OPERATOR INCIDENT NOTE:
+  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.
+  2. Run /usr/bin/repair_buffer to restore history buffer.
+================================================================================
+alice@apollo:/home/alice$ sync
+[SYSTEM]: In-memory buffers flushed to persistent storage.
+alice@apollo:/home/alice$ cat readme.txt
+APOLLO WORKSTATION LOGON
+[SYSTEM ADVISORY]: Shell degraded. Diagnostics available via 'decrypt'.
+alice@apollo:/home/alice$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: bash: j: command not found
+[APOLLO-DIAGNOSTIC: FAULT 0x4F - BINARY UNREGISTERED]
+Executable not located in standard search paths ($PATH).
+Action: Check /opt/phoenix/recovery or /mnt/recovery/bin, or inspect $PATH settings.
+alice@apollo:/home/alice$ cd /opt/phoenix/recovery
+alice@apollo:/opt/phoenix/recovery$ ls
+find  grep  recovery.sh  tree
+alice@apollo:/opt/phoenix/recovery$ cat tree
+ELF 64-bit LSB executablealice@apollo:/opt/phoenix/recovery$ tree
+/opt/phoenix/recovery
+├── find
+├── grep
+├── recovery.sh
+└── tree
+alice@apollo:/opt/phoenix/recovery$ cat find
+ELF 64-bit LSB executablealice@apollo:/opt/phoenix/recovery$ find
+.
+./find
+./grep
+./recovery.sh
+./tree
+alice@apollo:/opt/phoenix/recovery$ cat grep
+ELF 64-bit LSB executablealice@apollo:/opt/phoenix/recovery$ grep
+Usage: grep [OPTION]... PATTERNS [FILE]...
+alice@apollo:/opt/phoenix/recovery$ cat recovery.sh
+#!/bin/bash
+echo 'Restoring core nodes...'alice@apollo:/opt/phoenix/recovery$ ls
+find  grep  recovery.sh  tree
+alice@apollo:/opt/phoenix/recovery$ tree
+/opt/phoenix/recovery
+├── find
+├── grep
+├── recovery.sh
+└── tree
+alice@apollo:/opt/phoenix/recovery$ cd ..
+alice@apollo:/opt/phoenix$ ls -a
+.  ..  config  phoenix.conf  phoenix_daemon  recovery
+alice@apollo:/opt/phoenix$ cat config
+cat: config: Is a directory
+alice@apollo:/opt/phoenix$ cat phoenix.conf
+# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG
+SERVICE_ENABLED=1
+LISTEN_PORT=8080
+GATEWAY_IP=10.0.42.1
+RECOVERY_KEY=0x7F_PHOENIX_INIT_2042
+alice@apollo:/opt/phoenix$ cd recovery
+alice@apollo:/opt/phoenix/recovery$ ls -a
+.  ..  find  grep  recovery.sh  tree
+alice@apollo:/opt/phoenix/recovery$ cd ..
+alice@apollo:/opt/phoenix$ ls -a
+.  ..  config  phoenix.conf  phoenix_daemon  recovery
+alice@apollo:/opt/phoenix$ cd phoenix_daemon
+bash: cd: phoenix_daemon: Not a directory
+alice@apollo:/opt/phoenix$ cat phoenix_daemon
+ELF 64-bit LSB executable [PHOENIX-DAEMON v2.5]alice@apollo:/opt/phoenix$
+alice@apollo:/opt/phoenix$ ls
+config  phoenix.conf  phoenix_daemon  recovery
+alice@apollo:/opt/phoenix$ cd
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  README.txt  TODO.txt  notes  readme.txt
+alice@apollo:/home/alice$ cat TODO.txt
+=== OPERATOR RECOVERY SCRATCHPAD ===
+1. [x] Terminal line buffer patched.
+2. [x] Shell config (.bashrc) restored.
+3. [ ] Audit running processes - runaway miner consuming CPU (check ps / kill).
+4. [ ] Check recovery partition in /mnt/recovery/bin/ (permissions damaged).
+5. [ ] Bring network uplink (apollo0) online and verify gateway (10.0.42.1).
+6. [ ] Reconfigure and restore PHOENIX daemon in /etc/phoenix/.
+alice@apollo:/home/alice$ cat notes
+cat: notes: Is a directory
+alice@apollo:/home/alice$ cd notes
+alice@apollo:/home/alice/notes$ ls -a
+.  ..  mapping_tool.txt  sysadmin_notes.txt
+alice@apollo:/home/alice/notes$ cat mapping_tool.txt
+UTILITY RECOVERY NOTE:
+Visual hierarchy utility 'tree' preserved under /opt/phoenix/recovery/tree
+alice@apollo:/home/alice/notes$ cat sysadmin_notes.txt
+SYSADMIN LOG - RECOVERY PROTOCOLS:
+1. Use 'grep' to search error streams.
+2. Ensure recovery binaries have execution permissions via 'chmod'.
+3. Bring interfaces up using 'ip link set <dev> up'.
+alice@apollo:/home/alice/notes$ help
+bash: help: command not found
+alice@apollo:/home/alice/notes$ tree
+/home/alice/notes
+├── mapping_tool.txt
+└── sysadmin_notes.txt
+alice@apollo:/home/alice/notes$ cd
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  README.txt  TODO.txt  notes  readme.txt
+alice@apollo:/home/alice$ cat .note.txt
+Shell readline profile missing. Backup profiles stored in /opt/backup/profiles/.
+alice@apollo:/home/alice$ cd opt/backup/profiles
+bash: cd: opt/backup/profiles: No such file or directory
+alice@apollo:/home/alice$ cat opt/backup/profiles
+cat: opt/backup/profiles: No such file or directory
+alice@apollo:/home/alice$ cd /opt/backup/profiles/
+alice@apollo:/opt/backup/profiles$ ls
+CHEAT_SHEET.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat CHEAT_SHEET.txt
+RESTORING SHELL PROFILES:
+Use stdout redirection to copy profile templates:
+cat <profile_src> > <target_path>
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc
+# ALICE BASHRC TEMPLATE
+export PATH=/bin:/usr/bin:/mnt/recovery/bin
+alias ll='ls -la'
+alice@apollo:/opt/backup/profiles$

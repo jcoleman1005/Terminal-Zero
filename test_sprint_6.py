@@ -105,11 +105,11 @@ def run_tests():
     assert "64 bytes from 10.0.42.1" in ping_up.stdout, "ping missing ICMP responses"
     assert "0% packet loss" in ping_up.stdout, "ping missing summary stats"
 
-    # Test ss socket audit
+    # Test ss socket audit (sanitized initial state: sshd port 22)
     ss_res = cmd_ss(ctx, ["-tulpn"])
     assert "LISTEN" in ss_res.stdout, "ss missing listening sockets"
-    assert "phoenix_daemon" in ss_res.stdout, "ss missing phoenix_daemon"
     assert "22" in ss_res.stdout, "ss missing sshd port 22"
+    assert "sshd" in ss_res.stdout, "ss missing sshd process"
 
     # -------------------------------------------------------------
     # 3. Test Module 3: Pipeline Execution Engine & tail -f
