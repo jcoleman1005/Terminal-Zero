@@ -60,6 +60,7 @@ def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> No
             "unlocked_ergonomics": ergo
         },
         "system_flags": state.system_flags,
+        "discovered_clues": getattr(state, "discovered_clues", {}),
         "process_table": [
             {
                 "pid": p.pid,
@@ -113,11 +114,18 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
     }
 
     state.system_flags = data.get("system_flags", state.system_flags)
+    if "discovered_clues" in data:
+        state.discovered_clues = data["discovered_clues"]
+
     try:
-        from terminal_zero.content.narrative import get_todo_content
+        from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
         todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
         if todo_node:
-            todo_node.content = get_todo_content(state.system_flags)
+            todo_node.content = get_todo_content(state.system_flags, state.discovered_clues)
+
+        dossier_node, _ = state.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
+        if dossier_node:
+            dossier_node.content = get_incident_dossier(state.discovered_clues)
     except ImportError:
         pass
 
@@ -153,7 +161,7 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
 
 def register_autosave_handler(bus: EventBus, get_state):
     def on_event(event: Event):
-        if event.type == "flag_changed":
+        if event.type in ["flag_changed", "clue_discovered"]:
             state = get_state()
             if state:
                 save_game_state(state, "savegame.json")

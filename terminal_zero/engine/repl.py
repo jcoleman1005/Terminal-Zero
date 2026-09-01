@@ -47,6 +47,8 @@ class TerminalShell:
         result = self.pipeline_engine.run(raw_input, self.ctx.state)
         if result.exit_code != 0 and result.stderr:
             self.ctx.state.last_stderr = result.stderr.strip()
+        elif result.exit_code == 0:
+            self.ctx.state.last_stderr = ""
         return result
 
     def execute_line(self, line: str):

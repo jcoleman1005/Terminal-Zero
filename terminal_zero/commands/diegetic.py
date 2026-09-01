@@ -338,5 +338,5 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
     if ctx.state.cwd_str == "/opt/backup/profiles" and not flags.get("BASHRC_RESTORED", False):
         lines.append("\nLOCATION TIP: You found the backup profiles! Read 'NOTE_FROM_MORGAN.txt' with 'cat NOTE_FROM_MORGAN.txt' to restore your shell.")
 
-    lines.append(f"\n{get_primary_goal(flags)}")
+    lines.append(f"\n{get_primary_goal(flags, getattr(ctx.state, 'discovered_clues', {}))}")
     return ctx.result_factory(stdout="\n".join(lines) + "\n")

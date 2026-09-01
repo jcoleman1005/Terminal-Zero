@@ -37,9 +37,16 @@ class TerminalState:
         self.system_flags: Dict[str, bool] = {
             "BUFFER_REPAIRED": False,
             "BASHRC_RESTORED": False,
+            "LOGS_AUDITED": False,
             "MALWARE_TERMINATED": False,
             "NETWORK_ONLINE": False,
             "PHOENIX_ONLINE": False
+        }
+        self.discovered_clues: Dict[str, bool] = {
+            "ALERT_0x01": False,
+            "ALERT_0x02": False,
+            "ALERT_0x03": False,
+            "ALERT_0x04": False,
         }
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
@@ -59,7 +66,7 @@ class TerminalState:
         # Hook state observer for ergonomic flags synchronization
         self.bus.subscribe(self._on_event)
 
-        # Update dynamic TODO.txt if present in VFS
+        # Update dynamic TODO.txt & INCIDENT_REPORT.log if present in VFS
         self._sync_todo()
 
         # Soft-gate /opt/phoenix based on initial system flags
@@ -67,10 +74,14 @@ class TerminalState:
 
     def _sync_todo(self):
         try:
-            from terminal_zero.content.narrative import get_todo_content
+            from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
             todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
             if todo_node:
-                todo_node.content = get_todo_content(self.system_flags)
+                todo_node.content = get_todo_content(self.system_flags, self.discovered_clues)
+            
+            dossier_node, _ = self.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
+            if dossier_node:
+                dossier_node.content = get_incident_dossier(self.discovered_clues)
         except ImportError:
             pass
 
@@ -100,6 +111,11 @@ class TerminalState:
             elif (flag == "MALWARE_TERMINATED" or flag == "SIGINT_REPAIRED") and val:
                 self.unlocked_ergonomics["sigint"] = True
                 self.unlocked_ergonomics["sigint_trap"] = True
+        elif event.type == "clue_discovered":
+            clue_id = event.data.get("clue_id")
+            if clue_id in self.discovered_clues:
+                self.discovered_clues[clue_id] = True
+            self._sync_todo()
 
     @property
     def cwd_str(self) -> str:

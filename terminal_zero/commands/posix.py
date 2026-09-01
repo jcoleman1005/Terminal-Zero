@@ -6,6 +6,51 @@ from terminal_zero.core.vfs import VFSNode
 from terminal_zero.core.state import CommandContext, CommandResult
 
 
+CLUE_DESCRIPTIONS = {
+    "ALERT_0x01": ("ALERT-0x01", "Rogue Miner identified", "PID: 104 (sys_miner)"),
+    "ALERT_0x02": ("ALERT-0x02", "Tampered Sector located", "/mnt/recovery/bin/recovery.sh (stripped)"),
+    "ALERT_0x03": ("ALERT-0x03", "Degraded Interface isolated", "apollo0 link state DOWN"),
+    "ALERT_0x04": ("ALERT-0x04", "Service Failure isolated", "phoenix-sync terminated by signal 9"),
+}
+
+
+def check_clue_discovery(ctx: CommandContext, text_displayed: str) -> str:
+    if not text_displayed:
+        return ""
+
+    discovered_now = []
+    clues_state = getattr(ctx.state, "discovered_clues", {})
+
+    for clue_key, (tag, title, detail) in CLUE_DESCRIPTIONS.items():
+        if tag in text_displayed:
+            if not clues_state.get(clue_key, False):
+                clues_state[clue_key] = True
+                ctx.bus.publish(Event("clue_discovered", {"clue_id": clue_key}))
+                discovered_now.append(f"✓ [{tag}] {title} -> {detail}")
+
+    if not discovered_now:
+        return ""
+
+    total_unmasked = sum(1 for k in CLUE_DESCRIPTIONS if clues_state.get(k, False))
+    header = f"│ [!] INCIDENT DOSSIER UPDATED ({total_unmasked}/4 Leads Unmasked)"
+    header_padded = f"{header:<72} │"
+    notice = [
+        "\n┌────────────────────────────────────────────────────────────────────────┐",
+        header_padded,
+        "├────────────────────────────────────────────────────────────────────────┤",
+    ]
+    for line in discovered_now:
+        notice.append(f"│   {line:<68} │")
+    notice.append("└────────────────────────────────────────────────────────────────────────┘")
+
+    # If at least 2 clues (or all 4) are found, mark LOGS_AUDITED complete
+    if total_unmasked >= 2 and not ctx.state.system_flags.get("LOGS_AUDITED", False):
+        ctx.state.system_flags["LOGS_AUDITED"] = True
+        ctx.bus.publish(Event("flag_changed", {"flag": "LOGS_AUDITED", "value": True}))
+
+    return "\n" + "\n".join(notice) + "\n"
+
+
 def cmd_tree(ctx: Any, args: List[str]) -> Any:
     # Retained as an in-world discoverable POSIX utility
     start_node = ctx.vfs.resolve_path(ctx.state.current_path)
@@ -37,7 +82,8 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "cat", "args": args}))
     if not args:
         if ctx.stdin:
-            return ctx.result_factory(stdout=ctx.stdin)
+            discovery_banner = check_clue_discovery(ctx, ctx.stdin)
+            return ctx.result_factory(stdout=ctx.stdin + discovery_banner)
         return ctx.result_factory(stderr="cat: missing file operand\n", exit_code=1)
 
     output = []
@@ -55,7 +101,9 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
             return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
         output.append(node.content if node.content is not None else "")
 
-    return ctx.result_factory(stdout="".join(output))
+    full_output = "".join(output)
+    discovery_banner = check_clue_discovery(ctx, full_output)
+    return ctx.result_factory(stdout=full_output + discovery_banner)
 
 
 def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -82,7 +130,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not file_targets:
         if ctx.stdin:
             lines = ctx.stdin.splitlines(keepends=True)[:lines_count]
-            return ctx.result_factory(stdout="".join(lines))
+            content = "".join(lines)
+            discovery_banner = check_clue_discovery(ctx, content)
+            return ctx.result_factory(stdout=content + discovery_banner)
         return ctx.result_factory(stderr="head: missing file operand\n", exit_code=1)
 
     output = []
@@ -101,7 +151,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
         output.append("".join(lines))
 
-    return ctx.result_factory(stdout="".join(output))
+    full_output = "".join(output)
+    discovery_banner = check_clue_discovery(ctx, full_output)
+    return ctx.result_factory(stdout=full_output + discovery_banner)
 
 
 def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -145,7 +197,8 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
                     "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
                     "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
                 )
-            return ctx.result_factory(stdout=output)
+            discovery_banner = check_clue_discovery(ctx, output)
+            return ctx.result_factory(stdout=output + discovery_banner)
         return ctx.result_factory(stderr="tail: missing file operand\n", exit_code=1)
 
     output = []
@@ -173,7 +226,8 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
             "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
         )
 
-    return ctx.result_factory(stdout=result_text)
+    discovery_banner = check_clue_discovery(ctx, result_text)
+    return ctx.result_factory(stdout=result_text + discovery_banner)
 
 
 def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -224,8 +278,10 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not files:
         if ctx.stdin:
             matched_lines = evaluate_text(ctx.stdin)
+            out = "\n".join(matched_lines) + ("\n" if matched_lines else "")
+            discovery_banner = check_clue_discovery(ctx, out)
             return ctx.result_factory(
-                stdout="\n".join(matched_lines) + ("\n" if matched_lines else ""),
+                stdout=out + discovery_banner,
                 exit_code=0 if matched_lines else 1
             )
         return ctx.result_factory(stderr="grep: missing file operand\n", exit_code=2)
@@ -259,8 +315,10 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
             display_tag = target if len(files) > 1 else ""
             matched_lines.extend(evaluate_text(node.content or "", display_tag))
 
+    res_text = "\n".join(matched_lines) + ("\n" if matched_lines else "")
+    discovery_banner = check_clue_discovery(ctx, res_text)
     return ctx.result_factory(
-        stdout="\n".join(matched_lines) + ("\n" if matched_lines else ""),
+        stdout=res_text + discovery_banner,
         exit_code=0 if matched_lines else 1
     )
 
@@ -665,3 +723,10 @@ def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     lines.append("rtt min/avg/max/mdev = 0.038/0.042/0.049/0.004 ms")
 
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
+
+
+def cmd_ll(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "ll", "args": args}))
+    if not (ctx.state.system_flags.get("BASHRC_RESTORED", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
+        return ctx.result_factory(stderr="bash: ll: command not found\n", exit_code=127)
+    return cmd_ls(ctx, ["-la"] + args)

@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 from terminal_zero.core.vfs import VFSNode
-from terminal_zero.content.narrative import get_todo_content
+from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
 
 
 def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
@@ -80,6 +80,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644",
         owner="alice"
     )
+    add_file(
+        "/home/alice/INCIDENT_REPORT.log",
+        get_incident_dossier({}),
+        perms="644",
+        owner="alice"
+    )
 
     # Milestone 1: /opt/backup/profiles & /home/alice
     add_file(
@@ -144,7 +150,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="root"
     )
 
-    # Milestone 2: /var/log/
+    # Milestone 2: /var/log/ with color-coded incident alert tags
     auth_content = (
         "[INFO]: System boot complete.\n"
         + (" [WARN]: Normal PAM session.\n" * 20)
@@ -152,17 +158,17 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2\n"
         "03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2\n"
         "03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status\n"
-        "[ALERT]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
-        "[ALERT]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
+        "\033[1;31m[ALERT-0x01]\033[0m: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
+        "\033[1;33m[ALERT-0x02]\033[0m: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
     )
     add_file("/var/log/auth.log", auth_content, perms="640", owner="root")
     add_file(
         "/var/log/syslog",
         "03:40:01 apollo systemd[1]: Starting System Logging Service...\n"
         "03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)\n"
-        "03:40:12 apollo kernel: [SECURITY FAULT] Interface apollo0 link state degraded: DOWN\n"
+        "03:40:12 apollo kernel: \033[1;36m[ALERT-0x03]\033[0m Interface apollo0 link state degraded: DOWN\n"
         "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0\n"
-        "03:42:19 apollo systemd[1]: phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
+        "03:42:19 apollo systemd[1]: \033[1;35m[ALERT-0x04]\033[0m phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
         "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.\n",
         perms="644"
     )

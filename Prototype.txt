@@ -160,17 +160,52 @@ class VirtualFilesystem:
 
 
 # --- narrative.py ---
-def get_primary_goal(flags: Dict[str, bool]) -> str:
+def get_incident_dossier(clues: Optional[Dict[str, bool]] = None) -> str:
+    if clues is None:
+        clues = {}
+
+    c1 = "\033[1;32mPID: 104 (sys_miner)\033[0m" if clues.get("ALERT_0x01") else "\033[1;30m[ REDACTED_PID ]\033[0m"
+    c2 = "\033[1;32m/mnt/recovery/bin/recovery.sh (mode: 000)\033[0m" if clues.get("ALERT_0x02") else "\033[1;30m[ REDACTED_PATH ]\033[0m"
+    c3 = "\033[1;32mDevice: apollo0 (link: DOWN)\033[0m" if clues.get("ALERT_0x03") else "\033[1;30m[ REDACTED_DEVICE ]\033[0m"
+    c4 = "\033[1;32mphoenix-sync.service (killed)\033[0m" if clues.get("ALERT_0x04") else "\033[1;30m[ REDACTED_SERVICE ]\033[0m"
+
+    count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
+    status_header = f"ALL LEADS UNMASKED ({count}/4)" if count == 4 else f"CLASSIFIED DOSSIER ({count}/4 LEADS UNMASKED)"
+
+    return (
+        "================================================================================\n"
+        f"        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [{status_header}]\n"
+        "================================================================================\n"
+        f" \033[1;31m[ALERT-0x01]\033[0m INTRUDER PROCESS : Attacker deployed rogue miner -> {c1}\n"
+        f" \033[1;33m[ALERT-0x02]\033[0m TAMPERED SECTOR  : Core recovery binary stripped   -> {c2}\n"
+        f" \033[1;36m[ALERT-0x03]\033[0m HARDWARE STATUS  : Network interface knocked DOWN  -> {c3}\n"
+        f" \033[1;35m[ALERT-0x04]\033[0m DAEMON STATUS    : Cluster service terminated      -> {c4}\n"
+        "================================================================================\n"
+        "INVESTIGATION DIRECTIVE: Audit logs in /var/log/ with 'cat', 'head', 'tail', or 'grep'\n"
+        "to discover matching color-coded [ALERT-0x0X] incident markers and fill in gaps.\n"
+        "================================================================================\n"
+    )
+
+
+def get_primary_goal(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = None) -> str:
+    if clues is None:
+        clues = {}
+
+    count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
+
     if not flags.get("BUFFER_REPAIRED", False):
         return "CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history."
     elif not flags.get("BASHRC_RESTORED", False):
         return "CURRENT MISSION: Morgan left a backup profile in '/opt/backup/profiles/'. Head there with 'cd /opt/backup/profiles' and restore your shell."
     elif not flags.get("LOGS_AUDITED", False):
-        return "CURRENT MISSION: Investigate the security breach. Audit incident logs in '/var/log' using 'cat', 'head', 'tail', or 'grep'."
+        if count == 0:
+            return "CURRENT MISSION: Investigate the security breach. Audit incident logs in '/var/log' using 'cat', 'head', 'tail', or 'grep' to unmask incident clues."
+        else:
+            return f"CURRENT MISSION: Triage breach logs in '/var/log'. ({count}/4 incident leads unmasked — inspect 'auth.log' and 'syslog')."
     elif not (flags.get("RECOVERY_LOCATED", False) and flags.get("PERMISSIONS_RESTORED", False)):
-        return "CURRENT MISSION: Locate recovery tools in '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'."
+        return "CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'."
     elif not flags.get("MALWARE_TERMINATED", False):
-        return "CURRENT MISSION: Hunt down the rogue miner draining 98% CPU. Run 'ps aux' to find its PID, then terminate it with 'kill -9 104'."
+        return "CURRENT MISSION: Hunt down rogue miner PID 104 draining 98% CPU. Run 'ps aux' to verify, then terminate with 'kill -9 104'."
     elif not flags.get("NETWORK_ONLINE", False):
         return "CURRENT MISSION: Network interface offline. Bring adapter 'apollo0' online with 'ip link set apollo0 up' and verify with 'ping'."
     elif not flags.get("PHOENIX_ONLINE", False):
@@ -179,7 +214,10 @@ def get_primary_goal(flags: Dict[str, bool]) -> str:
         return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO is fully restored."
 
 
-def get_todo_content(flags: Dict[str, bool]) -> str:
+def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = None) -> str:
+    if clues is None:
+        clues = {}
+
     m0 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
     m1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
     m2 = "x" if flags.get("LOGS_AUDITED", False) else " "
@@ -187,14 +225,18 @@ def get_todo_content(flags: Dict[str, bool]) -> str:
     m5 = "x" if flags.get("MALWARE_TERMINATED", False) else " "
     m6 = "x" if flags.get("NETWORK_ONLINE", False) else " "
     m7 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+
+    count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
+    m2_label = "2. TRIAGE BREACH     : All incident leads unmasked (4/4)" if flags.get("LOGS_AUDITED") else f"2. TRIAGE BREACH     : Unmask incident clues in /var/log/ ({count}/4 unmasked)"
+
     return (
         "================================================================================\n"
         "               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
         "================================================================================\n"
         f"[{m0}] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'\n"
         f"[{m1}] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc\n"
-        f"[{m2}] 2. TRIAGE BREACH     : Intruder left traces   -> Inspect incident logs in /var/log/\n"
-        f"[{m5}] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID with 'ps' & terminate with 'kill -9'\n"
+        f"[{m2}] {m2_label}\n"
+        f"[{m5}] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID 104 with 'ps' & terminate with 'kill -9'\n"
         f"[{m6}] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'\n"
         f"[{m7}] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/\n"
         "================================================================================\n"
@@ -279,6 +321,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644",
         owner="alice"
     )
+    add_file(
+        "/home/alice/INCIDENT_REPORT.log",
+        get_incident_dossier({}),
+        perms="644",
+        owner="alice"
+    )
 
     # Milestone 1: /opt/backup/profiles & /home/alice
     add_file(
@@ -343,7 +391,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="root"
     )
 
-    # Milestone 2: /var/log/
+    # Milestone 2: /var/log/ with color-coded incident alert tags
     auth_content = (
         "[INFO]: System boot complete.\n"
         + (" [WARN]: Normal PAM session.\n" * 20)
@@ -351,17 +399,17 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2\n"
         "03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2\n"
         "03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status\n"
-        "[ALERT]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
-        "[ALERT]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
+        "\033[1;31m[ALERT-0x01]\033[0m: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
+        "\033[1;33m[ALERT-0x02]\033[0m: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
     )
     add_file("/var/log/auth.log", auth_content, perms="640", owner="root")
     add_file(
         "/var/log/syslog",
         "03:40:01 apollo systemd[1]: Starting System Logging Service...\n"
         "03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)\n"
-        "03:40:12 apollo kernel: [SECURITY FAULT] Interface apollo0 link state degraded: DOWN\n"
+        "03:40:12 apollo kernel: \033[1;36m[ALERT-0x03]\033[0m Interface apollo0 link state degraded: DOWN\n"
         "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0\n"
-        "03:42:19 apollo systemd[1]: phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
+        "03:42:19 apollo systemd[1]: \033[1;35m[ALERT-0x04]\033[0m phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
         "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.\n",
         perms="644"
     )
@@ -482,9 +530,16 @@ class TerminalState:
         self.system_flags: Dict[str, bool] = {
             "BUFFER_REPAIRED": False,
             "BASHRC_RESTORED": False,
+            "LOGS_AUDITED": False,
             "MALWARE_TERMINATED": False,
             "NETWORK_ONLINE": False,
             "PHOENIX_ONLINE": False
+        }
+        self.discovered_clues: Dict[str, bool] = {
+            "ALERT_0x01": False,
+            "ALERT_0x02": False,
+            "ALERT_0x03": False,
+            "ALERT_0x04": False,
         }
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
@@ -504,7 +559,7 @@ class TerminalState:
         # Hook state observer for ergonomic flags synchronization
         self.bus.subscribe(self._on_event)
 
-        # Update dynamic TODO.txt if present in VFS
+        # Update dynamic TODO.txt & INCIDENT_REPORT.log if present in VFS
         self._sync_todo()
 
         # Soft-gate /opt/phoenix based on initial system flags
@@ -514,7 +569,11 @@ class TerminalState:
         try:
             todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
             if todo_node:
-                todo_node.content = get_todo_content(self.system_flags)
+                todo_node.content = get_todo_content(self.system_flags, self.discovered_clues)
+            
+            dossier_node, _ = self.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
+            if dossier_node:
+                dossier_node.content = get_incident_dossier(self.discovered_clues)
         except ImportError:
             pass
 
@@ -544,6 +603,11 @@ class TerminalState:
             elif (flag == "MALWARE_TERMINATED" or flag == "SIGINT_REPAIRED") and val:
                 self.unlocked_ergonomics["sigint"] = True
                 self.unlocked_ergonomics["sigint_trap"] = True
+        elif event.type == "clue_discovered":
+            clue_id = event.data.get("clue_id")
+            if clue_id in self.discovered_clues:
+                self.discovered_clues[clue_id] = True
+            self._sync_todo()
 
     @property
     def cwd_str(self) -> str:
@@ -573,6 +637,7 @@ class CommandContext:
 # --- man_pages.py ---
 MAN_PAGES: Dict[str, str] = {
     "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
+    "ll": "NAME\n    ll - shell alias for 'ls -la'\n\nSYNOPSIS\n    ll [FILE]...\n\nDESCRIPTION\n    Custom shell shortcut defined in ~/.bashrc to list files in long format including hidden files.\n\nEXAMPLES\n    ll\n    ll /var/log\n",
     "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
     "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
     "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
@@ -602,6 +667,51 @@ MAN_PAGES: Dict[str, str] = {
 
 # --- posix.py ---
 from typing import Any, List, Optional
+
+
+CLUE_DESCRIPTIONS = {
+    "ALERT_0x01": ("ALERT-0x01", "Rogue Miner identified", "PID: 104 (sys_miner)"),
+    "ALERT_0x02": ("ALERT-0x02", "Tampered Sector located", "/mnt/recovery/bin/recovery.sh (stripped)"),
+    "ALERT_0x03": ("ALERT-0x03", "Degraded Interface isolated", "apollo0 link state DOWN"),
+    "ALERT_0x04": ("ALERT-0x04", "Service Failure isolated", "phoenix-sync terminated by signal 9"),
+}
+
+
+def check_clue_discovery(ctx: CommandContext, text_displayed: str) -> str:
+    if not text_displayed:
+        return ""
+
+    discovered_now = []
+    clues_state = getattr(ctx.state, "discovered_clues", {})
+
+    for clue_key, (tag, title, detail) in CLUE_DESCRIPTIONS.items():
+        if tag in text_displayed:
+            if not clues_state.get(clue_key, False):
+                clues_state[clue_key] = True
+                ctx.bus.publish(Event("clue_discovered", {"clue_id": clue_key}))
+                discovered_now.append(f"✓ [{tag}] {title} -> {detail}")
+
+    if not discovered_now:
+        return ""
+
+    total_unmasked = sum(1 for k in CLUE_DESCRIPTIONS if clues_state.get(k, False))
+    header = f"│ [!] INCIDENT DOSSIER UPDATED ({total_unmasked}/4 Leads Unmasked)"
+    header_padded = f"{header:<72} │"
+    notice = [
+        "\n┌────────────────────────────────────────────────────────────────────────┐",
+        header_padded,
+        "├────────────────────────────────────────────────────────────────────────┤",
+    ]
+    for line in discovered_now:
+        notice.append(f"│   {line:<68} │")
+    notice.append("└────────────────────────────────────────────────────────────────────────┘")
+
+    # If at least 2 clues (or all 4) are found, mark LOGS_AUDITED complete
+    if total_unmasked >= 2 and not ctx.state.system_flags.get("LOGS_AUDITED", False):
+        ctx.state.system_flags["LOGS_AUDITED"] = True
+        ctx.bus.publish(Event("flag_changed", {"flag": "LOGS_AUDITED", "value": True}))
+
+    return "\n" + "\n".join(notice) + "\n"
 
 
 def cmd_tree(ctx: Any, args: List[str]) -> Any:
@@ -635,7 +745,8 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "cat", "args": args}))
     if not args:
         if ctx.stdin:
-            return ctx.result_factory(stdout=ctx.stdin)
+            discovery_banner = check_clue_discovery(ctx, ctx.stdin)
+            return ctx.result_factory(stdout=ctx.stdin + discovery_banner)
         return ctx.result_factory(stderr="cat: missing file operand\n", exit_code=1)
 
     output = []
@@ -653,7 +764,9 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
             return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
         output.append(node.content if node.content is not None else "")
 
-    return ctx.result_factory(stdout="".join(output))
+    full_output = "".join(output)
+    discovery_banner = check_clue_discovery(ctx, full_output)
+    return ctx.result_factory(stdout=full_output + discovery_banner)
 
 
 def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -680,7 +793,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not file_targets:
         if ctx.stdin:
             lines = ctx.stdin.splitlines(keepends=True)[:lines_count]
-            return ctx.result_factory(stdout="".join(lines))
+            content = "".join(lines)
+            discovery_banner = check_clue_discovery(ctx, content)
+            return ctx.result_factory(stdout=content + discovery_banner)
         return ctx.result_factory(stderr="head: missing file operand\n", exit_code=1)
 
     output = []
@@ -699,7 +814,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
         output.append("".join(lines))
 
-    return ctx.result_factory(stdout="".join(output))
+    full_output = "".join(output)
+    discovery_banner = check_clue_discovery(ctx, full_output)
+    return ctx.result_factory(stdout=full_output + discovery_banner)
 
 
 def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -743,7 +860,8 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
                     "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
                     "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
                 )
-            return ctx.result_factory(stdout=output)
+            discovery_banner = check_clue_discovery(ctx, output)
+            return ctx.result_factory(stdout=output + discovery_banner)
         return ctx.result_factory(stderr="tail: missing file operand\n", exit_code=1)
 
     output = []
@@ -771,7 +889,8 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
             "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
         )
 
-    return ctx.result_factory(stdout=result_text)
+    discovery_banner = check_clue_discovery(ctx, result_text)
+    return ctx.result_factory(stdout=result_text + discovery_banner)
 
 
 def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -822,8 +941,10 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not files:
         if ctx.stdin:
             matched_lines = evaluate_text(ctx.stdin)
+            out = "\n".join(matched_lines) + ("\n" if matched_lines else "")
+            discovery_banner = check_clue_discovery(ctx, out)
             return ctx.result_factory(
-                stdout="\n".join(matched_lines) + ("\n" if matched_lines else ""),
+                stdout=out + discovery_banner,
                 exit_code=0 if matched_lines else 1
             )
         return ctx.result_factory(stderr="grep: missing file operand\n", exit_code=2)
@@ -857,8 +978,10 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
             display_tag = target if len(files) > 1 else ""
             matched_lines.extend(evaluate_text(node.content or "", display_tag))
 
+    res_text = "\n".join(matched_lines) + ("\n" if matched_lines else "")
+    discovery_banner = check_clue_discovery(ctx, res_text)
     return ctx.result_factory(
-        stdout="\n".join(matched_lines) + ("\n" if matched_lines else ""),
+        stdout=res_text + discovery_banner,
         exit_code=0 if matched_lines else 1
     )
 
@@ -1265,6 +1388,13 @@ def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
+def cmd_ll(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "ll", "args": args}))
+    if not (ctx.state.system_flags.get("BASHRC_RESTORED", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
+        return ctx.result_factory(stderr="bash: ll: command not found\n", exit_code=127)
+    return cmd_ls(ctx, ["-la"] + args)
+
+
 # --- debriefs.py ---
 class DebriefManager:
     DEBRIEFS: Dict[str, str] = {
@@ -1412,6 +1542,7 @@ def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> No
             "unlocked_ergonomics": ergo
         },
         "system_flags": state.system_flags,
+        "discovered_clues": getattr(state, "discovered_clues", {}),
         "process_table": [
             {
                 "pid": p.pid,
@@ -1465,10 +1596,17 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
     }
 
     state.system_flags = data.get("system_flags", state.system_flags)
+    if "discovered_clues" in data:
+        state.discovered_clues = data["discovered_clues"]
+
     try:
         todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
         if todo_node:
-            todo_node.content = get_todo_content(state.system_flags)
+            todo_node.content = get_todo_content(state.system_flags, state.discovered_clues)
+
+        dossier_node, _ = state.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
+        if dossier_node:
+            dossier_node.content = get_incident_dossier(state.discovered_clues)
     except ImportError:
         pass
 
@@ -1504,7 +1642,7 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
 
 def register_autosave_handler(bus: EventBus, get_state):
     def on_event(event: Event):
-        if event.type == "flag_changed":
+        if event.type in ["flag_changed", "clue_discovered"]:
             state = get_state()
             if state:
                 save_game_state(state, "savegame.json")
@@ -1841,7 +1979,7 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
     if ctx.state.cwd_str == "/opt/backup/profiles" and not flags.get("BASHRC_RESTORED", False):
         lines.append("\nLOCATION TIP: You found the backup profiles! Read 'NOTE_FROM_MORGAN.txt' with 'cat NOTE_FROM_MORGAN.txt' to restore your shell.")
 
-    lines.append(f"\n{get_primary_goal(flags)}")
+    lines.append(f"\n{get_primary_goal(flags, getattr(ctx.state, 'discovered_clues', {}))}")
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
 
@@ -1850,6 +1988,7 @@ from typing import Any, Callable, Dict
     cmd_pwd,
     cmd_cd,
     cmd_ls,
+    cmd_ll,
     cmd_cat,
     cmd_head,
     cmd_tail,
@@ -1882,6 +2021,7 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "pwd": cmd_pwd,
         "cd": cmd_cd,
         "ls": cmd_ls,
+        "ll": cmd_ll,
         "cat": cmd_cat,
         "head": cmd_head,
         "tail": cmd_tail,
@@ -2309,6 +2449,8 @@ class TerminalShell:
         result = self.pipeline_engine.run(raw_input, self.ctx.state)
         if result.exit_code != 0 and result.stderr:
             self.ctx.state.last_stderr = result.stderr.strip()
+        elif result.exit_code == 0:
+            self.ctx.state.last_stderr = ""
         return result
 
     def execute_line(self, line: str):

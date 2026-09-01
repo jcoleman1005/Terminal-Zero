@@ -1,0 +1,457 @@
+PS C:\Active Projects\Terminal Zero> python terminal_zero.py
+=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===
+System degraded. Type 'help' for guidance or inspect 'README.txt'.
+Type 'exit' to disconnect.
+
+alice@apollo:/home/alice$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+│   • ls -a          : Reveal hidden files (starting with a dot .)       │
+└────────────────────────────────────────────────────────────────────────┘
+
+[?] 6 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history.
+alice@apollo:/home/alice$ la -a
+bash: la: command not found
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  INCIDENT_REPORT.log  README.txt  TODO.txt
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD
+================================================================================
+QUICK NAVIGATION ACTIONS:
+  • ls             : Look around (list visible files in current folder).
+  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').
+  • pwd            : Check what folder you are currently standing in.
+  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.
+  • sync           : Save workstation progress to persistent disk.
+
+OPERATOR INCIDENT LOG:
+  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.
+  2. Run 'repair_buffer' to restore command history recall.
+================================================================================
+alice@apollo:/home/alice$ cat BOOT_FAIL.log
+[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.
+[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.
+alice@apollo:/home/alice$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  INCIDENT_REPORT.log  README.txt  TODO.txt
+
+[DRIVER MISSING]: libreadline unit offline. Tab autocompletion unavailable.
+alice@apollo:/home/alice$ cat INCIDENT_REPORT.log
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You filtered security logs in /var/log to isolate the intrusion.       │
+│ In real Linux systems:                                                 │
+│ • 'grep -i' searches case-insensitively for key strings in logs.       │
+│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│
+└────────────────────────────────────────────────────────────────────────┘
+================================================================================
+        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [CLASSIFIED DOSSIER (0/4 LEADS UNMASKED)]
+================================================================================
+ [ALERT-0x01] INTRUDER PROCESS : Attacker deployed rogue miner -> [ REDACTED_PID ]
+ [ALERT-0x02] TAMPERED SECTOR  : Core recovery binary stripped   -> [ REDACTED_PATH ]
+ [ALERT-0x03] HARDWARE STATUS  : Network interface knocked DOWN  -> [ REDACTED_DEVICE ]
+ [ALERT-0x04] DAEMON STATUS    : Cluster service terminated      -> [ REDACTED_SERVICE ]
+================================================================================
+INVESTIGATION DIRECTIVE: Audit logs in /var/log/ with 'cat', 'head', 'tail', or 'grep'
+to discover matching color-coded [ALERT-0x0X] incident markers and fill in gaps.
+================================================================================
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (4/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x01] Rogue Miner identified -> PID: 104 (sys_miner)        │
+│   ✓ [ALERT-0x02] Tampered Sector located -> /mnt/recovery/bin/recovery.sh (stripped) │
+│   ✓ [ALERT-0x03] Degraded Interface isolated -> apollo0 link state DOWN │
+│   ✓ [ALERT-0x04] Service Failure isolated -> phoenix-sync terminated by signal 9 │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/home/alice$ grep
+Usage: grep [OPTION]... PATTERNS [FILE]...
+alice@apollo:/home/alice$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: Usage: grep [OPTION]... PATTERNS [FILE]...
+[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]
+Subsystem failure registered in execution pipeline.
+Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'.
+alice@apollo:/home/alice$ man grep
+NAME
+    grep - print lines that match patterns
+
+SYNOPSIS
+    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...
+
+EXAMPLES
+    grep -i 'error' /var/log/system.log
+    grep -r 'PHOENIX' /opt
+alice@apollo:/home/alice$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+│   • ls -a          : Reveal hidden files (starting with a dot .)       │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+
+[?] 4 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Morgan left a backup profile in '/opt/backup/profiles/'. Head there with 'cd /opt/backup/profiles' and restore your shell.
+alice@apollo:/home/alice$ cd /opt/backup/profiles
+alice@apollo:/opt/backup/profiles$ ls -a
+.  ..  CHEAT_SHEET.txt  NOTE_FROM_MORGAN.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat NOTE_FROM_MORGAN.txt
+// MORGAN [03:42 AM] — INCIDENT OVERRIDE
+Alice — during the breach, your shell profile was wiped out, which broke your
+command search paths and shortcuts.
+
+I left a clean backup template right here ('alice.bashrc').
+
+To clone it back into your home directory, write it over with '>':
+  cat alice.bashrc > /home/alice/.bashrc
+
+(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)
+Once that's in place, your tools and shortcuts will wake back up.
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc > ~/.bashrc
+
+[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized
+Custom shortcuts active (try 'll' to list files).
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Shell Startup Profiles & Environment Variables    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You restored ~/.bashrc to re-enable tab autocompletion and $PATH.     │
+│ In real Linux systems:                                                 │
+│ • ~/.bashrc runs for interactive non-login shells.                     │
+│ • The $PATH variable defines directory search order for executables.   │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/opt/backup/profiles$ $PATH
+bash: $PATH: command not found
+alice@apollo:/opt/backup/profiles$ decrypt
+[DECRYPT ADVISORY]: The command entered does not exist.
+• Check spelling or type 'ls' to see available local files.
+• Type 'help' for guidance or inspect 'README.txt'.
+• Standard utilities: pwd, ls, cd, cat, man, sync.
+alice@apollo:/opt/backup/profiles$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 CHEAT_SHEET.txt
+-rw-r--r-- 1 root root 4096 NOTE_FROM_MORGAN.txt
+-rw-r--r-- 1 root root 4096 alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat CHe
+cat: CHe: No such file or directory
+alice@apollo:/opt/backup/profiles$ cat CH
+cat: CH: No such file or directory
+alice@apollo:/opt/backup/profiles$ cat CHEAT_SHEET.txt
+// MORGAN [03:42 AM] — INCIDENT OVERRIDE
+Alice — during the breach, your shell profile was wiped out, which broke your
+command search paths and shortcuts.
+
+I left a clean backup template right here ('alice.bashrc').
+
+To clone it back into your home directory, write it over with '>':
+  cat alice.bashrc > /home/alice/.bashrc
+
+(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)
+Once that's in place, your tools and shortcuts will wake back up.
+alice@apollo:/opt/backup/profiles$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+
+[?] 4 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'.
+alice@apollo:/opt/backup/profiles$ cd /mnt/recovery/bin
+alice@apollo:/mnt/recovery/bin$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 apollo-net
+-rw-r--r-- 1 root root 4096 phoenix_ctl
+-rw-r--r-- 1 root root 4096 recovery-tool
+-rw-r--r-- 1 root root 4096 recovery.sh
+-rw-r--r-- 1 root root 4096 repair_buffer
+alice@apollo:/mnt/recovery/bin$ recovery.sh
+bash: recovery.sh: Permission denied
+alice@apollo:/mnt/recovery/bin$ chmod +x
+chmod: missing operand
+alice@apollo:/mnt/recovery/bin$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: chmod: missing operand
+[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]
+Subsystem failure registered in execution pipeline.
+Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'.
+alice@apollo:/mnt/recovery/bin$ man chmod
+NAME
+    chmod - change file mode bits
+
+SYNOPSIS
+    chmod MODE FILE...
+
+EXAMPLES
+    chmod +x /opt/phoenix/recovery/recovery.sh
+    chmod 755 /bin/tool
+alice@apollo:/mnt/recovery/bin$ chmod +x /opt/phoenix/recovery/recovery.sh
+alice@apollo:/mnt/recovery/bin$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+
+[?] 4 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'.
+alice@apollo:/mnt/recovery/bin$ recovery.sh
+bash: recovery.sh: Permission denied
+alice@apollo:/mnt/recovery/bin$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 apollo-net
+-rw-r--r-- 1 root root 4096 phoenix_ctl
+-rw-r--r-- 1 root root 4096 recovery-tool
+-rw-r--r-- 1 root root 4096 recovery.sh
+-rw-r--r-- 1 root root 4096 repair_buffer
+alice@apollo:/mnt/recovery/bin$ chmod +x recovery.sh
+alice@apollo:/mnt/recovery/bin$ recovery.sh
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │
+├────────────────────────────────────────────────────────────────────────┤
+│ You made recovery.sh executable and restored kernel signal traps.       │
+│ In real Linux systems:                                                 │
+│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │
+│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Emergency Signal Trapping (SIGINT)
+Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.
+^C
+alice@apollo:/mnt/recovery/bin$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name "*.sh"').
+  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').
+  • ps aux         : Scan active background processes.
+  • kill -9 <PID>  : Terminate a runaway rogue process by PID.
+
+[?] 2 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'.
+alice@apollo:/mnt/recovery/bin$ kill -9
+kill: invalid pid or signal specification
+alice@apollo:/mnt/recovery/bin$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: kill: invalid pid or signal specification
+[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]
+Process ID not active or signal invalid.
+Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'.
+alice@apollo:/mnt/recovery/bin$ ps aux
+USER       PID %CPU COMMAND
+root         1  0.1 /sbin/init
+root       104 98.2 /tmp/sys_miner --stealth
+root       210  0.0 /usr/sbin/sshd -D
+alice@apollo:/mnt/recovery/bin$ kill - sshd -D
+kill: invalid pid or signal specification
+alice@apollo:/mnt/recovery/bin$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: kill: invalid pid or signal specification
+[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]
+Process ID not active or signal invalid.
+Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'.
+alice@apollo:/mnt/recovery/bin$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name "*.sh"').
+  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').
+  • ps aux         : Scan active background processes.
+  • kill -9 <PID>  : Terminate a runaway rogue process by PID.
+
+[?] 2 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'.
+alice@apollo:/mnt/recovery/bin$ ls
+apollo-net  phoenix_ctl  recovery-tool  recovery.sh  repair_buffer
+alice@apollo:/mnt/recovery/bin$ apollot-net
+bash: apollot-net: command not found
+alice@apollo:/mnt/recovery/bin$ apollo-net
+[APOLLO-NET v1.0]: Subnet link state is DOWN. Gateway 10.0.42.1
+alice@apollo:/mnt/recovery/bin$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 apollo-net
+-rw-r--r-- 1 root root 4096 phoenix_ctl
+-rw-r--r-- 1 root root 4096 recovery-tool
+-rwxr-xr-x 1 root root 4096 recovery.sh
+-rw-r--r-- 1 root root 4096 repair_buffer
+alice@apollo:/mnt/recovery/bin$ phoenix_ctl
+[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.
+alice@apollo:/mnt/recovery/bin$ recovery.sh
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │
+├────────────────────────────────────────────────────────────────────────┤
+│ You made recovery.sh executable and restored kernel signal traps.       │
+│ In real Linux systems:                                                 │
+│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │
+│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Emergency Signal Trapping (SIGINT)
+Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.
+alice@apollo:/mnt/recovery/bin$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 apollo-net
+-rw-r--r-- 1 root root 4096 phoenix_ctl
+-rw-r--r-- 1 root root 4096 recovery-tool
+-rwxr-xr-x 1 root root 4096 recovery.sh
+-rw-r--r-- 1 root root 4096 repair_buffer
+alice@apollo:/mnt/recovery/bin$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/mnt/recovery/bin$ ls
+apollo-net  phoenix_ctl  recovery-tool  recovery.sh  repair_buffer
+alice@apollo:/mnt/recovery/bin$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name "*.sh"').
+  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').
+  • ps aux         : Scan active background processes.
+  • kill -9 <PID>  : Terminate a runaway rogue process by PID.
+
+[?] 2 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'.
+alice@apollo:/mnt/recovery/bin$ reset
+
+Broadcast message from root@apollo (tty1) (system reboot):
+
+The system is going down for reboot NOW!
+Restarting system...
+
+=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===
+System degraded. Type 'help' for guidance or inspect 'README.txt'.
+Type 'exit' to disconnect.
+alice@apollo:/home/alice$ exit
+PS C:\Active Projects\Terminal Zero>

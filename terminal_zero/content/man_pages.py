@@ -2,6 +2,7 @@ from typing import Dict
 
 MAN_PAGES: Dict[str, str] = {
     "ls": "NAME\n    ls - list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [FILE]...\n\nEXAMPLES\n    ls -la /var/log\n    ls -a ~\n",
+    "ll": "NAME\n    ll - shell alias for 'ls -la'\n\nSYNOPSIS\n    ll [FILE]...\n\nDESCRIPTION\n    Custom shell shortcut defined in ~/.bashrc to list files in long format including hidden files.\n\nEXAMPLES\n    ll\n    ll /var/log\n",
     "cd": "NAME\n    cd - change the working directory\n\nSYNOPSIS\n    cd [DIRECTORY]\n\nEXAMPLES\n    cd /opt/phoenix\n    cd ..\n",
     "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
     "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
