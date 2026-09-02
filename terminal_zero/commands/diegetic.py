@@ -1,9 +1,10 @@
+import datetime
 import os
 from typing import List
 from terminal_zero.core.events import Event
 from terminal_zero.core.state import CommandContext, CommandResult
 from terminal_zero.core.persistence import save_game_state
-from terminal_zero.content.narrative import get_primary_goal
+from terminal_zero.content.narrative import get_primary_goal, get_todo_content, get_victory_screen
 from terminal_zero.content.man_pages import MAN_PAGES
 from terminal_zero.content.initial_vfs import build_default_vfs
 
@@ -93,11 +94,11 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
             "Virtual network interface link state is DOWN.\n"
             "Action: Run 'ip link set apollo0 up' to activate the network adapter and verify routing."
         )
-    elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err:
+    elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err or "kill:" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x5E - PROCESS ANOMALY]\n"
-            "Process ID not active or signal invalid.\n"
-            "Action: Run 'ps aux' to audit active process table before issuing 'kill -9 <PID>'."
+            "[APOLLO-DIAGNOSTIC: FAULT 0x5E - NUMERIC PID REQUIRED]\n"
+            "Notice: 'kill' requires a numeric Process ID (PID), not a process name or command string.\n"
+            "Action: Run 'ps aux' to find the rogue miner's numeric PID in the PID column, then terminate it with 'kill -9 104'."
         )
     elif any(k in last_err.lower() for k in ["missing file operand", "missing pattern", "missing argument", "option requires", "invalid line count", "invalid count", "invalid mode"]):
         diag = (
@@ -174,8 +175,12 @@ def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
         })
 
     ctx.bus.publish(Event("flag_changed", {"flag": "PHOENIX_ONLINE", "value": True}))
+    victory = get_victory_screen()
     return ctx.result_factory(
-        stdout="[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway ONLINE.\n"
+        stdout=(
+            "[PHOENIX-DAEMON]: Emergency Restoration Protocol activated. Listening on 127.0.0.1:8080. Gateway ONLINE.\n"
+            + victory
+        )
     )
 
 
@@ -224,13 +229,12 @@ def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.state.listening_sockets = list(fresh_state.listening_sockets)
     ctx.state.last_stderr = ""
 
+    from terminal_zero.engine.repl import get_boot_screen
     reboot_banner = (
         "\nBroadcast message from root@apollo (tty1) (system reboot):\n\n"
         "The system is going down for reboot NOW!\n"
         "Restarting system...\n\n"
-        "=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===\n"
-        "System degraded. Type 'help' for guidance or inspect 'README.txt'.\n"
-        "Type 'exit' to disconnect.\n"
+        + get_boot_screen(ctx.state.system_flags)
     )
     return ctx.result_factory(stdout=reboot_banner)
 
@@ -268,6 +272,17 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         if target in MAN_PAGES:
             return ctx.result_factory(stdout=MAN_PAGES[target])
         return ctx.result_factory(stderr=f"help: no help topics match `{target}'. Try 'man {target}'.\n", exit_code=1)
+
+    if not flags.get("README_INSPECTED", False):
+        standby_msg = (
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [!] SURVIVAL MANUAL STANDBY:                                           │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ Emergency Operator Survival Card is offline.                           │\n"
+            "│ Inspect 'README.txt' using 'cat README.txt' to initialize instructions.│\n"
+            "└────────────────────────────────────────────────────────────────────────┘\n"
+        )
+        return ctx.result_factory(stdout=standby_msg)
 
     lines = [
         "┌────────────────────────────────────────────────────────────────────────┐",
@@ -340,3 +355,159 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     lines.append(f"\n{get_primary_goal(flags, getattr(ctx.state, 'discovered_clues', {}))}")
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
+
+
+def cmd_note(ctx: CommandContext, args: List[str]) -> CommandResult:
+    if not args:
+        return ctx.result_factory(
+            stdout="[PLAYTEST NOTE]: Usage: note <your feedback here without quotes>\n"
+        )
+    message = " ".join(args)
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sector = ctx.state.cwd_str
+    completed = sum(1 for v in ctx.state.system_flags.values() if v)
+    total = len(ctx.state.system_flags)
+    log_entry = f"[{ts}] [{sector}] [Flags: {completed}/{total}] {message}\n"
+    try:
+        with open("playtest_notes.txt", "a", encoding="utf-8") as f:
+            f.write(log_entry)
+    except Exception:
+        pass
+    return ctx.result_factory(stdout=f'[NOTE RECORDED]: "{message}"\n')
+
+
+def cmd_feedback(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_note(ctx, args)
+
+
+def cmd_taskctl(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "taskctl", "args": args}))
+    ctx.state.system_flags["TODO_LINKED"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "TODO_LINKED", "value": True}))
+    banner = (
+        "[taskctl]: Linking '/home/alice/TODO.txt' to shell command vector...\n"
+        "[!] SHORTCUT REGISTERED: Global commands 'todo' and 'tasks' are now active!\n"
+        "Type 'todo' from any directory to inspect your recovery progress.\n"
+    )
+    return ctx.result_factory(stdout=banner)
+
+
+def cmd_todo(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "todo", "args": args}))
+    if not ctx.state.system_flags.get("TODO_LINKED", False):
+        return ctx.result_factory(
+            stderr="bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' and run 'taskctl link' to activate)\n",
+            exit_code=127
+        )
+    content = get_todo_content(ctx.state.system_flags, getattr(ctx.state, 'discovered_clues', {}))
+    return ctx.result_factory(stdout=content)
+
+
+def cmd_tasks(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_todo(ctx, args)
+
+
+def _check_all_triage_complete(ctx: CommandContext) -> str:
+    clues = getattr(ctx.state, "discovered_clues", {})
+    count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
+    if count == 4 and not ctx.state.system_flags.get("LOGS_AUDITED", False):
+        ctx.state.system_flags["LOGS_AUDITED"] = True
+        ctx.bus.publish(Event("flag_changed", {"flag": "LOGS_AUDITED", "value": True}))
+        return (
+            "\n"
+            "┌────────────────────────────────────────────────────────────────────────┐\n"
+            "│ [!] ALL INCIDENT LEADS VERIFIED (4/4 Complete)                         │\n"
+            "├────────────────────────────────────────────────────────────────────────┤\n"
+            "│ Milestone 2 Complete: Security breach triaged & incident dossier locked!│\n"
+            "│ Next Step: Head to /mnt/recovery/bin/ to restore tool permissions.     │\n"
+            "└────────────────────────────────────────────────────────────────────────┘\n"
+        )
+    return ""
+
+
+def cmd_triage_process(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "triage_process", "args": args}))
+    if not args:
+        return ctx.result_factory(
+            stderr="[ERROR]: Missing argument. Usage: triage_process <PID>\n"
+                   "Tip: Audit /var/log/auth.log for the red [ALERT-0x01] rogue miner process ID.\n",
+            exit_code=1
+        )
+    val = args[0].strip()
+    if val == "104":
+        ctx.state.discovered_clues["ALERT_0x01"] = True
+        ctx.bus.publish(Event("clue_discovered", {"clue_id": "ALERT_0x01"}))
+        banner = "\033[1;32m[SUCCESS]: Intruder process verified!\033[0m PID 104 (sys_miner) logged in incident dossier.\n"
+        banner += _check_all_triage_complete(ctx)
+        return ctx.result_factory(stdout=banner)
+    else:
+        return ctx.result_factory(
+            stderr=f"\033[1;31m[ERROR]: PID '{val}' incorrect.\033[0m Audit /var/log/auth.log for the red [ALERT-0x01] rogue miner process ID.\n",
+            exit_code=1
+        )
+
+
+def cmd_triage_sector(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "triage_sector", "args": args}))
+    if not args:
+        return ctx.result_factory(
+            stderr="[ERROR]: Missing argument. Usage: triage_sector <FILE_PATH>\n"
+                   "Tip: Audit /var/log/auth.log for the yellow [ALERT-0x02] stripped recovery script.\n",
+            exit_code=1
+        )
+    val = args[0].strip()
+    if val in ["/mnt/recovery/bin/recovery.sh", "recovery.sh", "/mnt/recovery/bin"]:
+        ctx.state.discovered_clues["ALERT_0x02"] = True
+        ctx.bus.publish(Event("clue_discovered", {"clue_id": "ALERT_0x02"}))
+        banner = "\033[1;32m[SUCCESS]: Tampered sector verified!\033[0m /mnt/recovery/bin/recovery.sh logged in incident dossier.\n"
+        banner += _check_all_triage_complete(ctx)
+        return ctx.result_factory(stdout=banner)
+    else:
+        return ctx.result_factory(
+            stderr=f"\033[1;33m[ERROR]: Sector path '{val}' incorrect.\033[0m Audit /var/log/auth.log for the yellow [ALERT-0x02] stripped recovery script.\n",
+            exit_code=1
+        )
+
+
+def cmd_triage_interface(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "triage_interface", "args": args}))
+    if not args:
+        return ctx.result_factory(
+            stderr="[ERROR]: Missing argument. Usage: triage_interface <DEVICE_NAME>\n"
+                   "Tip: Audit /var/log/syslog for the cyan [ALERT-0x03] degraded network link.\n",
+            exit_code=1
+        )
+    val = args[0].strip()
+    if val == "apollo0":
+        ctx.state.discovered_clues["ALERT_0x03"] = True
+        ctx.bus.publish(Event("clue_discovered", {"clue_id": "ALERT_0x03"}))
+        banner = "\033[1;32m[SUCCESS]: Degraded interface verified!\033[0m Device apollo0 logged in incident dossier.\n"
+        banner += _check_all_triage_complete(ctx)
+        return ctx.result_factory(stdout=banner)
+    else:
+        return ctx.result_factory(
+            stderr=f"\033[1;36m[ERROR]: Interface '{val}' incorrect.\033[0m Audit /var/log/syslog for the cyan [ALERT-0x03] degraded network link.\n",
+            exit_code=1
+        )
+
+
+def cmd_triage_service(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "triage_service", "args": args}))
+    if not args:
+        return ctx.result_factory(
+            stderr="[ERROR]: Missing argument. Usage: triage_service <SERVICE_NAME>\n"
+                   "Tip: Audit /var/log/syslog for the magenta [ALERT-0x04] killed cluster daemon.\n",
+            exit_code=1
+        )
+    val = args[0].strip()
+    if val in ["phoenix-sync.service", "phoenix-sync"]:
+        ctx.state.discovered_clues["ALERT_0x04"] = True
+        ctx.bus.publish(Event("clue_discovered", {"clue_id": "ALERT_0x04"}))
+        banner = "\033[1;32m[SUCCESS]: Terminated service verified!\033[0m phoenix-sync.service logged in incident dossier.\n"
+        banner += _check_all_triage_complete(ctx)
+        return ctx.result_factory(stdout=banner)
+    else:
+        return ctx.result_factory(
+            stderr=f"\033[1;35m[ERROR]: Service '{val}' incorrect.\033[0m Audit /var/log/syslog for the magenta [ALERT-0x04] killed cluster daemon.\n",
+            exit_code=1
+        )

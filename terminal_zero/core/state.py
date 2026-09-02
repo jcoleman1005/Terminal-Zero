@@ -35,6 +35,8 @@ class TerminalState:
             "sigint_trap": False
         }
         self.system_flags: Dict[str, bool] = {
+            "README_INSPECTED": False,
+            "TODO_LINKED": False,
             "BUFFER_REPAIRED": False,
             "BASHRC_RESTORED": False,
             "LOGS_AUDITED": False,

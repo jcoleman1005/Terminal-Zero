@@ -22,8 +22,8 @@ def get_incident_dossier(clues: Optional[Dict[str, bool]] = None) -> str:
         f" \033[1;36m[ALERT-0x03]\033[0m HARDWARE STATUS  : Network interface knocked DOWN  -> {c3}\n"
         f" \033[1;35m[ALERT-0x04]\033[0m DAEMON STATUS    : Cluster service terminated      -> {c4}\n"
         "================================================================================\n"
-        "INVESTIGATION DIRECTIVE: Audit logs in /var/log/ with 'cat', 'head', 'tail', or 'grep'\n"
-        "to discover matching color-coded [ALERT-0x0X] incident markers and fill in gaps.\n"
+        "INVESTIGATION DIRECTIVE: Audit compromised daemon logs in /var/log/ with 'cat',\n"
+        "'head', 'tail', or 'grep' to uncover matching incident leads.\n"
         "================================================================================\n"
     )
 
@@ -35,22 +35,22 @@ def get_primary_goal(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
 
     if not flags.get("BUFFER_REPAIRED", False):
-        return "CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history."
+        return "CURRENT MISSION: Command history memory offline. Check 'diagnostics/BOOT_FAIL.log' and run the repair utility."
     elif not flags.get("BASHRC_RESTORED", False):
-        return "CURRENT MISSION: Morgan left a backup profile in '/opt/backup/profiles/'. Head there with 'cd /opt/backup/profiles' and restore your shell."
+        return "CURRENT MISSION: Shell profile missing. Explore '/opt/backup/profiles/' and restore ~/.bashrc."
     elif not flags.get("LOGS_AUDITED", False):
         if count == 0:
-            return "CURRENT MISSION: Investigate the security breach. Audit incident logs in '/var/log' using 'cat', 'head', 'tail', or 'grep' to unmask incident clues."
+            return "CURRENT MISSION: Investigate the security breach. Audit daemon logs in '/var/log/' to unmask incident clues."
         else:
-            return f"CURRENT MISSION: Triage breach logs in '/var/log'. ({count}/4 incident leads unmasked — inspect 'auth.log' and 'syslog')."
-    elif not (flags.get("RECOVERY_LOCATED", False) and flags.get("PERMISSIONS_RESTORED", False)):
-        return "CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x', and run 'recovery.sh'."
+            return f"CURRENT MISSION: Triage breach logs in '/var/log/'. ({count}/4 incident leads unmasked)."
+    elif not (flags.get("PERMISSIONS_RESTORED", False) and flags.get("SIGINT_UNLOCKED", False)):
+        return "CURRENT MISSION: Recovery tools locked. Explore '/mnt/recovery/bin/', restore execution permissions, and run recovery.sh."
     elif not flags.get("MALWARE_TERMINATED", False):
-        return "CURRENT MISSION: Hunt down rogue miner PID 104 draining 98% CPU. Run 'ps aux' to verify, then terminate with 'kill -9 104'."
+        return "CURRENT MISSION: CPU threshold critical. Audit process table with 'ps' and terminate the rogue miner PID."
     elif not flags.get("NETWORK_ONLINE", False):
-        return "CURRENT MISSION: Network interface offline. Bring adapter 'apollo0' online with 'ip link set apollo0 up' and verify with 'ping'."
+        return "CURRENT MISSION: Network interface offline. Inspect '/etc/network/' and bring interface 'apollo0' online."
     elif not flags.get("PHOENIX_ONLINE", False):
-        return "CURRENT MISSION: Final step! Append auth key from '/mnt/recovery/keys/phoenix.key' to '/etc/phoenix/phoenix.conf' and start 'phoenix_daemon'."
+        return "CURRENT MISSION: Final hurdle! Re-authenticate PHOENIX daemon with recovery key and start service in '/etc/phoenix/'."
     else:
         return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO is fully restored."
 
@@ -68,17 +68,49 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     m7 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
 
     count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
-    m2_label = "2. TRIAGE BREACH     : All incident leads unmasked (4/4)" if flags.get("LOGS_AUDITED") else f"2. TRIAGE BREACH     : Unmask incident clues in /var/log/ ({count}/4 unmasked)"
+    m2_label = "2. TRIAGE BREACH     : All incident leads unmasked (4/4)" if flags.get("LOGS_AUDITED") else f"2. TRIAGE BREACH     : Audit daemons in /var/log/ ({count}/4 unmasked)"
+
+    footer = (
+        "[SHORTCUT ACTIVE]:\n"
+        "Type 'todo' or 'tasks' from any directory to inspect your recovery progress.\n"
+    ) if flags.get("TODO_LINKED", False) else (
+        "[OPERATOR SHORTCUT TIP]:\n"
+        "Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!\n"
+    )
 
     return (
         "================================================================================\n"
         "               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
         "================================================================================\n"
-        f"[{m0}] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'\n"
-        f"[{m1}] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc\n"
+        f"[{m0}] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log\n"
+        f"[{m1}] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/\n"
         f"[{m2}] {m2_label}\n"
-        f"[{m5}] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID 104 with 'ps' & terminate with 'kill -9'\n"
-        f"[{m6}] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'\n"
-        f"[{m7}] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/\n"
+        f"[{m3}] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/\n"
+        f"[{m5}] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate\n"
+        f"[{m6}] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/\n"
+        f"[{m7}] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/\n"
+        "================================================================================\n"
+        f"{footer}"
+        "================================================================================\n"
+    )
+
+
+def get_victory_screen() -> str:
+    return (
+        "\n"
+        "================================================================================\n"
+        "       ★ ★ ★  APOLLO WORKSTATION RESTORATION COMPLETE  ★ ★ ★\n"
+        "================================================================================\n"
+        " [ OK ] Memory Recall Buffer    : Synchronized (TTY line discipline active)\n"
+        " [ OK ] User Shell Environment   : Restored (PATH, aliases & tab-completion online)\n"
+        " [ OK ] Security Log Audit       : Triaged (All 4 intrusion vectors isolated)\n"
+        " [ OK ] Recovery Partition       : Execution permissions & signal traps linked\n"
+        " [ OK ] Process Integrity        : Rogue miner terminated (CPU 0.1% nominal)\n"
+        " [ OK ] Network Interface        : Device apollo0 ONLINE (10.0.42.15/24)\n"
+        " [ OK ] PHOENIX Restoration Svc  : Daemon listening on 127.0.0.1:8080 (Gateway UP)\n"
+        "================================================================================\n"
+        "*** WORKSTATION OPERATIONAL: MISSION ACCOMPLISHED ***\n"
+        "Operator alice: You successfully diagnosed, triaged, and recovered APOLLO!\n"
+        "Type 'exit' to disconnect or 'help' to review recovered subsystems.\n"
         "================================================================================\n"
     )

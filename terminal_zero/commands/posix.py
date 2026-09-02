@@ -6,23 +6,29 @@ from terminal_zero.core.vfs import VFSNode
 from terminal_zero.core.state import CommandContext, CommandResult
 
 
-CLUE_DESCRIPTIONS = {
-    "ALERT_0x01": ("ALERT-0x01", "Rogue Miner identified", "PID: 104 (sys_miner)"),
-    "ALERT_0x02": ("ALERT-0x02", "Tampered Sector located", "/mnt/recovery/bin/recovery.sh (stripped)"),
-    "ALERT_0x03": ("ALERT-0x03", "Degraded Interface isolated", "apollo0 link state DOWN"),
-    "ALERT_0x04": ("ALERT-0x04", "Service Failure isolated", "phoenix-sync terminated by signal 9"),
+CLUE_SIGNATURES = {
+    "ALERT_0x01": ("ALERT-0x01", "Rogue miner deployed", "Rogue Miner identified", "PID: 104 (sys_miner)"),
+    "ALERT_0x02": ("ALERT-0x02", "Recovery binary stripped", "Tampered Sector located", "/mnt/recovery/bin/recovery.sh (stripped)"),
+    "ALERT_0x03": ("ALERT-0x03", "apollo0 link state degraded", "Degraded Interface isolated", "apollo0 link state DOWN"),
+    "ALERT_0x04": ("ALERT-0x04", "phoenix-sync", "Service Failure isolated", "phoenix-sync terminated by signal 9"),
 }
 
 
-def check_clue_discovery(ctx: CommandContext, text_displayed: str) -> str:
+def check_clue_discovery(ctx: CommandContext, text_displayed: str, source_targets: Optional[List[str]] = None) -> str:
     if not text_displayed:
         return ""
+
+    if source_targets:
+        for tgt in source_targets:
+            clean = tgt.rstrip("/").split("/")[-1]
+            if clean in ["INCIDENT_REPORT.log", "TODO.txt", "README.txt", "BOOT_FAIL.log"]:
+                return ""
 
     discovered_now = []
     clues_state = getattr(ctx.state, "discovered_clues", {})
 
-    for clue_key, (tag, title, detail) in CLUE_DESCRIPTIONS.items():
-        if tag in text_displayed:
+    for clue_key, (tag, signature, title, detail) in CLUE_SIGNATURES.items():
+        if tag in text_displayed and signature in text_displayed:
             if not clues_state.get(clue_key, False):
                 clues_state[clue_key] = True
                 ctx.bus.publish(Event("clue_discovered", {"clue_id": clue_key}))
@@ -31,7 +37,7 @@ def check_clue_discovery(ctx: CommandContext, text_displayed: str) -> str:
     if not discovered_now:
         return ""
 
-    total_unmasked = sum(1 for k in CLUE_DESCRIPTIONS if clues_state.get(k, False))
+    total_unmasked = sum(1 for k in CLUE_SIGNATURES if clues_state.get(k, False))
     header = f"│ [!] INCIDENT DOSSIER UPDATED ({total_unmasked}/4 Leads Unmasked)"
     header_padded = f"{header:<72} │"
     notice = [
@@ -92,18 +98,22 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"cat: {filepath}: No such file or directory\n", exit_code=1)
 
+        if node.is_dir():
+            return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
+
         user = ctx.state.env.get("USER", "alice")
         allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
         if not allowed or (node.permissions == "000" and node.owner != user):
             return ctx.result_factory(stderr=f"cat: {filepath}: Permission denied\n", exit_code=1)
 
-        if node.is_dir():
-            return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
+        if filepath.endswith("README.txt") or filepath == "README.txt":
+            if not ctx.state.system_flags.get("README_INSPECTED", False):
+                ctx.state.system_flags["README_INSPECTED"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
         output.append(node.content if node.content is not None else "")
 
     full_output = "".join(output)
-    discovery_banner = check_clue_discovery(ctx, full_output)
-    return ctx.result_factory(stdout=full_output + discovery_banner)
+    return ctx.result_factory(stdout=full_output)
 
 
 def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -131,8 +141,7 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
         if ctx.stdin:
             lines = ctx.stdin.splitlines(keepends=True)[:lines_count]
             content = "".join(lines)
-            discovery_banner = check_clue_discovery(ctx, content)
-            return ctx.result_factory(stdout=content + discovery_banner)
+            return ctx.result_factory(stdout=content)
         return ctx.result_factory(stderr="head: missing file operand\n", exit_code=1)
 
     output = []
@@ -148,12 +157,15 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
 
         if node.is_dir():
             return ctx.result_factory(stderr=f"head: error reading '{filepath}': Is a directory\n", exit_code=1)
+        if filepath.endswith("README.txt") or filepath == "README.txt":
+            if not ctx.state.system_flags.get("README_INSPECTED", False):
+                ctx.state.system_flags["README_INSPECTED"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
         output.append("".join(lines))
 
     full_output = "".join(output)
-    discovery_banner = check_clue_discovery(ctx, full_output)
-    return ctx.result_factory(stdout=full_output + discovery_banner)
+    return ctx.result_factory(stdout=full_output)
 
 
 def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -197,8 +209,7 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
                     "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
                     "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
                 )
-            discovery_banner = check_clue_discovery(ctx, output)
-            return ctx.result_factory(stdout=output + discovery_banner)
+            return ctx.result_factory(stdout=output)
         return ctx.result_factory(stderr="tail: missing file operand\n", exit_code=1)
 
     output = []
@@ -226,8 +237,7 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
             "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
         )
 
-    discovery_banner = check_clue_discovery(ctx, result_text)
-    return ctx.result_factory(stdout=result_text + discovery_banner)
+    return ctx.result_factory(stdout=result_text)
 
 
 def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -279,9 +289,8 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
         if ctx.stdin:
             matched_lines = evaluate_text(ctx.stdin)
             out = "\n".join(matched_lines) + ("\n" if matched_lines else "")
-            discovery_banner = check_clue_discovery(ctx, out)
             return ctx.result_factory(
-                stdout=out + discovery_banner,
+                stdout=out,
                 exit_code=0 if matched_lines else 1
             )
         return ctx.result_factory(stderr="grep: missing file operand\n", exit_code=2)
@@ -316,7 +325,7 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
             matched_lines.extend(evaluate_text(node.content or "", display_tag))
 
     res_text = "\n".join(matched_lines) + ("\n" if matched_lines else "")
-    discovery_banner = check_clue_discovery(ctx, res_text)
+    discovery_banner = check_clue_discovery(ctx, res_text, files)
     return ctx.result_factory(
         stdout=res_text + discovery_banner,
         exit_code=0 if matched_lines else 1
@@ -554,7 +563,10 @@ def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
             idx += 1
 
     if not pid_str or not pid_str.isdigit():
-        return ctx.result_factory(stderr="kill: invalid pid or signal specification\n", exit_code=1)
+        return ctx.result_factory(
+            stderr="kill: invalid pid or signal specification (use numeric PID from 'ps aux', e.g. 'kill -9 104')\n",
+            exit_code=1
+        )
 
     target_pid = int(pid_str)
 

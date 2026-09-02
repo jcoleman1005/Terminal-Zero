@@ -144,9 +144,9 @@ class PipelineEngine:
 
         if vfs_node and vfs_node.is_file():
             # Guard against executing text / log / config data files directly
-            if any(cmd_name.endswith(ext) for ext in [".txt", ".log", ".conf", ".key", ".md"]):
+            if any(cmd_name.endswith(ext) for ext in [".txt", ".log", ".conf", ".key", ".md", ".bash_history", ".bashrc"]):
                 return ctx.result_factory(
-                    stderr=f"bash: {cmd_name}: cannot execute text file (use 'cat {cmd_name}' to read contents)\n",
+                    stderr=f"bash: {cmd_name}: cannot execute binary file: Exec format error\n",
                     exit_code=126
                 )
 
@@ -160,10 +160,12 @@ class PipelineEngine:
             if base_name in self.commands:
                 return self.commands[base_name](ctx, args)
             elif base_name == "recovery.sh":
+                ctx.state.system_flags["RECOVERY_LOCATED"] = True
                 ctx.state.system_flags["PERMISSIONS_RESTORED"] = True
                 ctx.state.system_flags["SIGINT_UNLOCKED"] = True
                 ctx.state.unlocked_ergonomics["sigint"] = True
                 ctx.state.unlocked_ergonomics["sigint_trap"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "RECOVERY_LOCATED", "value": True}))
                 ctx.bus.publish(Event("flag_changed", {"flag": "PERMISSIONS_RESTORED", "value": True}))
                 ctx.bus.publish(Event("flag_changed", {"flag": "SIGINT_UNLOCKED", "value": True}))
                 return ctx.result_factory(
@@ -172,8 +174,13 @@ class PipelineEngine:
                         "Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.\n"
                     )
                 )
+            elif base_name.endswith(".sh"):
+                return ctx.result_factory(stdout=f"[EXEC]: Executed shell script '{cmd_name}'\n")
             else:
-                return ctx.result_factory(stdout=f"[EXEC]: Executed binary '{cmd_name}'\n")
+                return ctx.result_factory(
+                    stderr=f"bash: {cmd_name}: cannot execute binary file: Exec format error\n",
+                    exit_code=126
+                )
 
         return ctx.result_factory(stderr=f"bash: {cmd_name}: command not found\n", exit_code=127)
 
@@ -181,6 +188,21 @@ class PipelineEngine:
         line = raw_input.strip()
         if not line:
             return CommandResult()
+        if line.startswith("#"):
+            return CommandResult(stdout="", stderr="", exit_code=0)
+
+        if line == "note" or line.startswith("note ") or line == "feedback" or line.startswith("feedback "):
+            cmd_name = "note" if (line == "note" or line.startswith("note ")) else "feedback"
+            raw_msg = line[len(cmd_name):].strip()
+            args = [raw_msg] if raw_msg else []
+            stage_ctx = CommandContext(
+                vfs=state.vfs,
+                state=state,
+                bus=self.bus,
+                stdin=""
+            )
+            if cmd_name in self.commands:
+                return self.commands[cmd_name](stage_ctx, args)
 
         stages_text = split_unquoted(line, "|")
         current_stdin = ""

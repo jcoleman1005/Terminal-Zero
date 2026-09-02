@@ -1,0 +1,442 @@
+PS C:\Active Projects\Terminal Zero> python terminal_zero.py
+================================================================================
+           APOLLO WORKSTATION OS v2.4 (x86_64-apollo-linux-gnu)
+================================================================================
+[ 0.001 ] Kernel initialized (Linux 5.15.0-apollo)
+[ 0.042 ] Checking hardware ring buffers........ [DEGRADED] -> Up/Down history recall offline
+[ 0.088 ] Loading shell user environment........ [ FAILED ] -> Shell profile missing (~/.bashrc)
+[ 0.120 ] Security subsystem audit.............. [ ALERT  ] -> Intrusion traces detected in /var/log/
+[ 0.195 ] Process supervisor integrity.......... [CRITICAL] -> Rogue miner active @ 98% CPU (/tmp/sys_miner)
+[ 0.240 ] Network link status (apollo0)......... [  DOWN  ] -> Network interface apollo0 offline
+[ 0.310 ] Cluster restoration gateway........... [INACTIVE] -> Cluster restoration gateway offline
+================================================================================
+*** SYSTEM IN EMERGENCY RECOVERY MODE ***
+Operator: alice (tty1) | Host: apollo | Location: /home/alice
+
+ONBOARDING ACTIONS:
+  • Type 'ls' to look around your current directory.
+  • Type 'cd <folder>' (e.g. 'cd diagnostics') to move into a folder.
+  • Type 'cat <filename>' (e.g. 'cat README.txt') to read file contents.
+  • Type 'exit' to disconnect from session.
+================================================================================
+
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD
+================================================================================
+BASIC NAVIGATION ACTIONS:
+  • ls             : Look around (list visible files and folders).
+  • cd <folder>    : Move into a folder (e.g. 'cd diagnostics' or 'cd ..' to go back).
+  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').
+  • pwd            : Check what folder you are currently standing in.
+  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.
+  • sync           : Save workstation progress to persistent disk.
+
+OPERATOR INCIDENT LOG:
+  1. Move into the diagnostics folder with 'cd diagnostics'.
+  2. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.
+  3. Run 'repair_buffer' to restore command history recall.
+================================================================================
+alice@apollo:/home/alice$ #README and opening instructions are too repetitive, README should only contain new informati
+on. Also what's to stop me from just running repair_buffer from here and bypassing the BOOT_FAIL.log. README should jus
+t have commands, no other instructions
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ TODO.txt
+bash: TODO.txt: cannot execute binary file: Exec format error
+alice@apollo:/home/alice$ cat TODO.txt
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[ ] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log
+[ ] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/
+[ ] 2. TRIAGE BREACH     : Audit daemons in /var/log/ (0/4 unmasked)
+[ ] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/
+[ ] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate
+[ ] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/
+[ ] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+================================================================================
+alice@apollo:/home/alice$ #This might just be a polish thing, but I naturally don't read through the entire file, I jus
+t skip to the end, see a command and type it.
+alice@apollo:/home/alice$ taskctl link
+[taskctl]: Linking '/home/alice/TODO.txt' to shell command vector...
+[!] SHORTCUT REGISTERED: Global commands 'todo' and 'tasks' are now active!
+Type 'todo' from any directory to inspect your recovery progress.
+alice@apollo:/home/alice$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[ ] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log
+[ ] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/
+[ ] 2. TRIAGE BREACH     : Audit daemons in /var/log/ (0/4 unmasked)
+[ ] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/
+[ ] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate
+[ ] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/
+[ ] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+================================================================================
+alice@apollo:/home/alice$ #Reword Shortcut tip: "Run the shortcut command by typing 'taskctl link' to access this docum
+ent by typing todo or tasks."
+alice@apollo:/home/alice$ #once the taskctl link command has been run, reword Shortcut tip to just say "Type todo or ta
+sks to bring up this document
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cat diagnostics
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ # no error for improper cat command
+alice@apollo:/home/alice$ cd diagnostics
+alice@apollo:/home/alice/diagnostics$ ls
+BOOT_FAIL.log  INCIDENT_REPORT.log
+alice@apollo:/home/alice/diagnostics$ cat BOOT_FAIL.log
+[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.
+[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.
+alice@apollo:/home/alice/diagnostics$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/home/alice/diagnostics$ #Maybe hide the take it to linux card and have the player choose to view it or no
+t [Y,N] option?
+alice@apollo:/home/alice/diagnostics$ ls
+BOOT_FAIL.log  INCIDENT_REPORT.log
+alice@apollo:/home/alice/diagnostics$ cat INCIDENT_REPORT.log
+================================================================================
+        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [CLASSIFIED DOSSIER (0/4 LEADS UNMASKED)]
+================================================================================
+ [ALERT-0x01] INTRUDER PROCESS : Attacker deployed rogue miner -> [ REDACTED_PID ]
+ [ALERT-0x02] TAMPERED SECTOR  : Core recovery binary stripped   -> [ REDACTED_PATH ]
+ [ALERT-0x03] HARDWARE STATUS  : Network interface knocked DOWN  -> [ REDACTED_DEVICE ]
+ [ALERT-0x04] DAEMON STATUS    : Cluster service terminated      -> [ REDACTED_SERVICE ]
+================================================================================
+INVESTIGATION DIRECTIVE: Audit compromised daemon logs in /var/log/ with 'cat',
+'head', 'tail', or 'grep' to uncover matching incident leads.
+================================================================================
+alice@apollo:/home/alice/diagnostics$ cd /var/log/
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ cat HOW_TO_READ_LOGS.txt
+================================================================================
+          APOLLO SECOPS FIELD MANUAL // HOW TO READ SYSTEM LOGS
+================================================================================
+Alice — when an attack happens, system daemons log events to /var/log/.
+Raw logs look dense, but every line follows a strict 4-part anatomy:
+
+  [ TIMESTAMP ]  [ HOST ]  [ DAEMON/SERVICE ]   [ EVENT MESSAGE ]
+  03:38:10       apollo    sshd[204]:           Invalid user operator from 192.168.1.105
+  └── When       └── Where └── Who logged it    └── What actually happened
+
+--------------------------------------------------------------------------------
+1. THE 4 COMMON INCIDENT DAEMONS:
+--------------------------------------------------------------------------------
+• 'sshd[PID]'   : Secure Shell logins.
+                  - "Failed password" = Unauthorized login attempt (brute force).
+                  - "Accepted password" = Successful breach / intruder entry.
+
+• 'sudo'        : Administrator privilege escalation.
+                  - "COMMAND=..." = Exact command executed with root powers.
+
+• 'kernel'      : Core OS hardware & network events.
+                  - "Interface link state degraded: DOWN" = Network port disabled.
+
+• 'systemd[1]'  : System service supervisor.
+                  - "code=killed, status=9/KILL" = Service forcefully terminated.
+
+--------------------------------------------------------------------------------
+2. YOUR LOG INVESTIGATION TOOLKIT:
+--------------------------------------------------------------------------------
+• cat <file>            : Stream an entire log from start to finish.
+• head -n 5 <file>      : Peek at the earliest events (e.g. system boot).
+• tail -n 10 <file>     : Focus on the latest events (e.g. recent attack activity).
+• grep -i "pattern" <file>: Filter the noise to find specific keywords or error tags.
+
+--------------------------------------------------------------------------------
+3. THE INVESTIGATOR'S MINDSET:
+--------------------------------------------------------------------------------
+When triaging a compromised machine, ask yourself three core questions:
+  1. Entry Point  : How did the intruder get in, and what commands did they run?
+  2. Persistence  : Did they spawn any hidden background processes or alter files?
+  3. Sabotage     : What network ports or critical services did they take down?
+
+Use your filtering tools to investigate the logs and uncover the trail.
+================================================================================
+alice@apollo:/var/log$ #This needs to be broken up and serve as breadcrumbs for the player to piece together
+alice@apollo:/var/log$ note
+[PLAYTEST NOTE]: Usage: note <your feedback here without quotes>
+alice@apollo:/var/log$ note The daemon explaination doesn't seem to serve any purpose. Why do I care about these?
+bash: syntax error: No closing quotation
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ cat auth.log
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You filtered security logs in /var/log to isolate the intrusion.       │
+│ In real Linux systems:                                                 │
+│ • 'grep -i' searches case-insensitively for key strings in logs.       │
+│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│
+└────────────────────────────────────────────────────────────────────────┘
+[INFO]: System boot complete.
+ [WARN]: Normal PAM session opened for user root.
+ [WARN]: Normal PAM session closed for user root.
+ [WARN]: Normal PAM session opened for user alice.
+ [WARN]: Normal PAM session closed for user alice.
+03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218
+03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2
+03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2
+03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status
+[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).
+[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (2/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x01] Rogue Miner identified -> PID: 104 (sys_miner)        │
+│   ✓ [ALERT-0x02] Tampered Sector located -> /mnt/recovery/bin/recovery.sh (stripped) │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/var/log$ #Ok so the game told me I unmasked leads, but I didn't know that. We need a way for the player t
+o enter or copy the correct clues into a file to prove that they understand what they are looking for.
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ cat system.log
+03:40:12 apollo kernel: eth0 link down
+03:42:19 apollo systemd: phoenix-sync terminated
+alice@apollo:/var/log$ #Ok so when= 0340, where = apollo, who = systemd, what = something called phoenix-sync was termi
+nated
+alice@apollo:/var/log$ cd apollo
+bash: cd: apollo: No such file or directory
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ cd syslog
+bash: cd: syslog: Not a directory
+alice@apollo:/var/log$ cat syslog
+03:40:01 apollo systemd[1]: Starting System Logging Service...
+03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)
+03:40:12 apollo kernel: [ALERT-0x03] Interface apollo0 link state degraded: DOWN
+03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0
+03:42:19 apollo systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL
+03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (4/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x03] Degraded Interface isolated -> apollo0 link state DOWN │
+│   ✓ [ALERT-0x04] Service Failure isolated -> phoenix-sync terminated by signal 9 │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/var/log$ #again i was told that I discovered something, but I don't know what. The colors are a good hint
+, we just need the player to do something with the information
+alice@apollo:/var/log$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log
+[ ] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/
+[x] 2. TRIAGE BREACH     : All incident leads unmasked (4/4)
+[ ] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/
+[ ] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate
+[ ] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/
+[ ] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+================================================================================
+alice@apollo:/var/log$ cd /opt/backup/
+alice@apollo:/opt/backup$ ls
+phoenix.conf  profiles
+alice@apollo:/opt/backup$ cat phoenix.conf
+[PHOENIX_DAEMON_CONFIG]
+LISTEN_PORT=8080
+GATEWAY=10.0.42.1
+alice@apollo:/opt/backup$ #I don't know what this is. Not a big deal, but we need to make sure that the player needs to
+ come back here at some point
+alice@apollo:/opt/backup$ ls
+phoenix.conf  profiles
+alice@apollo:/opt/backup$ cd profiles
+alice@apollo:/opt/backup/profiles$ ls
+NOTE_FROM_MORGAN.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat NOTE_FROM_MORGAN.txt
+// MORGAN [03:42 AM] — INCIDENT OVERRIDE
+Alice — during the breach, your shell profile was wiped out, which broke your
+command search paths and shortcuts.
+
+I left a clean backup template right here ('alice.bashrc').
+
+To clone it back into your home directory, write it over with '>':
+  cat alice.bashrc > /home/alice/.bashrc
+
+(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)
+Once that's in place, your tools and shortcuts will wake back up.
+alice@apollo:/opt/backup/profiles$ #just following the instructions...
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc > /home/alice/.bashrc
+
+[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized
+Custom shortcuts active (try 'll' to list files).
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Shell Startup Profiles & Environment Variables    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You restored ~/.bashrc to re-enable tab autocompletion and $PATH.     │
+│ In real Linux systems:                                                 │
+│ • ~/.bashrc runs for interactive non-login shells.                     │
+│ • The $PATH variable defines directory search order for executables.   │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/opt/backup/profiles$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 NOTE_FROM_MORGAN.txt
+-rw-r--r-- 1 root root 4096 alice.bashrc
+alice@apollo:/opt/backup/profiles$ # there needs to be a hidden file right here for the player to discover by typing ll
+ immediately. Also are the numbers and roots needed to be displayed? If so we need to tell the player what they are see
+ing.
+alice@apollo:/opt/backup/profiles$ cd ~
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ task
+bash: task: command not found
+alice@apollo:/home/alice$ tasks
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log
+[x] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/
+[x] 2. TRIAGE BREACH     : All incident leads unmasked (4/4)
+[ ] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/
+[ ] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate
+[ ] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/
+[ ] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+================================================================================
+alice@apollo:/home/alice$ cd /mnt/recovery/
+alice@apollo:/mnt/recovery$ ls
+bin  docs  keys
+alice@apollo:/mnt/recovery$ #a MORGAN_NOTE here would be good, telling the player about chmod
+alice@apollo:/mnt/recovery$ ls
+bin  docs  keys
+alice@apollo:/mnt/recovery$ cd docs
+alice@apollo:/mnt/recovery/docs$ ls
+
+alice@apollo:/mnt/recovery/docs$ ls -a
+.  ..
+alice@apollo:/mnt/recovery/docs$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+alice@apollo:/mnt/recovery/docs$ cd ..
+alice@apollo:/mnt/recovery$ ls
+bin  docs  keys
+alice@apollo:/mnt/recovery$ cd bin
+alice@apollo:/mnt/recovery/bin$ ls
+apollo-net  phoenix_ctl  recovery-tool  recovery.sh  repair_buffer
+alice@apollo:/mnt/recovery/bin$ recovery-tool
+bash: recovery-tool: Permission denied
+alice@apollo:/mnt/recovery/bin$ cat recovery.sh
+cat: recovery.sh: Permission denied
+alice@apollo:/mnt/recovery/bin$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/mnt/recovery/bin$ #repair_buffer should be in a different location sep from these other docs/commands so
+the player doesn't end up in this directory too early
+alice@apollo:/mnt/recovery/bin$ ls
+apollo-net  phoenix_ctl  recovery-tool  recovery.sh  repair_buffer
+alice@apollo:/mnt/recovery/bin$ apollo-net
+[APOLLO-NET v1.0]: Subnet link state is DOWN. Gateway 10.0.42.1
+alice@apollo:/mnt/recovery/bin$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log
+[x] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/
+[x] 2. TRIAGE BREACH     : All incident leads unmasked (4/4)
+[ ] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/
+[ ] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate
+[ ] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/
+[ ] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+================================================================================
+alice@apollo:/mnt/recovery/bin$ cd ..
+alice@apollo:/mnt/recovery$ ls
+bin  docs  keys
+alice@apollo:/mnt/recovery$ cd keys
+alice@apollo:/mnt/recovery/keys$ ls
+phoenix.key
+alice@apollo:/mnt/recovery/keys$ phoenix.key
+bash: phoenix.key: cannot execute binary file: Exec format error
+alice@apollo:/mnt/recovery/keys$ decrypt
+┌──────────────────────────────────────────────────────────┐
+│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │
+└──────────────────────────────────────────────────────────┘
+SOURCE FAULT: bash: phoenix.key: cannot execute binary file: Exec format error
+[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]
+Subsystem failure registered in execution pipeline.
+Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'.
+alice@apollo:/mnt/recovery/keys$ cat phoenix.key
+PX-KEY-7701-ALPHA
+alice@apollo:/mnt/recovery/keys$ ls
+phoenix.key
+alice@apollo:/mnt/recovery/keys$ cd ..
+alice@apollo:/mnt/recovery$ ls
+bin  docs  keys
+alice@apollo:/mnt/recovery$ # I'm lost
+alice@apollo:/mnt/recovery$ tree
+/mnt/recovery
+├── bin
+│   ├── apollo-net
+│   ├── phoenix_ctl
+│   ├── recovery-tool
+│   ├── recovery.sh
+│   └── repair_buffer
+├── docs
+└── keys
+    └── phoenix.key
+alice@apollo:/mnt/recovery$ cd ~
+alice@apollo:/home/alice$
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD
+================================================================================
+BASIC NAVIGATION ACTIONS:
+  • ls             : Look around (list visible files and folders).
+  • cd <folder>    : Move into a folder (e.g. 'cd diagnostics' or 'cd ..' to go back).
+  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').
+  • pwd            : Check what folder you are currently standing in.
+  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.
+  • sync           : Save workstation progress to persistent disk.
+
+OPERATOR INCIDENT LOG:
+  1. Move into the diagnostics folder with 'cd diagnostics'.
+  2. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.
+  3. Run 'repair_buffer' to restore command history recall.
+================================================================================
+alice@apollo:/home/alice$ exit

@@ -30,6 +30,15 @@ from terminal_zero.commands.diegetic import (
     cmd_man,
     cmd_restore,
     cmd_help,
+    cmd_note,
+    cmd_feedback,
+    cmd_taskctl,
+    cmd_todo,
+    cmd_tasks,
+    cmd_triage_process,
+    cmd_triage_sector,
+    cmd_triage_interface,
+    cmd_triage_service,
 )
 
 
@@ -66,6 +75,15 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "reboot": cmd_reboot,
         "reset": cmd_reboot,
         "restart": cmd_reboot,
+        "note": cmd_note,
+        "feedback": cmd_feedback,
+        "taskctl": cmd_taskctl,
+        "todo": cmd_todo,
+        "tasks": cmd_tasks,
+        "triage_process": cmd_triage_process,
+        "triage_sector": cmd_triage_sector,
+        "triage_interface": cmd_triage_interface,
+        "triage_service": cmd_triage_service,
     }
 
 

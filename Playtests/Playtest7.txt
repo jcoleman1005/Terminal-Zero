@@ -1,0 +1,243 @@
+=== APOLLO WORKSTATION TERMINAL [RECOVERY MODE] ===
+System degraded. Type 'help' for guidance or inspect 'README.txt'.
+Type 'exit' to disconnect.
+
+alice@apollo:/home/alice$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+│   • ls -a          : Reveal hidden files (starting with a dot .)       │
+└────────────────────────────────────────────────────────────────────────┘
+
+[?] 6 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Command recall memory is offline. Read 'BOOT_FAIL.log' and run 'repair_buffer' to restore Up/Down arrow history.
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  INCIDENT_REPORT.log  README.txt  TODO.txt
+alice@apollo:/home/alice$ cat BOOT_FAIL.log
+[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.
+[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.
+alice@apollo:/home/alice$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/home/alice$ cat TODO.txt
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'
+[ ] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc
+[ ] 2. TRIAGE BREACH     : Unmask incident clues in /var/log/ (0/4 unmasked)
+[ ] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID 104 with 'ps' & terminate with 'kill -9'
+[ ] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'
+[ ] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/
+================================================================================
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD
+================================================================================
+QUICK NAVIGATION ACTIONS:
+  • ls             : Look around (list visible files in current folder).
+  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').
+  • pwd            : Check what folder you are currently standing in.
+  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.
+  • sync           : Save workstation progress to persistent disk.
+
+OPERATOR INCIDENT LOG:
+  1. Inspect 'BOOT_FAIL.log' using 'cat' to diagnose initial hardware failure.
+  2. Run 'repair_buffer' to restore command history recall.
+================================================================================
+alice@apollo:/home/alice$ ll
+bash: ll: command not found
+alice@apollo:/home/alice$ la
+bash: la: command not found
+alice@apollo:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .note.txt  BOOT_FAIL.log  INCIDENT_REPORT.log  README.txt  TODO.txt
+alice@apollo:/home/alice$ cat .note.txt
+// STICKY NOTE TAPED TO MONITOR:
+Alice — your shell profile (.bashrc) got deleted during the incident.
+I stored a backup template in /opt/backup/profiles/.
+Head over there ('cd /opt/backup/profiles') and read my note to get your shortcuts back!
+— Morgan
+alice@apollo:/home/alice$ cd /opt/backup/profiles
+alice@apollo:/opt/backup/profiles$ ls -a
+.  ..  CHEAT_SHEET.txt  NOTE_FROM_MORGAN.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat NOTE_FROM_MORGAN.txt
+// MORGAN [03:42 AM] — INCIDENT OVERRIDE
+Alice — during the breach, your shell profile was wiped out, which broke your
+command search paths and shortcuts.
+
+I left a clean backup template right here ('alice.bashrc').
+
+To clone it back into your home directory, write it over with '>':
+  cat alice.bashrc > /home/alice/.bashrc
+
+(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)
+Once that's in place, your tools and shortcuts will wake back up.
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc > ~/.bashrc
+
+[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized
+Custom shortcuts active (try 'll' to list files).
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Shell Startup Profiles & Environment Variables    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You restored ~/.bashrc to re-enable tab autocompletion and $PATH.     │
+│ In real Linux systems:                                                 │
+│ • ~/.bashrc runs for interactive non-login shells.                     │
+│ • The $PATH variable defines directory search order for executables.   │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/opt/backup/profiles$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 CHEAT_SHEET.txt
+-rw-r--r-- 1 root root 4096 NOTE_FROM_MORGAN.txt
+-rw-r--r-- 1 root root 4096 alice.bashrc
+alice@apollo:/opt/backup/profiles$ cd ..
+alice@apollo:/opt/backup$ ls
+phoenix.conf  profiles
+alice@apollo:/opt/backup$ cat phoenix.conf
+[PHOENIX_DAEMON_CONFIG]
+LISTEN_PORT=8080
+GATEWAY=10.0.42.1
+alice@apollo:/opt/backup$ cd ~
+alice@apollo:/home/alice$ ls
+BOOT_FAIL.log  INCIDENT_REPORT.log  README.txt  TODO.txt
+alice@apollo:/home/alice$ cat TODO.txt
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'
+[x] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc
+[ ] 2. TRIAGE BREACH     : Unmask incident clues in /var/log/ (0/4 unmasked)
+[ ] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID 104 with 'ps' & terminate with 'kill -9'
+[ ] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'
+[ ] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/
+================================================================================
+alice@apollo:/home/alice$ cd /var/log/
+alice@apollo:/var/log$ ls
+auth.log  syslog  system.log
+alice@apollo:/var/log$ cat auth.log
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You filtered security logs in /var/log to isolate the intrusion.       │
+│ In real Linux systems:                                                 │
+│ • 'grep -i' searches case-insensitively for key strings in logs.       │
+│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│
+└────────────────────────────────────────────────────────────────────────┘
+[INFO]: System boot complete.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+ [WARN]: Normal PAM session.
+03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218
+03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2
+03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2
+03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status
+[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).
+[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (2/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x01] Rogue Miner identified -> PID: 104 (sys_miner)        │
+│   ✓ [ALERT-0x02] Tampered Sector located -> /mnt/recovery/bin/recovery.sh (stripped) │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/var/log$ ls
+auth.log  syslog  system.log
+alice@apollo:/var/log$ cat syslog
+03:40:01 apollo systemd[1]: Starting System Logging Service...
+03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)
+03:40:12 apollo kernel: [ALERT-0x03] Interface apollo0 link state degraded: DOWN
+03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0
+03:42:19 apollo systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL
+03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (4/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x03] Degraded Interface isolated -> apollo0 link state DOWN │
+│   ✓ [ALERT-0x04] Service Failure isolated -> phoenix-sync terminated by signal 9 │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/var/log$ ls
+auth.log  syslog  system.log
+alice@apollo:/var/log$ system.log
+bash: system.log: cannot execute text file (use 'cat system.log' to read contents)
+alice@apollo:/var/log$ cat system.log
+03:40:12 apollo kernel: eth0 link down
+03:42:19 apollo systemd: phoenix-sync terminated
+alice@apollo:/var/log$ cd ~
+alice@apollo:/home/alice$ cat TODO.txt
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] 0. RESTORE RECALL    : Command history dead   -> Run 'repair_buffer'
+[x] 1. REBUILD PROFILE   : Shell shortcuts missing-> Copy /opt/backup/profiles/alice.bashrc to ~/.bashrc
+[x] 2. TRIAGE BREACH     : All incident leads unmasked (4/4)
+[ ] 3. HUNT ROGUE MINER  : 98% CPU drain          -> Locate rogue PID 104 with 'ps' & terminate with 'kill -9'
+[ ] 4. ACTIVATE UPLINK   : Network offline        -> Bring 'apollo0' interface online with 'ip link'
+[ ] 5. RESTART DAEMON    : PHOENIX offline        -> Re-link auth key & boot daemon in /etc/phoenix/
+================================================================================
+alice@apollo:/home/alice$ help
+┌────────────────────────────────────────────────────────────────────────┐
+│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │
+├────────────────────────────────────────────────────────────────────────┤
+│ BASIC SURVIVAL TOOLKIT:                                                │
+│   • ls             : Look around (list visible files in current folder)│
+│   • cat <file>     : Open and read a file's contents                   │
+│   • pwd            : Check what folder you are currently standing in   │
+│   • decrypt        : Ask APOLLO AI to diagnose your last error         │
+│   • sync           : Save your game progress to persistent storage     │
+│   • reboot / reset : Restart the game from cold boot                   │
+└────────────────────────────────────────────────────────────────────────┘
+
+RECOVERED SUBSYSTEM UTILITIES:
+  • cd <folder>    : Walk into a folder (e.g. 'cd /opt/backup/profiles').
+  • man <command>  : Read complete utility manual.
+  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').
+  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').
+
+[?] 4 subsystem toolset(s) offline / hidden until restored.
+
+CURRENT MISSION: Leads unmasked! Head to '/mnt/recovery/bin', unlock execution with 'chmod +x recovery.sh', and run 'recovery.sh'.
+alice@apollo:/home/alice$ echo "Playtest note: No real idea of what to do next. The last few steps I just followed the
+prompts. The narrative needs to be a bit more present to sell the fantasy. There needs to be a log file that explains t
+he system logs in plaintext."
+Playtest note: No real idea of what to do next. The last few steps I just followed the prompts. The narrative needs to be a bit more present to sell the fantasy. There needs to be a log file that explains the system logs in plaintext.
+alice@apollo:/home/alice$
