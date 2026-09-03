@@ -22,7 +22,7 @@ class TerminalState:
         self.env: Dict[str, str] = {
             "USER": "alice",
             "HOME": "/home/alice",
-            "HOST": "apollo",
+            "HOST": "osiris",
             "TERM": "xterm-256color",
             "PATH": "/bin:/usr/bin"
         }
@@ -64,7 +64,7 @@ class TerminalState:
         ]
         self.network_interfaces: Dict[str, Dict[str, Any]] = {
             "lo": {"ip": "127.0.0.1/8", "state": "UP", "mac": "00:00:00:00:00:00"},
-            "apollo0": {"ip": "10.0.42.15/24", "state": "DOWN", "mac": "52:54:00:12:34:56"}
+            "osiris0": {"ip": "10.0.42.15/24", "state": "DOWN", "mac": "52:54:00:12:34:56"}
         }
         # Initial state: only sshd listening (port 8080 binds dynamically when phoenix_daemon starts)
         self.listening_sockets: List[Dict[str, Any]] = [

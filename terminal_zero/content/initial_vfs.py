@@ -46,9 +46,9 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     # Standard Binaries in /bin and /usr/bin
     for b in [
-        "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "apollo-diagnostics",
+        "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "osiris-diagnostics", "apollo-diagnostics",
         "chmod", "man", "ps", "kill", "ip", "ss", "ping", "head", "tail", "grep", "find",
-        "repair_buffer", "phoenix_ctl", "phoenix_daemon", "apollo-net", "tree",
+        "repair_buffer", "phoenix_ctl", "phoenix_daemon", "osiris-net", "apollo-net", "tree",
         "note", "feedback", "taskctl", "todo", "tasks", "manuals", "docs", "fieldguide",
         "triage_process", "triage_sector", "triage_interface", "triage_service"
     ]:
@@ -59,7 +59,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file(
         "/etc/motd",
         "================================================================================\n"
-        "                    APOLLO WORKSTATION // KERNEL v5.19.0-24\n"
+        "                    OSIRIS WORKSTATION // KERNEL v5.19.0-24\n"
         "================================================================================\n"
         " [ALERT] SYSTEM INTEGRITY COMPROMISED. AUTOMATIC QUARANTINE PROTOCOL ACTIVE.\n"
         " [ALERT] WAN LINK SEVERED. PRIMARY LINE DISCIPLINE DRIVERS CORRUPTED.\n"
@@ -76,7 +76,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 0: /home/alice & /home/alice/diagnostics
     readme_content = (
         "// ============================================================================\n"
-        "// APOLLO WORKSTATION // EMERGENCY OPERATOR PROTOCOL\n"
+        "// OSIRIS WORKSTATION // EMERGENCY OPERATOR PROTOCOL\n"
         "// ============================================================================\n"
         "Alice—\n\n"
         "If you're seeing this on your screen, the automated lockdown caught you at your\n"
@@ -105,7 +105,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/home/alice/README.txt", readme_content, perms="644", owner="alice")
 
     boot_fail_content = (
-        "[03:41:02.109] [KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
+        "[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
         "[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n"
         "[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.\n"
         "[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.\n"
@@ -123,12 +123,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # /etc/os-release (System Information)
     add_file(
         "/etc/os-release",
-        "NAME=\"Apollo Workstation OS\"\n"
+        "NAME=\"Osiris Workstation OS\"\n"
         "VERSION=\"2.4 LTS (Recovery Build 0x42)\"\n"
-        "ID=apollo\n"
+        "ID=osiris\n"
         "ID_LIKE=debian\n"
-        "PRETTY_NAME=\"Apollo OS 2.4 (x86_64-apollo-linux-gnu)\"\n"
-        "HOME_URL=\"https://apollo.internal/workstation\"\n",
+        "PRETTY_NAME=\"Osiris OS 2.4 (x86_64-osiris-linux-gnu)\"\n"
+        "HOME_URL=\"https://osiris.internal/workstation\"\n",
         perms="644",
         owner="root"
     )
@@ -152,8 +152,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PRIORITY: HIGH\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PRIORITY: HIGH\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM\n"
         "// FILE: /opt/backup/profiles/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
@@ -209,10 +209,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/opt/backup/profiles/.HOW_TO_READ_LL.txt", ll_guide_content, perms="644", owner="root")
     
     alice_bashrc_content = (
-        "# Clean Operator Profile for APOLLO Workstation (User: alice)\n"
+        "# Clean Operator Profile for OSIRIS Workstation (User: alice)\n"
         "# Base environment initialization & Readline recovery\n"
         "export PATH=\"/bin:/usr/bin:/opt/phoenix/bin\"\n"
-        "export PS1=\"\\u@apollo:\\w\\$ \"\n\n"
+        "export PS1=\"\\u@osiris:\\w\\$ \"\n\n"
         "# Readline Ergonomics & Completion Hooks\n"
         "bind 'set show-all-if-ambiguous on'\n"
         "bind 'set completion-ignore-case on'\n"
@@ -269,8 +269,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 2: /var/log/
     var_log_morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // LOG TRIAGE\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // LOG TRIAGE\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM\n"
         "// FILE: /var/log/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
@@ -297,12 +297,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     how_to_read_logs_content = (
         "================================================================================\n"
-        "          APOLLO SECOPS FIELD MANUAL // HOW TO READ SYSTEM LOGS\n"
+        "          OSIRIS SECOPS FIELD MANUAL // HOW TO READ SYSTEM LOGS\n"
         "================================================================================\n"
         "Alice — when an attack happens, system daemons log events to /var/log/.\n"
         "Raw logs look dense, but every line follows a strict 4-part anatomy:\n\n"
         "  [ TIMESTAMP ]  [ HOST ]  [ DAEMON/SERVICE ]   [ EVENT MESSAGE ]\n"
-        "  03:38:10       apollo    sshd[204]:           Invalid user operator from 192.168.1.105\n"
+        "  03:38:10       osiris    sshd[204]:           Invalid user operator from 192.168.1.105\n"
         "  └── When       └── Where └── Who logged it    └── What actually happened\n\n"
         "--------------------------------------------------------------------------------\n"
         "1. THE 4 COMMON INCIDENT DAEMONS:\n"
@@ -339,7 +339,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "   • \033[1;33mgrep -i 'error' /var/log/syslog\033[0m\n\n"
         "2. FILTER RUNAWAY PROCESSES & HARDWARE LINKS:\n"
         "   • \033[1;33mgrep -i 'miner' /var/log/auth.log\033[0m\n"
-        "   • \033[1;33mgrep -i 'apollo0' /var/log/syslog\033[0m\n\n"
+        "   • \033[1;33mgrep -i 'osiris0' /var/log/syslog\033[0m\n\n"
         "3. SHOW LINE NUMBERS & EXCLUDE NOISY DAEMONS:\n"
         "   • \033[1;33mgrep -n -i 'failed' /var/log/auth.log\033[0m   (Show line numbers)\n"
         "   • \033[1;33mgrep -v 'systemd' /var/log/syslog\033[0m      (Invert match: strip daemon noise)\n"
@@ -374,59 +374,59 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/var/log/REPAIR_COMMANDS.txt", repair_commands_content, perms="644", owner="root")
 
     auth_lines = [
-        "[2042-10-11 03:00:12] apollo sshd[102]: Server listening on 0.0.0.0 port 22.",
-        "[2042-10-11 03:02:15] apollo login[115]: Accepted password for alice from 127.0.0.1.",
-        "[2042-10-11 03:15:22] apollo systemd[1]: Started User Manager for UID 1000.",
-        "[2042-10-11 03:22:40] apollo sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg",
-        "[2042-10-11 03:38:19] apollo sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]",
-        "[2042-10-11 03:40:02] apollo auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99",
-        "[2042-10-11 03:41:45] apollo auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.",
-        "[2042-10-11 03:42:01] apollo kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.",
-        "[2042-10-11 03:42:15] apollo kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).",
-        "[2042-10-11 03:42:30] apollo kernel: ALERT-0x03: apollo0 link state degraded -> Device: apollo0 (link: DOWN).",
-        "[2042-10-11 03:42:48] apollo kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.",
-        "[2042-10-11 03:43:00] apollo auth: Emergency containment active. User session sandboxed."
+        "[2042-10-11 03:00:12] osiris sshd[102]: Server listening on 0.0.0.0 port 22.",
+        "[2042-10-11 03:02:15] osiris login[115]: Accepted password for alice from 127.0.0.1.",
+        "[2042-10-11 03:15:22] osiris systemd[1]: Started User Manager for UID 1000.",
+        "[2042-10-11 03:22:40] osiris sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg",
+        "[2042-10-11 03:38:19] osiris sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]",
+        "[2042-10-11 03:40:02] osiris auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99",
+        "[2042-10-11 03:41:45] osiris auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.",
+        "[2042-10-11 03:42:01] osiris kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.",
+        "[2042-10-11 03:42:15] osiris kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).",
+        "[2042-10-11 03:42:30] osiris kernel: ALERT-0x03: osiris0 link state degraded -> Device: osiris0 (link: DOWN).",
+        "[2042-10-11 03:42:48] osiris kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.",
+        "[2042-10-11 03:43:00] osiris auth: Emergency containment active. User session sandboxed."
     ]
     add_file("/var/log/auth.log", "\n".join(auth_lines) + "\n", perms="640", owner="root")
 
     syslog_lines = [
-        "03:40:01 apollo systemd[1]: Starting System Logging Service...",
-        "03:40:02 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)",
-        "03:40:02 apollo kernel: [    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-apollo root=/dev/sda1 ro quiet",
-        "03:40:03 apollo kernel: [    0.042100] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'",
-        "03:40:03 apollo kernel: [    0.042105] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'",
-        "03:40:04 apollo systemd[1]: Mounted Huge Pages File System.",
-        "03:40:04 apollo systemd[1]: Mounted POSIX Message Queue File System.",
-        "03:40:05 apollo systemd[1]: Started Dispatch Password Requests to Console Directory Watch.",
-        "03:40:06 apollo kernel: [    0.108420] e1000e: Intel(R) PRO/1000 Network Driver",
-        "03:40:07 apollo kernel: [    0.108422] e1000e 0000:00:03.0 eth0: (PCI Express:2.5GT/s:Width x1) 52:54:00:12:34:56",
-        "03:40:08 apollo systemd[1]: Reached target Local Encrypted Volumes.",
-        "03:40:09 apollo systemd[1]: Listening on Syslog Socket.",
-        "03:40:10 apollo systemd[1]: Reached target Network (Pre).",
-        "03:40:12 apollo kernel: [ALERT-0x03] Interface apollo0 link state degraded: DOWN",
-        "03:40:15 apollo systemd[1]: Starting Network Time Synchronization...",
-        "03:40:18 apollo systemd-timesyncd[110]: Network configuration changed, trying to establish connection.",
-        "03:40:22 apollo systemd[1]: Started Network Time Synchronization.",
-        "03:40:30 apollo systemd[1]: Reached target System Time Set.",
-        "03:40:45 apollo systemd[1]: Starting Rotate log files...",
-        "03:40:50 apollo systemd[1]: logrotate.service: Deactivated successfully.",
-        "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0",
-        "03:41:15 apollo kernel: [   12.401920] perf: interrupt took too long (2510 > 2500), lowering kernel.perf_event_max_sample_rate to 50000",
-        "03:41:30 apollo systemd[1]: Starting Periodic ext4 Online Metadata Check...",
-        "03:41:40 apollo systemd[1]: e4defrag.service: Deactivated successfully.",
-        "03:42:00 apollo kernel: [   14.881200] CPU0: Core temperature above threshold, cpu clock throttled",
-        "03:42:19 apollo systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL",
-        "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.",
-        "03:42:25 apollo systemd[1]: phoenix-sync.service: Scheduled restart job, restart counter is at 1.",
-        "03:42:30 apollo systemd[1]: Stopped Phoenix Synchronization Service.",
-        "03:43:00 apollo kernel: [   18.109200] audit: type=1100 audit(1652341380.120:45): pid=104 uid=0 auid=1000 ses=1 msg='op=PAM:accounting grantors=pam_unix,pam_permit acct=\"root\" exe=\"/tmp/sys_miner\" hostname=? addr=? terminal=? res=success'",
-        "03:43:15 apollo systemd[1]: Starting Daily Cleanup of Temporary Directories...",
-        "03:43:20 apollo systemd[1]: systemd-tmpfiles-clean.service: Deactivated successfully."
+        "03:40:01 osiris systemd[1]: Starting System Logging Service...",
+        "03:40:02 osiris kernel: [    0.000000] Linux version 5.15.0-osiris (gcc 11.2.0)",
+        "03:40:02 osiris kernel: [    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-osiris root=/dev/sda1 ro quiet",
+        "03:40:03 osiris kernel: [    0.042100] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'",
+        "03:40:03 osiris kernel: [    0.042105] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'",
+        "03:40:04 osiris systemd[1]: Mounted Huge Pages File System.",
+        "03:40:04 osiris systemd[1]: Mounted POSIX Message Queue File System.",
+        "03:40:05 osiris systemd[1]: Started Dispatch Password Requests to Console Directory Watch.",
+        "03:40:06 osiris kernel: [    0.108420] e1000e: Intel(R) PRO/1000 Network Driver",
+        "03:40:07 osiris kernel: [    0.108422] e1000e 0000:00:03.0 eth0: (PCI Express:2.5GT/s:Width x1) 52:54:00:12:34:56",
+        "03:40:08 osiris systemd[1]: Reached target Local Encrypted Volumes.",
+        "03:40:09 osiris systemd[1]: Listening on Syslog Socket.",
+        "03:40:10 osiris systemd[1]: Reached target Network (Pre).",
+        "03:40:12 osiris kernel: [ALERT-0x03] Interface osiris0 link state degraded: DOWN",
+        "03:40:15 osiris systemd[1]: Starting Network Time Synchronization...",
+        "03:40:18 osiris systemd-timesyncd[110]: Network configuration changed, trying to establish connection.",
+        "03:40:22 osiris systemd[1]: Started Network Time Synchronization.",
+        "03:40:30 osiris systemd[1]: Reached target System Time Set.",
+        "03:40:45 osiris systemd[1]: Starting Rotate log files...",
+        "03:40:50 osiris systemd[1]: logrotate.service: Deactivated successfully.",
+        "03:41:00 osiris sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0",
+        "03:41:15 osiris kernel: [   12.401920] perf: interrupt took too long (2510 > 2500), lowering kernel.perf_event_max_sample_rate to 50000",
+        "03:41:30 osiris systemd[1]: Starting Periodic ext4 Online Metadata Check...",
+        "03:41:40 osiris systemd[1]: e4defrag.service: Deactivated successfully.",
+        "03:42:00 osiris kernel: [   14.881200] CPU0: Core temperature above threshold, cpu clock throttled",
+        "03:42:19 osiris systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL",
+        "03:42:19 osiris systemd[1]: phoenix-sync.service: Failed with result 'signal'.",
+        "03:42:25 osiris systemd[1]: phoenix-sync.service: Scheduled restart job, restart counter is at 1.",
+        "03:42:30 osiris systemd[1]: Stopped Phoenix Synchronization Service.",
+        "03:43:00 osiris kernel: [   18.109200] audit: type=1100 audit(1652341380.120:45): pid=104 uid=0 auid=1000 ses=1 msg='op=PAM:accounting grantors=pam_unix,pam_permit acct=\"root\" exe=\"/tmp/sys_miner\" hostname=? addr=? terminal=? res=success'",
+        "03:43:15 osiris systemd[1]: Starting Daily Cleanup of Temporary Directories...",
+        "03:43:20 osiris systemd[1]: systemd-tmpfiles-clean.service: Deactivated successfully."
     ]
     add_file("/var/log/syslog", "\n".join(syslog_lines) + "\n", perms="644", owner="root")
     add_file(
         "/var/log/system.log",
-        "03:40:12 apollo kernel: eth0 link down\n03:42:19 apollo systemd: phoenix-sync terminated\n",
+        "03:40:12 osiris kernel: eth0 link down\n03:42:19 osiris systemd: phoenix-sync terminated\n",
         perms="644",
         owner="root"
     )
@@ -434,8 +434,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 3 & 4: /mnt/recovery/
     mnt_recovery_morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // RECOVERY MOUNT\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // RECOVERY MOUNT\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM\n"
         "// FILE: /mnt/recovery/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
@@ -479,8 +479,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     permissions_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // SECURITY LOCKDOWN\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // SECURITY LOCKDOWN\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM\n"
         "// FILE: /mnt/recovery/bin/PERMISSIONS_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
@@ -507,7 +507,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     recovery_sh_content = (
         "#!/bin/bash\n"
-        "# APOLLO WORKSTATION // SUBSYSTEM RESTORATION SCRIPT\n"
+        "# OSIRIS WORKSTATION // SUBSYSTEM RESTORATION SCRIPT\n"
         "# Re-links kernel signal handlers and line disciplines.\n\n"
         "echo \"[RECOVERY]: Probing line discipline vector registers...\"\n"
         "sleep 0.5\n"
@@ -517,14 +517,15 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file("/mnt/recovery/bin/recovery.sh", recovery_sh_content, perms="000", owner="root")
 
-    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]\n", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/osiris-net", "ELF 64-bit LSB executable [OSIRIS-NET v1.0]\n", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [OSIRIS-NET v1.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]\n", perms="000", owner="root")
 
     phoenix_key_content = (
         "-----BEGIN PHOENIX CLUSTER AUTHORIZATION TOKEN-----\n"
         "AUTH_TOKEN=PX-KEY-7701-ALPHA-SIGINT-TRAP-VECTOR-ENABLED\n"
-        "CLUSTER_ID=APOLLO-GRID-01\n"
+        "CLUSTER_ID=OSIRIS-GRID-01\n"
         "ISSUED=2042-10-11T03:30:00Z\n"
         "SIGNATURE=d8e8fca2dc018b63b7e411b9802de922c091ad55\n"
         "-----END PHOENIX CLUSTER AUTHORIZATION TOKEN-----\n"
@@ -534,8 +535,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # /tmp/ Morgan Note
     tmp_morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PROCESS REMEDIATION\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PROCESS REMEDIATION\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM\n"
         "// FILE: /tmp/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
@@ -580,15 +581,15 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 5: /etc/network/interfaces & NOTE_FROM_MORGAN.txt
     network_morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // NETWORK RECOVERY\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // NETWORK RECOVERY\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM\n"
         "// FILE: /etc/network/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "The miner is dead and CPU load is back to normal, but the machine is still\n"
         "isolated. The attack toggled our primary network adapter off at the driver level.\n\n"
         "Check the hardware definitions in 'interfaces' using 'cat'.\n\n"
-        "You'll see our interface name is 'apollo0' and our local subnet gateway is\n"
+        "You'll see our interface name is 'osiris0' and our local subnet gateway is\n"
         "located at 10.0.42.1.\n\n"
         "To restore connectivity:\n"
         "1. Inspect the current adapter link state:\n"
@@ -607,14 +608,14 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/etc/network/NETWORK_ADVISORY.txt", network_morgan_note, perms="644", owner="root")
 
     interfaces_content = (
-        "# APOLLO WORKSTATION NETWORK INTERFACE CONFIGURATION\n"
+        "# OSIRIS WORKSTATION NETWORK INTERFACE CONFIGURATION\n"
         "# Local loopback interface\n"
         "auto lo\n"
         "iface lo inet loopback\n\n"
         "# Primary Ethernet uplink (Degraded by automated containment)\n"
         "# Hardware MAC: 52:54:00:12:34:56\n"
-        "auto apollo0\n"
-        "iface apollo0 inet static\n"
+        "auto osiris0\n"
+        "iface osiris0 inet static\n"
         "    address 10.0.42.15/24\n"
         "    gateway 10.0.42.1\n"
         "    dns-nameservers 10.0.42.1\n"
@@ -624,8 +625,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     # Milestone 6: /etc/phoenix/ & Fallback Backups
     phoenix_morgan_note = (
         "// ============================================================================\n"
-        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PHOENIX CLUSTER DAEMON\n"
-        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM\n"
+        "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PHOENIX CLUSTER DAEMON\n"
+        "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM\n"
         "// FILE: /etc/phoenix/NOTE_FROM_MORGAN.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"

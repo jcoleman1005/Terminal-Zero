@@ -7,7 +7,7 @@ def get_incident_dossier(clues: Optional[Dict[str, bool]] = None) -> str:
 
     c1 = "\033[1;32mPID: 104 (sys_miner)\033[0m" if clues.get("ALERT_0x01") else "\033[1;30m[ REDACTED_PID ]\033[0m"
     c2 = "\033[1;32m/mnt/recovery/bin/recovery.sh (mode: 000)\033[0m" if clues.get("ALERT_0x02") else "\033[1;30m[ REDACTED_PATH ]\033[0m"
-    c3 = "\033[1;32mDevice: apollo0 (link: DOWN)\033[0m" if clues.get("ALERT_0x03") else "\033[1;30m[ REDACTED_DEVICE ]\033[0m"
+    c3 = "\033[1;32mDevice: osiris0 (link: DOWN)\033[0m" if clues.get("ALERT_0x03") else "\033[1;30m[ REDACTED_DEVICE ]\033[0m"
     c4 = "\033[1;32mphoenix-sync.service (killed)\033[0m" if clues.get("ALERT_0x04") else "\033[1;30m[ REDACTED_SERVICE ]\033[0m"
 
     count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
@@ -15,7 +15,7 @@ def get_incident_dossier(clues: Optional[Dict[str, bool]] = None) -> str:
 
     return (
         "================================================================================\n"
-        f"        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [{status_header}]\n"
+        f"        OSIRIS WORKSTATION // INCIDENT RECOVERY DOSSIER [{status_header}]\n"
         "================================================================================\n"
         f" \033[1;31m[ALERT-0x01]\033[0m INTRUDER PROCESS : Attacker deployed rogue miner -> {c1}\n"
         f" \033[1;33m[ALERT-0x02]\033[0m TAMPERED SECTOR  : Core recovery binary stripped   -> {c2}\n"
@@ -48,11 +48,11 @@ def get_primary_goal(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     elif not flags.get("MALWARE_TERMINATED", False):
         return "CURRENT MISSION: CPU threshold critical @ 98%. Locate and terminate the high-CPU rogue miner process with 'kill -9'."
     elif not flags.get("NETWORK_ONLINE", False):
-        return "CURRENT MISSION: Physical network adapter offline. Inspect '/etc/network/interfaces', bring device 'apollo0' online, and verify gateway."
+        return "CURRENT MISSION: Physical network adapter offline. Inspect '/etc/network/interfaces', bring device 'osiris0' online, and verify gateway."
     elif not flags.get("PHOENIX_ONLINE", False):
         return "CURRENT MISSION: Cluster supervisor offline. Append key to '/etc/phoenix/phoenix.conf' via '>>', set permissions ('chmod 644'), and launch daemon."
     else:
-        return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO cluster gateway is fully restored."
+        return "MISSION ACCOMPLISHED: All workstation subsystems nominal! OSIRIS cluster gateway is fully restored."
 
 
 def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = None) -> str:
@@ -155,7 +155,7 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     p5_text = (
         f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
         f"    • [{p5_1}] Inspect interface definitions in /etc/network/interfaces\n"
-        f"    • [{p5_2}] Bring physical interface 'apollo0' online via 'ip link'\n"
+        f"    • [{p5_2}] Bring physical interface 'osiris0' online via 'ip link'\n"
         f"    • [{p5_3}] Verify gateway reachability with ping probe ('ping -c 4 10.0.42.1')\n\n"
     ) if 5 <= active_phase else (
         f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
@@ -183,7 +183,7 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
 
     return (
         "================================================================================\n"
-        "               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
+        "               OSIRIS WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
         "================================================================================\n"
         f"{p0_text}"
         f"{p1_text}"
@@ -203,10 +203,10 @@ def get_victory_screen() -> str:
         "\n"
         "[PHOENIX-DAEMON]: Handshake verified with gateway node 10.0.42.1:8080.\n"
         "[PHOENIX-DAEMON]: Ingress routing tables broadcasted across subnet.\n"
-        "[PHOENIX-DAEMON]: Workstation APOLLO verified as AUTHENTIC ROOT CLUSTER NODE.\n"
+        "[PHOENIX-DAEMON]: Workstation OSIRIS verified as AUTHENTIC ROOT CLUSTER NODE.\n"
         "\n"
         "================================================================================\n"
-        "                        APOLLO WORKSTATION RECOVERED\n"
+        "                        OSIRIS WORKSTATION RECOVERED\n"
         "================================================================================\n"
         "  All local subsystems operational. Global mesh synchronization initialized.\n"
         "  Workstation containment lifted. Terminal session secured.\n"
@@ -225,4 +225,5 @@ def get_victory_screen() -> str:
         "I'll see you on the network.\"\n"
         "================================================================================\n"
     )
+
 

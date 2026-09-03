@@ -14,58 +14,58 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
     last_err = ctx.state.last_stderr.strip()
     if not last_err:
         return ctx.result_factory(
-            stdout="[APOLLO-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
+            stdout="[OSIRIS-DIAGNOSTIC]: No recent hardware or kernel fault recorded in buffer.\n"
         )
 
     if "command not found" in last_err:
         cmd_candidate = last_err.split(":")[1].strip().split()[0] if ":" in last_err else ""
         if cmd_candidate == "append":
             diag = (
-                "[APOLLO-DIAGNOSTIC: FAULT 0x1D - SHELL REDIRECTION ADVISORY]\n"
+                "[OSIRIS-DIAGNOSTIC: FAULT 0x1D - SHELL REDIRECTION ADVISORY]\n"
                 "'append' is an action, not a standalone shell command.\n"
                 "In Linux shells, use double-arrow redirection '>>' to append data to a file.\n"
                 "Example: cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf"
             )
         else:
             diag = (
-                f"[APOLLO-DIAGNOSTIC: FAULT 0x02 - UTILITY UNAVAILABLE]\n"
+                f"[OSIRIS-DIAGNOSTIC: FAULT 0x02 - UTILITY UNAVAILABLE]\n"
                 f"Binary '{cmd_candidate or 'command'}' was corrupted or stripped during the incident.\n"
                 f"Action: Type 'help' or inspect 'TODO.txt' to review active recovery tools."
             )
     elif "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
             "Notice: The '<' and '>' in Morgan's notes represent placeholder names, not literal characters.\n"
             "Action: Replace '<profile_src>' with 'alice.bashrc' and '<target_path>' with '/home/alice/.bashrc'.\n"
             "Exact command: cat alice.bashrc > /home/alice/.bashrc"
         )
     elif "cannot execute text file" in last_err or ("Permission denied" in last_err and any(ext in last_err for ext in [".txt", ".log", ".conf", ".key"])):
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1E - NON-EXECUTABLE STREAM]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x1E - NON-EXECUTABLE STREAM]\n"
             "Target is a plain-text document, not an executable program.\n"
             "Action: Use 'cat <file>' or 'head <file>' to view file contents."
         )
     elif "Authentication token missing" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x5B - AUTHENTICATION REQUIRED]\n"
             "Daemon initialization aborted: Missing cryptographic authentication key in configuration.\n"
             "Action: Retrieve key from /mnt/recovery/keys/phoenix.key and append to /etc/phoenix/phoenix.conf via '>>'."
         )
     elif "Insecure permissions" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
             "Configuration file permissions rejected by daemon security audit (mode must be 0644).\n"
             "Action: Run 'chmod 644 /etc/phoenix/phoenix.conf' to secure configuration permissions."
         )
     elif "Missing configuration file" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x0A - NODE NOT FOUND]\n"
             "Required service configuration file missing from /etc/phoenix/.\n"
             "Action: Restore fallback template from /etc/phoenix/phoenix.conf.default or /opt/backup/phoenix.conf."
         )
     elif "Operation not permitted" in last_err and "phoenix" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2D - ACCESS RESTRICTED]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x2D - ACCESS RESTRICTED]\n"
             "/opt/phoenix is locked by root system services.\n"
             "Action: Investigate incident logs in /var/log/ to trace the breach before accessing system services."
         )
@@ -86,68 +86,68 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
             node, _ = ctx.vfs.get_node(ctx.state.current_path, dotname)
             if node:
                 diag = (
-                    f"[APOLLO-DIAGNOSTIC: FAULT 0x1A - HIDDEN NODE MATCH]\n"
+                    f"[OSIRIS-DIAGNOSTIC: FAULT 0x1A - HIDDEN NODE MATCH]\n"
                     f"File '{basename}' not found, but hidden file '{dotname}' exists in this directory.\n"
                     f"Action: Type 'cat {dotname}' to view it. (Remember hidden dotfiles start with a dot '.')"
                 )
             else:
                 diag = (
-                    "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+                    "[OSIRIS-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
                     "Target node does not exist in the active directory tree.\n"
                     "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
                 )
         else:
             diag = (
-                "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+                "[OSIRIS-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
                 "Target node does not exist in the active directory tree.\n"
                 "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
             )
     elif "Is a directory" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
             "Target path resolves to a directory node, but the requested binary requires a file stream.\n"
             "Action: Use 'cd' to traverse or 'ls' to inspect contents."
         )
     elif "Not a directory" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1C - INVALID TRAVERSAL]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x1C - INVALID TRAVERSAL]\n"
             "Cannot traverse into a standard data file.\n"
             "Action: Use 'cat', 'head', or 'tail' to read file contents."
         )
     elif "Permission denied" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x2E - ACCESS RESTRICTED]\n"
             "Node execution or read/write bits are disabled.\n"
             "Action: Use 'chmod +x <target>' or 'chmod 755 <target>' to elevate node permissions."
         )
     elif "Network is unreachable" in last_err or "network unreachable" in last_err.lower() or "network gateway unreachable" in last_err.lower():
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x3D - NETWORK OFFLINE]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x3D - NETWORK OFFLINE]\n"
             "Virtual network interface link state is DOWN.\n"
-            "Action: Run 'ip link set apollo0 up' to activate the network adapter and verify routing."
+            "Action: Run 'ip link set osiris0 up' to activate the network adapter and verify routing."
         )
     elif "No such process" in last_err or "invalid signal specification" in last_err or "invalid pid" in last_err or "kill:" in last_err:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x5E - NUMERIC PID REQUIRED]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x5E - NUMERIC PID REQUIRED]\n"
             "Notice: 'kill' requires a numeric Process ID (PID), not a process name or command string.\n"
             "Action: Run 'ps aux' to find the rogue miner's numeric PID in the PID column, then terminate it with 'kill -9 104'."
         )
     elif any(k in last_err.lower() for k in ["missing file operand", "missing pattern", "missing argument", "option requires", "invalid line count", "invalid count", "invalid mode"]):
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x05 - ARITY MISMATCH]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x05 - ARITY MISMATCH]\n"
             "Command invoked without mandatory arguments or with malformed options.\n"
             "Action: Run 'man <command>' to inspect supported syntax."
         )
     else:
         diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]\n"
+            "[OSIRIS-DIAGNOSTIC: FAULT 0x99 - GENERAL EXCEPTION]\n"
             "Subsystem failure registered in execution pipeline.\n"
             "Action: Consult system logs in /var/log/syslog or inspect command manual via 'man'."
         )
 
     output = (
         "┌──────────────────────────────────────────────────────────┐\n"
-        "│ APOLLO RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │\n"
+        "│ OSIRIS RECOVERY DAEMON v2.4 — ERROR BUFFER TRANSLATION   │\n"
         "└──────────────────────────────────────────────────────────┘\n"
         f"SOURCE FAULT: {last_err}\n"
         f"{diag}\n"
@@ -170,7 +170,7 @@ def cmd_phoenix_daemon(ctx: CommandContext, args: List[str]) -> CommandResult:
     # 1. Validate Network State
     if not ctx.state.system_flags.get("NETWORK_ONLINE", False):
         return ctx.result_factory(
-            stderr="[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.\n", 
+            stderr="[PHOENIX ERROR]: Network gateway unreachable. Interface 'osiris0' is DOWN.\n", 
             exit_code=1
         )
 
@@ -221,12 +221,14 @@ def cmd_phoenix_ctl(ctx: CommandContext, args: List[str]) -> CommandResult:
     return cmd_phoenix_daemon(ctx, args)
 
 
-def cmd_apollo_net(ctx: CommandContext, args: List[str]) -> CommandResult:
-    ctx.bus.publish(Event("command_executed", {"command": "apollo-net", "args": args}))
-    iface_state = ctx.state.network_interfaces.get("apollo0", {}).get("state", "DOWN")
+def cmd_osiris_net(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "osiris-net", "args": args}))
+    iface_state = ctx.state.network_interfaces.get("osiris0", {}).get("state", "DOWN")
     return ctx.result_factory(
-        stdout=f"[APOLLO-NET v1.0]: Subnet link state is {iface_state}. Gateway 10.0.42.1\n"
+        stdout=f"[OSIRIS-NET v1.0]: Subnet link state is {iface_state}. Gateway 10.0.42.1\n"
     )
+
+cmd_apollo_net = cmd_osiris_net
 
 
 def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
@@ -263,7 +265,7 @@ def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     from terminal_zero.engine.repl import get_boot_screen
     reboot_banner = (
-        "\nBroadcast message from root@apollo (tty1) (system reboot):\n\n"
+        "\nBroadcast message from root@osiris (tty1) (system reboot):\n\n"
         "The system is going down for reboot NOW!\n"
         "Restarting system...\n\n"
         + get_boot_screen(ctx.state.system_flags)
@@ -318,13 +320,13 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     lines = [
         "┌────────────────────────────────────────────────────────────────────────┐",
-        "│ APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │",
+        "│ OSIRIS WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD                 │",
         "├────────────────────────────────────────────────────────────────────────┤",
         "│ BASIC SURVIVAL TOOLKIT:                                                │",
         "│   • ls             : Look around (list visible files in current folder)│",
         "│   • cat <file>     : Open and read a file's contents                   │",
         "│   • pwd            : Check what folder you are currently standing in   │",
-        "│   • decrypt        : Ask APOLLO AI to diagnose your last error         │",
+        "│   • decrypt        : Ask OSIRIS AI to diagnose your last error         │",
         "│   • manuals        : Browse collected field manuals and cheat sheets   │",
         "│   • sync           : Save your game progress to persistent storage     │",
         "│   • reboot / reset : Restart the game from cold boot                   │",
@@ -353,7 +355,7 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         discovered.append("  • kill -9 <PID>  : Terminate a runaway rogue process by PID.")
 
     if flags.get("NETWORK_ONLINE"):
-        discovered.append("  • ip addr / link : Manage network interface hardware (e.g. 'ip link set apollo0 up').")
+        discovered.append("  • ip addr / link : Manage network interface hardware (e.g. 'ip link set osiris0 up').")
         discovered.append("  • ss -tulpn      : Inspect active listening network sockets.")
         discovered.append("  • ping <host>    : Send ICMP echo packets to test gateway reachability.")
 
@@ -511,10 +513,10 @@ def cmd_triage_interface(ctx: CommandContext, args: List[str]) -> CommandResult:
             exit_code=1
         )
     val = args[0].strip()
-    if val == "apollo0":
+    if val == "osiris0":
         ctx.state.discovered_clues["ALERT_0x03"] = True
         ctx.bus.publish(Event("clue_discovered", {"clue_id": "ALERT_0x03"}))
-        banner = "\033[1;32m[SUCCESS]: Degraded interface verified!\033[0m Device apollo0 logged in incident dossier.\n"
+        banner = "\033[1;32m[SUCCESS]: Degraded interface verified!\033[0m Device osiris0 logged in incident dossier.\n"
         banner += _check_all_triage_complete(ctx)
         return ctx.result_factory(stdout=banner)
     else:
@@ -578,7 +580,7 @@ def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(
             stdout=(
                 "================================================================================\n"
-                "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS\n"
+                "               OSIRIS WORKSTATION // DISCOVERED FIELD MANUALS\n"
                 "================================================================================\n"
                 "[!] No field manuals recovered yet.\n"
                 "Inspect documentation files using 'cat' to register them in your manual inventory.\n"
@@ -588,7 +590,7 @@ def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     lines = [
         "================================================================================",
-        "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS",
+        "               OSIRIS WORKSTATION // DISCOVERED FIELD MANUALS",
         "================================================================================",
         f"Index of recovered operational guides and cheat sheets ({len(available)} discovered):\n"
     ]
@@ -621,7 +623,7 @@ def cmd_fieldguide(ctx: CommandContext, args: List[str]) -> CommandResult:
         return ctx.result_factory(
             stdout=(
                 "================================================================================\n"
-                "               APOLLO WORKSTATION // LINUX FIELD GUIDE VAULT\n"
+                "               OSIRIS WORKSTATION // LINUX FIELD GUIDE VAULT\n"
                 "================================================================================\n"
                 "[!] No Field Guide entries unlocked yet.\n"
                 "Complete workstation recovery milestones to collect real-world Linux debrief cards!\n"
@@ -631,7 +633,7 @@ def cmd_fieldguide(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     lines = [
         "================================================================================",
-        "               APOLLO WORKSTATION // LINUX FIELD GUIDE VAULT",
+        "               OSIRIS WORKSTATION // LINUX FIELD GUIDE VAULT",
         "================================================================================",
         f"Index of collected real-world Linux administration debriefs ({len(cards)} unlocked):\n"
     ]

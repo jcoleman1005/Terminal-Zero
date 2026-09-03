@@ -9,7 +9,7 @@ from terminal_zero.core.state import CommandContext, CommandResult
 CLUE_SIGNATURES = {
     "ALERT_0x01": ("ALERT-0x01", "Rogue miner deployed", "Rogue Miner identified", "PID: 104 (sys_miner)"),
     "ALERT_0x02": ("ALERT-0x02", "Recovery binary stripped", "Tampered Sector located", "/mnt/recovery/bin/recovery.sh (stripped)"),
-    "ALERT_0x03": ("ALERT-0x03", "apollo0 link state degraded", "Degraded Interface isolated", "apollo0 link state DOWN"),
+    "ALERT_0x03": ("ALERT-0x03", "osiris0 link state degraded", "Degraded Interface isolated", "osiris0 link state DOWN"),
     "ALERT_0x04": ("ALERT-0x04", "phoenix-sync", "Service Failure isolated", "phoenix-sync terminated by signal 9"),
 }
 
@@ -210,10 +210,10 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
                 output += (
                     "\n[LOG STREAM ACTIVE - Press Ctrl+C to abort]\n"
                     "[STREAM ACTIVE - Press Ctrl+C to exit]\n"
-                    "03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state change detected: Interface apollo0 link state UP\n"
-                    "03:45:01 apollo kernel: Process 104 (sys_miner) terminated\n"
-                    "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
-                    "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
+                    "03:45:01 osiris kernel: [SECURITY] Interface osiris0 link state change detected: Interface osiris0 link state UP\n"
+                    "03:45:01 osiris kernel: Process 104 (sys_miner) terminated\n"
+                    "03:45:02 osiris phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
+                    "03:45:05 osiris systemd[1]: Reached target Network (Online).\n"
                 )
             return ctx.result_factory(stdout=output)
         return ctx.result_factory(stderr="tail: missing file operand\n", exit_code=1)
@@ -240,10 +240,10 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
         result_text += (
             "\n[LOG STREAM ACTIVE - Press Ctrl+C to abort]\n"
             "[STREAM ACTIVE - Press Ctrl+C to exit]\n"
-            "03:45:01 apollo kernel: [SECURITY] Interface apollo0 link state change detected: Interface apollo0 link state UP\n"
-            "03:45:01 apollo kernel: Process 104 (sys_miner) terminated\n"
-            "03:45:02 apollo phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
-            "03:45:05 apollo systemd[1]: Reached target Network (Online).\n"
+            "03:45:01 osiris kernel: [SECURITY] Interface osiris0 link state change detected: Interface osiris0 link state UP\n"
+            "03:45:01 osiris kernel: Process 104 (sys_miner) terminated\n"
+            "03:45:02 osiris phoenix_daemon[500]: Listening for restoration heartbeat on 127.0.0.1:8080\n"
+            "03:45:05 osiris systemd[1]: Reached target Network (Online).\n"
         )
 
     return ctx.result_factory(stdout=result_text)
@@ -665,13 +665,13 @@ def cmd_ip(ctx: CommandContext, args: List[str]) -> CommandResult:
 
             if action == "up":
                 ctx.state.network_interfaces[target_iface]["state"] = "UP"
-                if target_iface == "apollo0":
+                if target_iface in ["osiris0", "apollo0"]:
                     ctx.state.system_flags["NETWORK_ONLINE"] = True
                     ctx.bus.publish(Event("flag_changed", {"flag": "NETWORK_ONLINE", "value": True}))
                 return ctx.result_factory()
             elif action == "down":
                 ctx.state.network_interfaces[target_iface]["state"] = "DOWN"
-                if target_iface == "apollo0":
+                if target_iface in ["osiris0", "apollo0"]:
                     ctx.state.system_flags["NETWORK_ONLINE"] = False
                     ctx.bus.publish(Event("flag_changed", {"flag": "NETWORK_ONLINE", "value": False}))
                 return ctx.result_factory()
@@ -696,8 +696,8 @@ def cmd_ip(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     elif subcmd in ["route", "r"]:
         lines = [
-            "default via 10.0.42.1 dev apollo0 proto dhcp src 10.0.42.15 metric 100",
-            "10.0.42.0/24 dev apollo0 proto kernel scope link src 10.0.42.15 metric 100"
+            "default via 10.0.42.1 dev osiris0 proto dhcp src 10.0.42.15 metric 100",
+            "10.0.42.0/24 dev osiris0 proto kernel scope link src 10.0.42.15 metric 100"
         ]
         return ctx.result_factory(stdout="\n".join(lines) + "\n")
 
@@ -748,7 +748,7 @@ def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not target:
         return ctx.result_factory(stderr="ping: usage error: Destination address required\n", exit_code=1)
 
-    iface_state = ctx.state.network_interfaces.get("apollo0", {}).get("state", "DOWN")
+    iface_state = ctx.state.network_interfaces.get("osiris0", ctx.state.network_interfaces.get("apollo0", {})).get("state", "DOWN")
     if iface_state == "DOWN":
         return ctx.result_factory(stderr="ping: connect: Network is unreachable\n", exit_code=2)
 

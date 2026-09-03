@@ -217,8 +217,8 @@ cat alice.bashrc > /home/alice/.bashrc
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // LOG TRIAGE
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // LOG TRIAGE
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM
 // FILE: /var/log/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -257,18 +257,18 @@ reclaim the system.
 ### `/var/log/auth.log`
 
 ```text
-[2042-10-11 03:00:12] apollo sshd[102]: Server listening on 0.0.0.0 port 22.
-[2042-10-11 03:02:15] apollo login[115]: Accepted password for alice from 127.0.0.1.
-[2042-10-11 03:15:22] apollo systemd[1]: Started User Manager for UID 1000.
-[2042-10-11 03:22:40] apollo sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg
-[2042-10-11 03:38:19] apollo sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]
-[2042-10-11 03:40:02] apollo auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99
-[2042-10-11 03:41:45] apollo auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.
-[2042-10-11 03:42:01] apollo kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.
-[2042-10-11 03:42:15] apollo kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).
-[2042-10-11 03:42:30] apollo kernel: ALERT-0x03: apollo0 link state degraded -> Device: apollo0 (link: DOWN).
-[2042-10-11 03:42:48] apollo kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.
-[2042-10-11 03:43:00] apollo auth: Emergency containment active. User session sandboxed.
+[2042-10-11 03:00:12] osiris sshd[102]: Server listening on 0.0.0.0 port 22.
+[2042-10-11 03:02:15] osiris login[115]: Accepted password for alice from 127.0.0.1.
+[2042-10-11 03:15:22] osiris systemd[1]: Started User Manager for UID 1000.
+[2042-10-11 03:22:40] osiris sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg
+[2042-10-11 03:38:19] osiris sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]
+[2042-10-11 03:40:02] osiris auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99
+[2042-10-11 03:41:45] osiris auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.
+[2042-10-11 03:42:01] osiris kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.
+[2042-10-11 03:42:15] osiris kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).
+[2042-10-11 03:42:30] osiris kernel: ALERT-0x03: osiris0 link state degraded -> Device: osiris0 (link: DOWN).
+[2042-10-11 03:42:48] osiris kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.
+[2042-10-11 03:43:00] osiris auth: Emergency containment active. User session sandboxed.
 
 ```
 
@@ -282,8 +282,8 @@ reclaim the system.
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // RECOVERY MOUNT
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // RECOVERY MOUNT
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM
 // FILE: /mnt/recovery/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -324,7 +324,7 @@ Locate them. If you need full option lists for the search utility, run 'man find
 ```text
 -----BEGIN PHOENIX CLUSTER AUTHORIZATION TOKEN-----
 AUTH_TOKEN=PX-KEY-7701-ALPHA-SIGINT-TRAP-VECTOR-ENABLED
-CLUSTER_ID=APOLLO-GRID-01
+CLUSTER_ID=OSIRIS-GRID-01
 ISSUED=2042-10-11T03:30:00Z
 SIGNATURE=d8e8fca2dc018b63b7e411b9802de922c091ad55
 -----END PHOENIX CLUSTER AUTHORIZATION TOKEN-----
@@ -341,8 +341,8 @@ SIGNATURE=d8e8fca2dc018b63b7e411b9802de922c091ad55
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // SECURITY LOCKDOWN
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // SECURITY LOCKDOWN
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM
 // FILE: /mnt/recovery/bin/PERMISSIONS_NOTE.txt
 // ============================================================================
 
@@ -383,7 +383,7 @@ get Ctrl+C (SIGINT) back so you can break out of hung processes.
 
 ```bash
 #!/bin/bash
-# APOLLO WORKSTATION // SUBSYSTEM RESTORATION SCRIPT
+# OSIRIS WORKSTATION // SUBSYSTEM RESTORATION SCRIPT
 # Re-links kernel signal handlers and line disciplines.
 
 echo "[RECOVERY]: Probing line discipline vector registers..."
@@ -402,8 +402,8 @@ echo "[SUCCESS]: Kernel signal table recalibrated. Interactive break handling on
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PROCESS REMEDIATION
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PROCESS REMEDIATION
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM
 // FILE: /tmp/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -446,8 +446,8 @@ Kill the miner so our CPU cools down and frees up the network stack.
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // NETWORK RECOVERY
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // NETWORK RECOVERY
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM
 // FILE: /etc/network/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -458,7 +458,7 @@ isolated. The attack toggled our primary network adapter off at the driver level
 
 Check the hardware definitions in 'interfaces' using 'cat'.
 
-You'll see our interface name is 'apollo0' and our local subnet gateway is 
+You'll see our interface name is 'osiris0' and our local subnet gateway is 
 located at 10.0.42.1.
 
 To restore connectivity:
@@ -485,15 +485,15 @@ uplink is secure. Meet me at /etc/phoenix for the finale.
 ### `/etc/network/interfaces`
 
 ```text
-# APOLLO WORKSTATION NETWORK INTERFACE CONFIGURATION
+# OSIRIS WORKSTATION NETWORK INTERFACE CONFIGURATION
 # Local loopback interface
 auto lo
 iface lo inet loopback
 
 # Primary Ethernet uplink (Degraded by automated containment)
 # Hardware MAC: 52:54:00:12:34:56
-auto apollo0
-iface apollo0 inet static
+auto osiris0
+iface osiris0 inet static
     address 10.0.42.15/24
     gateway 10.0.42.1
     dns-nameservers 10.0.42.1
@@ -510,8 +510,8 @@ iface apollo0 inet static
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PHOENIX CLUSTER DAEMON
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PHOENIX CLUSTER DAEMON
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM
 // FILE: /etc/phoenix/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -599,7 +599,7 @@ FAILOVER_MODE=AUTONOMOUS
 
 ```text
 ================================================================================
-        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [{STATUS_HEADER}]
+        OSIRIS WORKSTATION // INCIDENT RECOVERY DOSSIER [{STATUS_HEADER}]
 ================================================================================
  [ALERT-0x01] INTRUDER PROCESS : Attacker deployed rogue miner -> {c1}
  [ALERT-0x02] TAMPERED SECTOR  : Core recovery binary stripped   -> {c2}
@@ -622,7 +622,7 @@ INVESTIGATION DIRECTIVE: Audit compromised logs in /var/log/ with 'head',
 
 ```text
 ================================================================================
-               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+               OSIRIS WORKSTATION // INCIDENT RECOVERY CHECKLIST
 ================================================================================
 [{p0}] PHASE 0: COLD BOOT & MEMORY RECALL
     • [{p0_1}] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
@@ -647,7 +647,7 @@ INVESTIGATION DIRECTIVE: Audit compromised logs in /var/log/ with 'head',
 
 [{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
     • [{p5_1}] Inspect interface definitions in /etc/network/interfaces
-    • [{p5_2}] Bring physical interface 'apollo0' online via 'ip link'
+    • [{p5_2}] Bring physical interface 'osiris0' online via 'ip link'
     • [{p5_3}] Verify gateway reachability with ping probe ('ping -c 4 10.0.42.1')
 
 [{p6}] PHASE 6: CLUSTER SUPERVISOR DAEMON
@@ -671,10 +671,10 @@ INVESTIGATION DIRECTIVE: Audit compromised logs in /var/log/ with 'head',
 ```text
 [PHOENIX-DAEMON]: Handshake verified with gateway node 10.0.42.1:8080.
 [PHOENIX-DAEMON]: Ingress routing tables broadcasted across subnet.
-[PHOENIX-DAEMON]: Workstation APOLLO verified as AUTHENTIC ROOT CLUSTER NODE.
+[PHOENIX-DAEMON]: Workstation OSIRIS verified as AUTHENTIC ROOT CLUSTER NODE.
 
 ================================================================================
-                        APOLLO WORKSTATION RECOVERED
+                        OSIRIS WORKSTATION RECOVERED
 ================================================================================
   All local subsystems operational. Global mesh synchronization initialized.
   Workstation containment lifted. Terminal session secured.
@@ -826,3 +826,8 @@ These modules unlock dynamically in the system manual reader (`manuals` / `field
 ```
 
 *(Triggered by: `PHOENIX_ONLINE = True`)*
+
+
+OSIRIS: Operational Systems Integration & Recovery Infrastructure System
+
+PHOENIX: Persistent Human Emergency Operations & Infrastructure eXchange

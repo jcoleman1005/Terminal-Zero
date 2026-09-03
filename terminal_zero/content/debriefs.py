@@ -95,7 +95,7 @@ class DebriefManager:
             "│ [TAKE IT TO LINUX]: Network Tooling & Interface Management (ip / ping)       │\n"
             "├──────────────────────────────────────────────────────────────────────────────┤\n"
             "│ What you fixed in the game:                                                  │\n"
-            "│ You brought up interface 'apollo0' with 'ip link' and tested the gateway.    │\n"
+            "│ You brought up interface 'osiris0' with 'ip link' and tested the gateway.     │\n"
             "│                                                                              │\n"
             "│ How real Linux systems handle this:                                          │\n"
             "│ • Modern Linux distributions deprecate old net-tools ('ifconfig') in favor   │\n"

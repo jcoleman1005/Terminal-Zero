@@ -21,23 +21,23 @@ def get_boot_screen(flags: Dict[str, bool]) -> str:
     m1_msg = "User ~/.bashrc profile active" if flags.get("BASHRC_RESTORED") else "Shell profile missing (~/.bashrc)"
     m2_msg = "Incident breach triaged" if flags.get("LOGS_AUDITED") else "Intrusion traces detected in /var/log/"
     m5_msg = "Process supervisor nominal" if flags.get("MALWARE_TERMINATED") else "Rogue miner active @ 98% CPU (/tmp/sys_miner)"
-    m6_msg = "Link state ONLINE (10.0.42.15)" if flags.get("NETWORK_ONLINE") else "Network interface apollo0 offline"
+    m6_msg = "Link state ONLINE (10.0.42.15)" if flags.get("NETWORK_ONLINE") else "Network interface osiris0 offline"
     m7_msg = "Restoration daemon listening on :8080" if flags.get("PHOENIX_ONLINE") else "Cluster restoration gateway offline"
 
     lines = [
         "================================================================================",
-        "           APOLLO WORKSTATION OS v2.4 (x86_64-apollo-linux-gnu)",
+        "           OSIRIS WORKSTATION OS v2.4 (x86_64-osiris-linux-gnu)",
         "================================================================================",
-        "[ 0.001 ] Kernel initialized (Linux 5.15.0-apollo)",
+        "[ 0.001 ] Kernel initialized (Linux 5.15.0-osiris)",
         f"[ 0.042 ] Checking hardware ring buffers........ {m0} -> {m0_msg}",
         f"[ 0.088 ] Loading shell user environment........ {m1} -> {m1_msg}",
         f"[ 0.120 ] Security subsystem audit.............. {m2} -> {m2_msg}",
         f"[ 0.195 ] Process supervisor integrity.......... {m5} -> {m5_msg}",
-        f"[ 0.240 ] Network link status (apollo0)......... {m6} -> {m6_msg}",
+        f"[ 0.240 ] Network link status (osiris0)......... {m6} -> {m6_msg}",
         f"[ 0.310 ] Cluster restoration gateway........... {m7} -> {m7_msg}",
         "================================================================================",
         "*** SYSTEM IN EMERGENCY RECOVERY MODE ***",
-        "Operator: alice (tty1) | Host: apollo | Location: /home/alice",
+        "Operator: alice (tty1) | Host: osiris | Location: /home/alice",
         "",
         "ONBOARDING ACTIONS:",
         "  • Type 'ls' to look around your current directory.",
@@ -78,7 +78,7 @@ class TerminalShell:
 
     def get_prompt(self) -> ANSI:
         user = self.ctx.state.env.get("USER", "alice")
-        host = self.ctx.state.env.get("HOST", "apollo")
+        host = self.ctx.state.env.get("HOST", "osiris")
         cwd = self.ctx.state.cwd_str
         return ANSI(f"\033[1;32m{user}@{host}\033[0m:\033[1;34m{cwd}\033[0m$ ")
 

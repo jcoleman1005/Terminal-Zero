@@ -206,7 +206,7 @@ class PipelineEngine:
         current_stdin = ""
         last_result = CommandResult()
         first_cmd = stages_text[0].strip().split()[0] if stages_text else ""
-        is_decrypt = first_cmd in ["decrypt", "apollo-diagnostics", "note", "feedback"]
+        is_decrypt = first_cmd in ["decrypt", "osiris-diagnostics", "apollo-diagnostics", "note", "feedback"]
 
         for idx, stage_text in enumerate(stages_text):
             parsed, err = self.parse_stage(stage_text)
