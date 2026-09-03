@@ -118,13 +118,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "Alice — during the breach, your shell profile was wiped out, which broke your\n"
         "command search paths and shortcuts.\n\n"
         "I left a clean backup template right here ('alice.bashrc').\n\n"
-        "To clone it back into your home directory, write it over with '>':\n"
-        "  cat alice.bashrc > /home/alice/.bashrc\n\n"
-        "(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)\n\n"
-        "Once restored, try typing 'll' right here.\n"
-        "The 'll' shortcut not only displays full file details (permissions, owner, size),\n"
-        "it also reveals secret hidden files and directories starting with a dot (.)!\n\n"
-        "[PRO TIP]: Restoring ~/.bashrc re-enables [TAB] autocompletion!\n"
+        "To clone it back into your home directory, overwrite your profile with '>':\n"
+        "  \033[1;33mcat alice.bashrc > ~/.bashrc\033[0m\n\n"
+        "Once restored, try typing '\033[1;33mll\033[0m' right here.\n"
+        "The '\033[1;33mll\033[0m' shortcut displays full file details and reveals secret hidden files\n"
+        "and cheat sheets starting with a dot (\033[1;36m.\033[0m) that I scattered across the system!\n\n"
+        "[PRO TIP]: Restoring ~/.bashrc also re-enables [TAB] autocompletion!\n"
         "Type 'cd /o' and press [TAB] anywhere to autocomplete long paths instantly.\n"
     )
     add_file("/opt/backup/profiles/NOTE_FROM_MORGAN.txt", morgan_note, perms="644", owner="root")
@@ -150,7 +149,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "                 '-' = Permission revoked / missing.\n\n"
         "[KEY RECOVERY TAKEAWAY]:\n"
         "If a tool has '---' instead of 'r-x' or 'rwx', it cannot run!\n"
-        "You can restore executable permissions on any file using 'chmod +x <filename>'.\n"
+        "You can restore executable permissions on any file using: \033[1;33mchmod +x <filename>\033[0m\n"
         "================================================================================\n"
     )
     add_file("/opt/backup/profiles/.HOW_TO_READ_LL.txt", ll_guide_content, perms="644", owner="root")
@@ -194,15 +193,15 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "             SYSADMIN PROTOCOLS // PROCESSES, MODES & NETWORKING\n"
         "================================================================================\n"
         "1. PROCESS SUPERVISION & SIGNALS:\n"
-        "   • 'ps aux'         : Inspect the active Process Status table (PID, %CPU, COMMAND).\n"
-        "   • 'kill -9 <PID>'  : Dispatch forceful SIGKILL signal to terminate runaway tasks.\n\n"
+        "   • \033[1;33mps aux\033[0m          : Inspect active system processes (PID, %CPU, COMMAND).\n"
+        "   • \033[1;33mkill -9 <PID>\033[0m   : Dispatch forceful SIGKILL signal to terminate rogue tasks.\n\n"
         "2. PERMISSIONS & FILE MODES:\n"
-        "   • 'chmod +x <file>': Grant executable rights (r-x) to recovery scripts.\n"
-        "   • 'chmod 644 <file>': Lock down configuration files to read-only security.\n\n"
+        "   • \033[1;33mchmod +x <file>\033[0m : Grant executable rights (r-x) to recovery scripts.\n"
+        "   • \033[1;33mchmod 644 <file>\033[0m: Lock down configuration files to secure read-only mode.\n\n"
         "3. NETWORKING & RECOVERY TOOLS:\n"
-        "   • 'ip link set <dev> up'      : Bring offline network interfaces to UP state.\n"
-        "   • 'ping <gateway>'            : Verify ICMP reachability to core gateway nodes.\n"
-        "   • 'find <path> -name \"<pat>\"'  : Scan partition trees for hidden keys.\n"
+        "   • \033[1;33mip link set <dev> up\033[0m : Bring offline network adapter online.\n"
+        "   • \033[1;33mping <gateway>\033[0m       : Verify ICMP reachability to core gateway nodes.\n"
+        "   • \033[1;33mfind <path> -name \"<pat>\"\033[0m : Search filesystem trees for hidden tokens.\n"
         "================================================================================\n",
         perms="644",
         owner="root"
@@ -228,10 +227,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "--------------------------------------------------------------------------------\n"
         "2. YOUR LOG INVESTIGATION TOOLKIT:\n"
         "--------------------------------------------------------------------------------\n"
-        "• cat <file>            : Stream an entire log from start to finish.\n"
-        "• head -n 5 <file>      : Peek at the earliest events (e.g. system boot).\n"
-        "• tail -n 10 <file>     : Focus on the latest events (e.g. recent attack activity).\n"
-        "• grep -i \"pattern\" <file>: Filter the noise to isolate specific keywords or alerts.\n\n"
+        "• \033[1;33mcat <file>\033[0m            : Stream an entire log from start to finish.\n"
+        "• \033[1;33mhead -n 5 <file>\033[0m      : Peek at the earliest events (e.g. system boot).\n"
+        "• \033[1;33mtail -n 10 <file>\033[0m     : Focus on the latest events (e.g. recent attack activity).\n"
+        "• \033[1;33mgrep -i \"pattern\" <file>\033[0m: Filter the noise to isolate specific keywords or alerts.\n\n"
         "--------------------------------------------------------------------------------\n"
         "3. TRIAGE VERIFICATION:\n"
         "--------------------------------------------------------------------------------\n"
@@ -248,15 +247,15 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "When triaging system breaches, raw logs contain hundreds of noisy events.\n"
         "Use 'grep' recipes to isolate critical incident keywords:\n\n"
         "1. ISOLATE ALERTS & ERRORS (Case-Insensitive):\n"
-        "   • grep -i 'alert' /var/log/auth.log\n"
-        "   • grep -i 'alert' /var/log/syslog\n"
-        "   • grep -i 'error' /var/log/syslog\n\n"
+        "   • \033[1;33mgrep -i 'alert' /var/log/auth.log\033[0m\n"
+        "   • \033[1;33mgrep -i 'alert' /var/log/syslog\033[0m\n"
+        "   • \033[1;33mgrep -i 'error' /var/log/syslog\033[0m\n\n"
         "2. FILTER RUNAWAY PROCESSES & HARDWARE LINKS:\n"
-        "   • grep -i 'miner' /var/log/auth.log\n"
-        "   • grep -i 'apollo0' /var/log/syslog\n\n"
+        "   • \033[1;33mgrep -i 'miner' /var/log/auth.log\033[0m\n"
+        "   • \033[1;33mgrep -i 'apollo0' /var/log/syslog\033[0m\n\n"
         "3. SHOW LINE NUMBERS & EXCLUDE NOISY DAEMONS:\n"
-        "   • grep -n -i 'failed' /var/log/auth.log   (Show line numbers)\n"
-        "   • grep -v 'systemd' /var/log/syslog      (Invert match: strip daemon noise)\n"
+        "   • \033[1;33mgrep -n -i 'failed' /var/log/auth.log\033[0m   (Show line numbers)\n"
+        "   • \033[1;33mgrep -v 'systemd' /var/log/syslog\033[0m      (Invert match: strip daemon noise)\n"
         "================================================================================\n"
     )
     add_file("/var/log/.grep_juice", grep_juice_content, perms="644", owner="root")
@@ -267,21 +266,21 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "================================================================================\n"
         "To verify breach leads and register findings into the incident dossier, run the\n"
         "matching triage command with the parameter extracted from the log files:\n\n"
-        " \033[1;31m[ALERT-0x01]\033[0m INTRUDER PROCESS PID:\n"
+        " [ALERT-0x01] INTRUDER PROCESS PID:\n"
         "   • Source Log : /var/log/auth.log\n"
-        "   • Command    : \033[1;31mtriage_process <PID>\033[0m\n"
+        "   • Command    : \033[1;33mtriage_process <PID>\033[0m\n"
         "   • Example    : triage_process 4991\n\n"
-        " \033[1;33m[ALERT-0x02]\033[0m TAMPERED SECTOR PATH:\n"
+        " [ALERT-0x02] TAMPERED SECTOR PATH:\n"
         "   • Source Log : /var/log/auth.log\n"
         "   • Command    : \033[1;33mtriage_sector <FILE_PATH>\033[0m\n"
         "   • Example    : triage_sector /opt/data/corrupted_agent.sh\n\n"
-        " \033[1;36m[ALERT-0x03]\033[0m DEGRADED NETWORK INTERFACE:\n"
+        " [ALERT-0x03] DEGRADED NETWORK INTERFACE:\n"
         "   • Source Log : /var/log/syslog\n"
-        "   • Command    : \033[1;36mtriage_interface <DEVICE_NAME>\033[0m\n"
+        "   • Command    : \033[1;33mtriage_interface <DEVICE_NAME>\033[0m\n"
         "   • Example    : triage_interface eth1\n\n"
-        " \033[1;35m[ALERT-0x04]\033[0m TERMINATED CLUSTER SERVICE:\n"
+        " [ALERT-0x04] TERMINATED CLUSTER SERVICE:\n"
         "   • Source Log : /var/log/syslog\n"
-        "   • Command    : \033[1;35mtriage_service <SERVICE_NAME>\033[0m\n"
+        "   • Command    : \033[1;33mtriage_service <SERVICE_NAME>\033[0m\n"
         "   • Example    : triage_service cron.service\n"
         "================================================================================\n"
     )
@@ -378,11 +377,11 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "================================================================================\n"
         "1. PERMISSION RECOVERY & SEARCH INDEXING:\n"
         "   The intruder stripped execution permissions (mode 000) on scripts in bin/.\n"
-        "   Restore execute permissions with: chmod +x /mnt/recovery/bin/recovery.sh\n"
+        "   Restore execute permissions with: \033[1;33mchmod +x /mnt/recovery/bin/recovery.sh\033[0m\n"
         "   Then execute recovery.sh to rebuild the partition index and unlock 'find'.\n\n"
         "2. PHOENIX CLUSTER AUTHENTICATION:\n"
         "   The cryptographic cluster key is preserved across this partition.\n"
-        "   Use 'find /mnt/recovery -name \"*.key\"' to locate authentication tokens.\n"
+        "   Use '\033[1;33mfind /mnt/recovery -name \"*.key\"\033[0m' to locate authentication tokens.\n"
         "   Append the key to /etc/phoenix/phoenix.conf to restore the gateway.\n"
         "================================================================================\n",
         perms="644",
@@ -416,34 +415,51 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644"
     )
 
-    # Milestone 6: /etc/network/interfaces & NOTE.txt
+    # Milestone 5: /etc/network/interfaces & NETWORK_ADVISORY.txt
     add_file(
         "/etc/network/interfaces",
         "auto lo\niface lo inet loopback\n\nauto apollo0\niface apollo0 inet static\n  address 10.0.42.15/24\n  gateway 10.0.42.1\n",
         perms="644",
         owner="root"
     )
-    add_file(
-        "/etc/network/NOTE.txt",
-        "NETWORK CONFIGURATION NOTE:\nPrimary interface knocked offline following intrusion attempt.\nUse 'ip link' to inspect interfaces and bring adapter 'apollo0' back online.\nTest reachability with 'ping 10.0.42.1'.\n",
-        perms="644",
-        owner="root"
+    network_advisory_content = (
+        "================================================================================\n"
+        "            NETWORK RECOVERY ADVISORY // ADAPTER LINK RESTORATION\n"
+        "================================================================================\n"
+        "Primary network interface was knocked offline following the intrusion.\n\n"
+        "1. Inspect link state of network adapters:\n"
+        "   \033[1;33mip link\033[0m\n\n"
+        "2. Bring adapter 'apollo0' online:\n"
+        "   \033[1;33mip link set apollo0 up\033[0m\n\n"
+        "3. Verify subnet gateway connectivity:\n"
+        "   \033[1;33mping 10.0.42.1\033[0m\n"
+        "================================================================================\n"
     )
+    add_file("/etc/network/NETWORK_ADVISORY.txt", network_advisory_content, perms="644", owner="root")
 
-    # Milestone 7: /etc/phoenix/ & Fallback Backups
+    # Milestone 6: /etc/phoenix/ & Fallback Backups
     initial_conf = "[PHOENIX_DAEMON_CONFIG]\nLISTEN_PORT=8080\nGATEWAY=10.0.42.1\n"
     add_file("/etc/phoenix/phoenix.conf", initial_conf, perms="600", owner="root")
     add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="644", owner="root")
     add_file("/opt/backup/phoenix.conf", initial_conf, perms="644", owner="root")
-    add_file(
-        "/etc/phoenix/NOTE.txt",
-        "[MORGAN'S FINAL FIELD NOTE]\n"
-        "Alice — to recover the cluster supervisor, the PHOENIX daemon requires two prerequisites:\n"
-        "  1. Append our cryptographic recovery key (/mnt/recovery/keys/phoenix.key) to /etc/phoenix/phoenix.conf\n"
-        "  2. Secure configuration permissions to read-only mode (chmod 644 /etc/phoenix/phoenix.conf)\n"
-        "Once secured, launch 'phoenix_daemon start' to restore the gateway!\n",
-        perms="644",
-        owner="root"
+    phoenix_recovery_content = (
+        "================================================================================\n"
+        "      PHOENIX CLUSTER SUPERVISOR // FINAL RESTORATION DIRECTIVES\n"
+        "================================================================================\n"
+        "Alice — to recover the cluster supervisor, the PHOENIX daemon requires two steps:\n\n"
+        "1. REDIRECTION & KEY APPENDING:\n"
+        "   In Linux shells, stream redirection controls how data is written to files:\n"
+        "   • Single arrow '>'  : Overwrites the destination file completely.\n"
+        "   • Double arrow '>>' : Appends data to the end of a file without overwriting it!\n\n"
+        "   Append our cryptographic key to the daemon configuration:\n"
+        "   \033[1;33mcat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf\033[0m\n\n"
+        "2. SECURE FILE PERMISSIONS:\n"
+        "   Lock down config permissions to read-only security mode (0644):\n"
+        "   \033[1;33mchmod 644 /etc/phoenix/phoenix.conf\033[0m\n\n"
+        "3. LAUNCH CLUSTER RESTORATION SERVICE:\n"
+        "   \033[1;33mphoenix_daemon start\033[0m\n"
+        "================================================================================\n"
     )
+    add_file("/etc/phoenix/PHOENIX_RECOVERY.txt", phoenix_recovery_content, perms="644", owner="root")
 
     return root

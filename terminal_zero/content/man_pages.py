@@ -26,13 +26,18 @@ MAN_PAGES: Dict[str, str] = {
         "    -r, --recursive\n"
         "        Read all files under each directory, recursively.\n\n"
         "EXAMPLES\n"
-        "    grep -i 'alert' /var/log/auth.log\n"
-        "    grep -i 'miner' /var/log/syslog\n"
-        "    grep -v 'systemd' /var/log/syslog\n"
-        "    grep -r 'PHOENIX' /opt\n"
+        "    grep -i 'navigation' /home/alice/README.txt\n"
+        "    grep -n 'PHOENIX' /usr/share/doc/sysadmin_notes.txt\n"
+        "    grep -v 'root' /etc/os-release\n"
+        "    grep -r 'address' /etc/network\n"
     ),
     "manuals": "NAME\n    manuals - index recovered field manuals and cheat sheets\n\nSYNOPSIS\n    manuals\n\nDESCRIPTION\n    Displays a catalog of all discovered operational guides, cheat sheets, and field notes that have been read with 'cat'.\n",
     "docs": "NAME\n    docs - alias for manuals\n\nSYNOPSIS\n    docs\n",
+    "fieldguide": "NAME\n    fieldguide - review collected 'Take It to Linux' real-world debrief cards\n\nSYNOPSIS\n    fieldguide\n\nDESCRIPTION\n    Displays all unlocked educational debrief modules explaining how game mechanics translate to real Linux system administration.\n",
+    "cards": "NAME\n    cards - alias for fieldguide\n\nSYNOPSIS\n    cards\n",
+    "debriefs": "NAME\n    debriefs - alias for fieldguide\n\nSYNOPSIS\n    debriefs\n",
+    "lore": "NAME\n    lore - alias for fieldguide\n\nSYNOPSIS\n    lore\n",
+    "append": "NAME\n    append - shell redirection advisory\n\nSYNOPSIS\n    append\n\nDESCRIPTION\n    Advisory explaining how to append data using the >> stream redirection operator.\n",
     "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
     "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x script.sh\n    chmod 755 /bin/tool\n    chmod 644 config.conf\n",
     "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",

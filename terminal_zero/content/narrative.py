@@ -37,20 +37,20 @@ def get_primary_goal(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     if not flags.get("BUFFER_REPAIRED", False):
         return "CURRENT MISSION: Command history memory offline. Check 'diagnostics/BOOT_FAIL.log' and run the repair utility."
     elif not flags.get("BASHRC_RESTORED", False):
-        return "CURRENT MISSION: Shell profile missing. Explore '/opt/backup/profiles/' and restore ~/.bashrc template."
+        return "CURRENT MISSION: Shell profile missing. Explore '/opt/backup/profiles/' and restore your shell configuration."
     elif not flags.get("LOGS_AUDITED", False):
         if count == 0:
-            return "CURRENT MISSION: Investigate security breach. Audit daemon logs in '/var/log/' with 'grep' or 'cat' to unmask leads."
+            return "CURRENT MISSION: Investigate security breach. Audit daemon logs in '/var/log/' to unmask intrusion leads."
         else:
             return f"CURRENT MISSION: Register security breach leads in '/var/log/'. ({count}/4 incident leads unmasked)."
     elif not (flags.get("PERMISSIONS_RESTORED", False) and flags.get("FIND_UNLOCKED", False)):
-        return "CURRENT MISSION: Recovery partition locked. Elevate execution permissions on '/mnt/recovery/bin/recovery.sh' (chmod +x) and execute to rebuild search index."
+        return "CURRENT MISSION: Recovery partition locked. Make recovery tools in '/mnt/recovery/bin/' executable to rebuild the filesystem search index."
     elif not flags.get("MALWARE_TERMINATED", False):
-        return "CURRENT MISSION: CPU threshold critical @ 98%. Check running programs with 'ps' to find the rogue miner's process ID (PID), then terminate with 'kill -9 <PID>'."
+        return "CURRENT MISSION: CPU threshold critical @ 98%. Locate and terminate the high-CPU rogue miner process."
     elif not flags.get("NETWORK_ONLINE", False):
-        return "CURRENT MISSION: Physical network adapter offline. Inspect '/etc/network/interfaces', bring device 'apollo0' UP, and probe gateway reachability."
+        return "CURRENT MISSION: Physical network adapter offline. Inspect '/etc/network/interfaces', bring device 'apollo0' online, and verify gateway reachability."
     elif not flags.get("PHOENIX_ONLINE", False):
-        return "CURRENT MISSION: Cluster supervisor offline. Search for cryptographic key (*.key), append to '/etc/phoenix/phoenix.conf', lock permissions (chmod 644), and launch daemon."
+        return "CURRENT MISSION: Cluster supervisor offline. Locate cryptographic key (*.key), append to '/etc/phoenix/phoenix.conf', secure file permissions, and launch daemon."
     else:
         return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO cluster gateway is fully restored."
 
@@ -118,7 +118,7 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     p1_text = (
         f"[{p1}] PHASE 1: USER SHELL ENVIRONMENT\n"
         f"    • [{p1_1}] Locate backup profile template in /opt/backup/profiles/\n"
-        f"    • [{p1_2}] Synchronize ~/.bashrc to restore command paths and shortcuts\n\n"
+        f"    • [{p1_2}] Restore shell configuration to recover command paths and shortcuts\n\n"
     ) if 1 <= active_phase else (
         f"[{p1}] PHASE 1: USER SHELL ENVIRONMENT\n"
         f"    • [ ] ??? [Classified Directives]\n\n"
@@ -126,7 +126,7 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
 
     p2_text = (
         f"[{p2}] PHASE 2: INCIDENT LOG FORENSICS\n"
-        f"    • [{p2_1}] Audit security daemon events in /var/log/ with 'grep'\n"
+        f"    • [{p2_1}] Audit security daemon logs in /var/log/ for intrusion traces\n"
         f"    • [{p2_2}] Register confirmed incident leads in dossier ({count}/4 unmasked)\n\n"
     ) if 2 <= active_phase else (
         f"[{p2}] PHASE 2: INCIDENT LOG FORENSICS\n"
@@ -135,9 +135,9 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
 
     p3_text = (
         f"[{p3}] PHASE 3: RECOVERY PARTITION & SEARCH INDEX\n"
-        f"    • [{p3_1}] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)\n"
-        f"    • [{p3_2}] Run recovery.sh to rebuild filesystem search index (find)\n"
-        f"    • [{p3_3}] Scan partition for cluster authentication key (*.key)\n\n"
+        f"    • [{p3_1}] Restore executable permissions to recovery tools in /mnt/recovery/bin/\n"
+        f"    • [{p3_2}] Run recovery script to register partition search tools\n"
+        f"    • [{p3_3}] Locate cluster authentication key (*.key) on the filesystem\n\n"
     ) if 3 <= active_phase else (
         f"[{p3}] PHASE 3: RECOVERY PARTITION & SEARCH INDEX\n"
         f"    • [ ] ??? [Classified Directives]\n\n"
@@ -145,8 +145,8 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
 
     p4_text = (
         f"[{p4}] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER\n"
-        f"    • [{p4_1}] Check running programs with 'ps' to find the high-CPU rogue miner (PID)\n"
-        f"    • [{p4_2}] Stop the rogue miner with 'kill -9 <PID>' using its process ID number\n\n"
+        f"    • [{p4_1}] Inspect active system programs to locate high-CPU rogue miner\n"
+        f"    • [{p4_2}] Terminate runaway rogue miner process\n\n"
     ) if 4 <= active_phase else (
         f"[{p4}] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER\n"
         f"    • [ ] ??? [Classified Directives]\n\n"
@@ -155,8 +155,8 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     p5_text = (
         f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
         f"    • [{p5_1}] Review interface configuration in /etc/network/interfaces\n"
-        f"    • [{p5_2}] Bring physical link state of device 'apollo0' to UP\n"
-        f"    • [{p5_3}] Verify subnet gateway reachability with ICMP echo probe\n\n"
+        f"    • [{p5_2}] Bring physical network interface 'apollo0' online\n"
+        f"    • [{p5_3}] Verify subnet gateway reachability with network ping probe\n\n"
     ) if 5 <= active_phase else (
         f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
         f"    • [ ] ??? [Classified Directives]\n\n"
@@ -165,8 +165,8 @@ def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     p6_text = (
         f"[{p6}] PHASE 6: CLUSTER SUPERVISOR DAEMON\n"
         f"    • [{p6_1}] Append cryptographic recovery key to /etc/phoenix/phoenix.conf\n"
-        f"    • [{p6_2}] Secure configuration file permissions (chmod 644)\n"
-        f"    • [{p6_3}] Launch PHOENIX restoration service and verify socket on port 8080\n"
+        f"    • [{p6_2}] Secure configuration file permissions (read-only mode)\n"
+        f"    • [{p6_3}] Launch PHOENIX restoration daemon and verify gateway socket\n"
     ) if 6 <= active_phase else (
         f"[{p6}] PHASE 6: CLUSTER SUPERVISOR DAEMON\n"
         f"    • [ ] ??? [Classified Directives]\n"

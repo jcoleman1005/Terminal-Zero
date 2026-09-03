@@ -18,16 +18,21 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
         )
 
     if "command not found" in last_err:
-        return ctx.result_factory(
-            stdout="[DECRYPT ADVISORY]: The command entered does not exist.\n"
-                   "• Check spelling or type 'ls' to see available local files.\n"
-                   "• Type 'help' for guidance or inspect 'README.txt'.\n"
-                   "• Standard utilities: pwd, ls, cd, cat, man, sync.\n"
-        )
-
-    diag = "[APOLLO-DIAGNOSTIC]: System anomaly detected."
-    
-    if "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
+        cmd_candidate = last_err.split(":")[1].strip().split()[0] if ":" in last_err else ""
+        if cmd_candidate == "append":
+            diag = (
+                "[APOLLO-DIAGNOSTIC: FAULT 0x1D - SHELL REDIRECTION ADVISORY]\n"
+                "'append' is an action, not a standalone shell command.\n"
+                "In Linux shells, use double-arrow redirection '>>' to append data to a file.\n"
+                "Example: cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf"
+            )
+        else:
+            diag = (
+                f"[APOLLO-DIAGNOSTIC: FAULT 0x02 - UTILITY UNAVAILABLE]\n"
+                f"Binary '{cmd_candidate or 'command'}' was corrupted or stripped during the incident.\n"
+                f"Action: Type 'help' or inspect 'TODO.txt' to review active recovery tools."
+            )
+    elif "<" in last_err or ">" in last_err or any(k in last_err for k in ["proile_src", "profile_src", "target_path"]):
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x1F - PLACEHOLDER SYNTAX]\n"
             "Notice: The '<' and '>' in Morgan's notes represent placeholder names, not literal characters.\n"
@@ -65,11 +70,38 @@ def cmd_decrypt(ctx: CommandContext, args: List[str]) -> CommandResult:
             "Action: Investigate incident logs in /var/log/ to trace the breach before accessing system services."
         )
     elif "No such file or directory" in last_err:
-        diag = (
-            "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
-            "Target node does not exist in the active directory tree.\n"
-            "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
-        )
+        missing_target = ""
+        if "cannot open '" in last_err:
+            missing_target = last_err.split("cannot open '")[1].split("'")[0]
+        elif "cannot access '" in last_err:
+            missing_target = last_err.split("cannot access '")[1].split("'")[0]
+        elif ":" in last_err:
+            parts = last_err.split(":")
+            if len(parts) >= 2:
+                missing_target = parts[1].strip()
+
+        basename = missing_target.split("/")[-1] if missing_target else ""
+        if basename and not basename.startswith("."):
+            dotname = "." + basename
+            node, _ = ctx.vfs.get_node(ctx.state.current_path, dotname)
+            if node:
+                diag = (
+                    f"[APOLLO-DIAGNOSTIC: FAULT 0x1A - HIDDEN NODE MATCH]\n"
+                    f"File '{basename}' not found, but hidden file '{dotname}' exists in this directory.\n"
+                    f"Action: Type 'cat {dotname}' to view it. (Remember hidden dotfiles start with a dot '.')"
+                )
+            else:
+                diag = (
+                    "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+                    "Target node does not exist in the active directory tree.\n"
+                    "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
+                )
+        else:
+            diag = (
+                "[APOLLO-DIAGNOSTIC: FAULT 0x1A - PATH NOT FOUND]\n"
+                "Target node does not exist in the active directory tree.\n"
+                "Action: Run 'ls' or 'pwd' to verify path coordinates before addressing target."
+            )
     elif "Is a directory" in last_err:
         diag = (
             "[APOLLO-DIAGNOSTIC: FAULT 0x1B - ILLEGAL NODE TYPE]\n"
@@ -525,6 +557,8 @@ def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
         ("GREP FORENSICS GUIDE", "/var/log/.grep_juice", "Log Filter Patterns & Practical Grep Recipes"),
         ("SECOPS TRIAGE GUIDE", "/var/log/REPAIR_COMMANDS.txt", "Incident Dossier Registration Commands"),
         ("PARTITION ADVISORY", "/mnt/recovery/docs/RECOVERY_NOTES.txt", "Recovery Partition Scripts & Security Key Info"),
+        ("NETWORK ADVISORY", "/etc/network/NETWORK_ADVISORY.txt", "Interface Link State & Gateway Ping Verification"),
+        ("PHOENIX DIRECTIVES", "/etc/phoenix/PHOENIX_RECOVERY.txt", "Redirection Modes, Permissions & Service Startup"),
         ("SYSADMIN PROTOCOLS", "/usr/share/doc/sysadmin_notes.txt", "Process Management, File Modes & Networking"),
     ]
 
@@ -571,5 +605,52 @@ def cmd_docs(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 
 def cmd_fieldguide(ctx: CommandContext, args: List[str]) -> CommandResult:
-    return cmd_manuals(ctx, args)
+    ctx.bus.publish(Event("command_executed", {"command": "fieldguide", "args": args}))
+    from terminal_zero.content.debriefs import DebriefManager
+
+    cards = []
+    for flag, card_text in DebriefManager.DEBRIEFS.items():
+        if ctx.state.system_flags.get(flag, False) or ctx.state.unlocked_cards.get(flag, False):
+            title = DebriefManager.TITLES.get(flag, flag)
+            cards.append((title, card_text))
+
+    if not cards:
+        return ctx.result_factory(
+            stdout=(
+                "================================================================================\n"
+                "               APOLLO WORKSTATION // LINUX FIELD GUIDE VAULT\n"
+                "================================================================================\n"
+                "[!] No Field Guide entries unlocked yet.\n"
+                "Complete workstation recovery milestones to collect real-world Linux debrief cards!\n"
+                "================================================================================\n"
+            )
+        )
+
+    lines = [
+        "================================================================================",
+        "               APOLLO WORKSTATION // LINUX FIELD GUIDE VAULT",
+        "================================================================================",
+        f"Index of collected real-world Linux administration debriefs ({len(cards)} unlocked):\n"
+    ]
+
+    for title, card_text in cards:
+        lines.append(card_text)
+        lines.append("")
+
+    lines.append("================================================================================")
+    lines.append("Tip: Use 'manuals' for in-game documentation, or 'man <cmd>' for syntax.")
+    lines.append("================================================================================")
+    return ctx.result_factory(stdout="\n".join(lines) + "\n")
+
+
+def cmd_cards(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_fieldguide(ctx, args)
+
+
+def cmd_debriefs(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_fieldguide(ctx, args)
+
+
+def cmd_lore(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_fieldguide(ctx, args)
 

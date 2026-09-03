@@ -56,6 +56,7 @@ class TerminalState:
             "ALERT_0x04": False,
         }
         self.discovered_manuals: Dict[str, bool] = {}
+        self.unlocked_cards: Dict[str, bool] = {}
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
             ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),

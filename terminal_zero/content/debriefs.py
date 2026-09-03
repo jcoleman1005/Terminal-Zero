@@ -78,6 +78,16 @@ class DebriefManager:
         )
     }
 
+    TITLES: Dict[str, str] = {
+        "BUFFER_REPAIRED": "Terminal Line Disciplines & Input Buffering",
+        "BASHRC_RESTORED": "Shell Startup Profiles & Environment Variables",
+        "MALWARE_TERMINATED": "Real-World Process Administration & Signals",
+        "FIND_UNLOCKED": "POSIX File Permissions & Filesystem Search",
+        "LOGS_AUDITED": "Log Triaging & Stream Filtering",
+        "NETWORK_ONLINE": "Network Interface Management with 'ip'",
+        "PHOENIX_ONLINE": "Daemon Sockets & Service Orchestration",
+    }
+
     def __init__(self, bus: EventBus, output_writer=None):
         self.bus = bus
         self.output_writer = output_writer or sys.stdout.write
@@ -88,6 +98,9 @@ class DebriefManager:
             flag = event.data.get("flag")
             value = event.data.get("value")
             if value and flag in self.DEBRIEFS:
+                title = self.TITLES.get(flag, flag)
                 if flag == "BASHRC_RESTORED":
-                    self.output_writer("\n[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized\nCustom shortcuts active (try 'll' to list files).\n")
-                self.output_writer("\n" + self.DEBRIEFS[flag] + "\n")
+                    self.output_writer("\n[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized (Aliases active: try 'll')\n")
+                elif flag == "BUFFER_REPAIRED":
+                    self.output_writer("\n[!] ABILITY UNLOCKED: Command Memory Recall (Use UP/DOWN arrows to navigate history)\n")
+                self.output_writer(f"[+] Linux Field Guide entry registered: '{title}'\n    (Type 'fieldguide' or 'cards' to review your real-world Linux debriefs)\n")

@@ -11,3 +11,17 @@
 [2026-09-03 09:29:52] [/var/log] [Flags: 4/13] yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
 [2026-09-03 09:35:35] [/mnt/recovery/bin] [Flags: 8/13] Take it to linix card printed twice
 [2026-09-03 09:38:25] [/mnt/recovery/keys] [Flags: 9/13] is there a way to reword phase 4 so that it's not so technically worded? As i understand it i need to find something called a process status tatble and then find a thing called a PID. Not sure what that means
+[2026-09-03 09:50:55] [/home/alice] [Flags: 1/13] decrypt explaination for missing terminal commands should say "<command> currupted and not available at this time"
+[2026-09-03 09:52:00] [/home/alice/diagnostics] [Flags: 2/13] "Let's make the take it to linux cards hidden. Instead of auto triggering, the player should be able to access them from a different menu/command
+[2026-09-03 09:56:16] [/var/log] [Flags: 3/13] somehow I ended up in phase 2 before phase 1. That's fine, since we're going for a metroidvania feel, but we need to make hard stops to redirect and incentivise the player to restore command paths and shortcuts
+[2026-09-03 09:57:55] [/opt/backup/profiles] [Flags: 4/13] there was a lot of text that a beginner might not understand in the morgan note. Make a point to do a narrative tone/language sweep prior to recruiting other playtesters.
+[2026-09-03 09:58:27] [/opt/backup/profiles] [Flags: 4/13] add a hint to check spelling
+[2026-09-03 09:59:03] [/opt/backup/profiles] [Flags: 4/13] make the new command yellow text
+[2026-09-03 10:00:42] [/var/log] [Flags: 4/13] we need to make it more obvious in the morgan notes that he "hid" files that can be accessed wth ll. use color to point it out
+[2026-09-03 10:03:14] [/var/log] [Flags: 4/13] the examples give away the answers. we should have use an example document in the root (README.txt) that the player has access to that they can practice grep on.
+[2026-09-03 10:05:49] [/var/log] [Flags: 5/13] the todo marks that the player correctly used grep, but the player didn't run the commands that signified that they knew what they were doing
+[2026-09-03 10:07:11] [/var/log] [Flags: 5/13] phase 3 should start with a task to discover how to raise permissions (i.e. find the chmod command) the actual command should be discovered in a txt file, not in the todo. the todo is to serve as a compass to point the player, not an answer key
+[2026-09-03 10:33:01] [/etc/network] [Flags: 11/13] /etc/network/NOTE.txt needs a better descriptive filename
+[2026-09-03 10:33:26] [/etc/network] [Flags: 11/13] that's...a lot of information that I'm not sure what it means
+[2026-09-03 10:48:20] [/home/alice] [Flags: 11/13] aha! this was the document i needed
+[2026-09-03 10:58:38] [/etc/phoenix] [Flags: 12/13] there's no instructions on how to append

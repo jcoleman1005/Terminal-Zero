@@ -768,3 +768,16 @@ def cmd_ll(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not (ctx.state.system_flags.get("BASHRC_RESTORED", False) or ctx.state.unlocked_ergonomics.get("autocomplete", False)):
         return ctx.result_factory(stderr="bash: ll: command not found\n", exit_code=127)
     return cmd_ls(ctx, ["-la"] + args)
+
+
+def cmd_append(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "append", "args": args}))
+    return ctx.result_factory(
+        stderr=(
+            "bash: append: command not found\n"
+            "(Tip: in Linux/Unix shells, use stream redirection '>>' to append data without overwriting)\n"
+            "Example: cat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf\n"
+        ),
+        exit_code=127
+    )
+

@@ -205,11 +205,15 @@ class PipelineEngine:
         stages_text = split_unquoted(line, "|")
         current_stdin = ""
         last_result = CommandResult()
+        first_cmd = stages_text[0].strip().split()[0] if stages_text else ""
+        is_decrypt = first_cmd in ["decrypt", "apollo-diagnostics", "note", "feedback"]
 
         for idx, stage_text in enumerate(stages_text):
             parsed, err = self.parse_stage(stage_text)
             if err or not parsed:
-                return CommandResult(stderr=f"bash: syntax error: {err}\n", exit_code=2)
+                res = CommandResult(stderr=f"bash: syntax error: {err}\n", exit_code=2)
+                state.last_stderr = res.stderr.strip()
+                return res
 
             cmd_name = parsed.args[0]
             cmd_args = parsed.args[1:]
@@ -226,6 +230,8 @@ class PipelineEngine:
 
             # If any stage fails, abort pipeline
             if stage_result.exit_code != 0:
+                if stage_result.stderr:
+                    state.last_stderr = stage_result.stderr.strip()
                 return stage_result
 
             current_stdin = stage_result.stdout
@@ -239,17 +245,25 @@ class PipelineEngine:
                 
                 parent_node, _ = state.vfs.get_node(state.current_path, parent_dir)
                 if not parent_node or not parent_node.is_dir():
-                    return CommandResult(stderr=f"bash: {redirect_target}: No such file or directory\n", exit_code=1)
+                    res = CommandResult(stderr=f"bash: {redirect_target}: No such file or directory\n", exit_code=1)
+                    state.last_stderr = res.stderr.strip()
+                    return res
                 
                 if parent_node.permissions == "000":
-                    return CommandResult(stderr=f"bash: {redirect_target}: Permission denied\n", exit_code=1)
+                    res = CommandResult(stderr=f"bash: {redirect_target}: Permission denied\n", exit_code=1)
+                    state.last_stderr = res.stderr.strip()
+                    return res
 
                 target_node, _ = state.vfs.get_node(state.current_path, redirect_target)
                 if target_node:
                     if target_node.is_dir():
-                        return CommandResult(stderr=f"bash: {redirect_target}: Is a directory\n", exit_code=1)
+                        res = CommandResult(stderr=f"bash: {redirect_target}: Is a directory\n", exit_code=1)
+                        state.last_stderr = res.stderr.strip()
+                        return res
                     if target_node.permissions in ["000", "444"]:
-                        return CommandResult(stderr=f"bash: {redirect_target}: Permission denied\n", exit_code=1)
+                        res = CommandResult(stderr=f"bash: {redirect_target}: Permission denied\n", exit_code=1)
+                        state.last_stderr = res.stderr.strip()
+                        return res
                     if parsed.redirect_append:
                         target_node.content = (target_node.content or "") + stage_result.stdout
                     else:
@@ -263,7 +277,9 @@ class PipelineEngine:
                         owner=state.env.get("USER", "alice")
                     )
                     if not success:
-                        return CommandResult(stderr=f"bash: {redirect_target}: {w_err}\n", exit_code=1)
+                        res = CommandResult(stderr=f"bash: {redirect_target}: {w_err}\n", exit_code=1)
+                        state.last_stderr = res.stderr.strip()
+                        return res
 
                 # Automatic write hook evaluation for .bashrc
                 check_bashrc_restoration(state.vfs, state, self.bus, redirect_target)
@@ -271,5 +287,10 @@ class PipelineEngine:
                 # Output was consumed by file redirection
                 current_stdin = ""
                 last_result = CommandResult(stdout="", stderr="", exit_code=0)
+
+        if last_result.exit_code != 0 and last_result.stderr:
+            state.last_stderr = last_result.stderr.strip()
+        elif last_result.exit_code == 0 and not is_decrypt:
+            state.last_stderr = ""
 
         return last_result

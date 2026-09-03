@@ -18,6 +18,7 @@ from terminal_zero.commands.posix import (
     cmd_ping,
     cmd_echo,
     cmd_tree,
+    cmd_append,
 )
 from terminal_zero.commands.diegetic import (
     cmd_decrypt,
@@ -38,6 +39,9 @@ from terminal_zero.commands.diegetic import (
     cmd_manuals,
     cmd_docs,
     cmd_fieldguide,
+    cmd_cards,
+    cmd_debriefs,
+    cmd_lore,
     cmd_triage_process,
     cmd_triage_sector,
     cmd_triage_interface,
@@ -86,6 +90,10 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "manuals": cmd_manuals,
         "docs": cmd_docs,
         "fieldguide": cmd_fieldguide,
+        "cards": cmd_cards,
+        "debriefs": cmd_debriefs,
+        "lore": cmd_lore,
+        "append": cmd_append,
         "triage_process": cmd_triage_process,
         "triage_sector": cmd_triage_sector,
         "triage_interface": cmd_triage_interface,

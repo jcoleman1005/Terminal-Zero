@@ -62,6 +62,7 @@ def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> No
         "system_flags": state.system_flags,
         "discovered_clues": getattr(state, "discovered_clues", {}),
         "discovered_manuals": getattr(state, "discovered_manuals", {}),
+        "unlocked_cards": getattr(state, "unlocked_cards", {}),
         "process_table": [
             {
                 "pid": p.pid,
@@ -119,6 +120,8 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
         state.discovered_clues = data["discovered_clues"]
     if "discovered_manuals" in data:
         state.discovered_manuals = data["discovered_manuals"]
+    if "unlocked_cards" in data:
+        state.unlocked_cards = data["unlocked_cards"]
 
     try:
         from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
