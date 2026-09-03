@@ -162,16 +162,14 @@ class PipelineEngine:
             elif base_name == "recovery.sh":
                 ctx.state.system_flags["RECOVERY_LOCATED"] = True
                 ctx.state.system_flags["PERMISSIONS_RESTORED"] = True
-                ctx.state.system_flags["SIGINT_UNLOCKED"] = True
-                ctx.state.unlocked_ergonomics["sigint"] = True
-                ctx.state.unlocked_ergonomics["sigint_trap"] = True
+                ctx.state.system_flags["FIND_UNLOCKED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "RECOVERY_LOCATED", "value": True}))
                 ctx.bus.publish(Event("flag_changed", {"flag": "PERMISSIONS_RESTORED", "value": True}))
-                ctx.bus.publish(Event("flag_changed", {"flag": "SIGINT_UNLOCKED", "value": True}))
+                ctx.bus.publish(Event("flag_changed", {"flag": "FIND_UNLOCKED", "value": True}))
                 return ctx.result_factory(
                     stdout=(
-                        "[!] ABILITY UNLOCKED: Emergency Signal Trapping (SIGINT)\n"
-                        "Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.\n"
+                        "[!] ABILITY UNLOCKED: Filesystem Search Utility ('find')\n"
+                        "Partition index registered. You can now use 'find <path> -name \"<pattern>\"' to scan trees.\n"
                     )
                 )
             elif base_name.endswith(".sh"):

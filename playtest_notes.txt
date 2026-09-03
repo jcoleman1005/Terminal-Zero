@@ -1,0 +1,13 @@
+[2026-09-02 16:20:05] [/home/alice] [Flags: 1/11] this file should only contain cd, pwd, decrypt, and sync commands
+[2026-09-02 16:24:11] [/var/log] [Flags: 3/11] There should be an "inventory" command that brings up a directory that shows manuals, readmes, and cheat sheets that the player has discovered. For example 'manuals' -> README.txt HOW_TO_READ_LOGS.txt
+[2026-09-02 16:26:30] [/var/log] [Flags: 3/11] the examples above give away the answer for alert 0x02
+[2026-09-02 16:27:15] [/var/log] [Flags: 3/11] there is still no reason to use grep
+[2026-09-02 16:43:17] [/home/alice] [Flags: 8/11] I'm lost
+[2026-09-02 20:56:26] [/home/alice] [Flags: 1/13] the following steps should be hidden until the step above it has been completed
+[2026-09-02 20:57:58] [/var/log] [Flags: 2/13] the error message shouldn't say to run the taskctl command, just point to the txt file
+[2026-09-02 21:02:03] [/home/alice] [Flags: 4/13] this sticky note is redundant and doesn't serve a purpose. It should instead give a clude on phase 3
+[2026-09-02 21:04:20] [/var/log] [Flags: 4/13] lets remove the color coding
+[2026-09-02 21:04:53] [/var/log] [Flags: 4/13] there should be a file called .grep_juice that explains how to use grep to search for alerts in the logs
+[2026-09-03 09:29:52] [/var/log] [Flags: 4/13] yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
+[2026-09-03 09:35:35] [/mnt/recovery/bin] [Flags: 8/13] Take it to linix card printed twice
+[2026-09-03 09:38:25] [/mnt/recovery/keys] [Flags: 9/13] is there a way to reword phase 4 so that it's not so technically worded? As i understand it i need to find something called a process status tatble and then find a thing called a PID. Not sure what that means

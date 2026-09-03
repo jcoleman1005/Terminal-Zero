@@ -293,6 +293,7 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         "│   • cat <file>     : Open and read a file's contents                   │",
         "│   • pwd            : Check what folder you are currently standing in   │",
         "│   • decrypt        : Ask APOLLO AI to diagnose your last error         │",
+        "│   • manuals        : Browse collected field manuals and cheat sheets   │",
         "│   • sync           : Save your game progress to persistent storage     │",
         "│   • reboot / reset : Restart the game from cold boot                   │",
     ]
@@ -311,11 +312,11 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         discovered.append("  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').")
         discovered.append("  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').")
 
-    if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED"):
-        discovered.append("  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name \"*.sh\"').")
+    if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED") or flags.get("FIND_UNLOCKED"):
+        discovered.append("  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name \"*.key\"').")
         discovered.append("  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').")
 
-    if flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED"):
+    if flags.get("MALWARE_TERMINATED"):
         discovered.append("  • ps aux         : Scan active background processes.")
         discovered.append("  • kill -9 <PID>  : Terminate a runaway rogue process by PID.")
 
@@ -337,9 +338,9 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         hidden_count += 1
     if not flags.get("LOGS_AUDITED"):
         hidden_count += 1
-    if not (flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED")):
+    if not (flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED") or flags.get("FIND_UNLOCKED")):
         hidden_count += 1
-    if not (flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED")):
+    if not flags.get("MALWARE_TERMINATED"):
         hidden_count += 1
     if not flags.get("NETWORK_ONLINE"):
         hidden_count += 1
@@ -396,7 +397,7 @@ def cmd_todo(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "todo", "args": args}))
     if not ctx.state.system_flags.get("TODO_LINKED", False):
         return ctx.result_factory(
-            stderr="bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' and run 'taskctl link' to activate)\n",
+            stderr="bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' for instructions)\n",
             exit_code=127
         )
     content = get_todo_content(ctx.state.system_flags, getattr(ctx.state, 'discovered_clues', {}))
@@ -511,3 +512,64 @@ def cmd_triage_service(ctx: CommandContext, args: List[str]) -> CommandResult:
             stderr=f"\033[1;35m[ERROR]: Service '{val}' incorrect.\033[0m Audit /var/log/syslog for the magenta [ALERT-0x04] killed cluster daemon.\n",
             exit_code=1
         )
+
+
+def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "manuals", "args": args}))
+
+    catalog = [
+        ("SURVIVAL CARD", "/home/alice/README.txt", "Basic Navigation, Terminal Diagnostics & Sync"),
+        ("LONG LISTING GUIDE", "/opt/backup/profiles/.HOW_TO_READ_LL.txt", "File Details, Modes & Permissions Breakdown"),
+        ("INCIDENT ADVISORY", "/opt/backup/profiles/NOTE_FROM_MORGAN.txt", "Shell Profile Template & Shortcuts Sync"),
+        ("LOG FORENSICS MANUAL", "/var/log/HOW_TO_READ_LOGS.txt", "Log Anatomy, Event Formatting & Filtering"),
+        ("GREP FORENSICS GUIDE", "/var/log/.grep_juice", "Log Filter Patterns & Practical Grep Recipes"),
+        ("SECOPS TRIAGE GUIDE", "/var/log/REPAIR_COMMANDS.txt", "Incident Dossier Registration Commands"),
+        ("PARTITION ADVISORY", "/mnt/recovery/docs/RECOVERY_NOTES.txt", "Recovery Partition Scripts & Security Key Info"),
+        ("SYSADMIN PROTOCOLS", "/usr/share/doc/sysadmin_notes.txt", "Process Management, File Modes & Networking"),
+    ]
+
+    discovered = getattr(ctx.state, "discovered_manuals", {})
+    available = []
+
+    for title, path, desc in catalog:
+        if discovered.get(path, False):
+            node, _ = ctx.vfs.get_node([], path)
+            if node:
+                available.append((title, path, desc))
+
+    if not available:
+        return ctx.result_factory(
+            stdout=(
+                "================================================================================\n"
+                "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS\n"
+                "================================================================================\n"
+                "[!] No field manuals recovered yet.\n"
+                "Inspect documentation files using 'cat' to register them in your manual inventory.\n"
+                "================================================================================\n"
+            )
+        )
+
+    lines = [
+        "================================================================================",
+        "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS",
+        "================================================================================",
+        f"Index of recovered operational guides and cheat sheets ({len(available)} discovered):\n"
+    ]
+
+    for title, path, desc in available:
+        lines.append(f"  • \033[1;36m{title:<22}\033[0m : {desc}")
+        lines.append(f"    Location: {path}  (Read: 'cat {path}')\n")
+
+    lines.append("================================================================================")
+    lines.append("Tip: Use 'cat <path>' to review any manual, or 'man <command>' for command help.")
+    lines.append("================================================================================")
+    return ctx.result_factory(stdout="\n".join(lines) + "\n")
+
+
+def cmd_docs(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_manuals(ctx, args)
+
+
+def cmd_fieldguide(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_manuals(ctx, args)
+

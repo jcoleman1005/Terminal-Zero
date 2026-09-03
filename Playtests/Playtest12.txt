@@ -1,0 +1,813 @@
+PS C:\Active Projects\Terminal Zero> python terminal_zero.py
+================================================================================
+           APOLLO WORKSTATION OS v2.4 (x86_64-apollo-linux-gnu)
+================================================================================
+[ 0.001 ] Kernel initialized (Linux 5.15.0-apollo)
+[ 0.042 ] Checking hardware ring buffers........ [DEGRADED] -> Up/Down history recall offline
+[ 0.088 ] Loading shell user environment........ [ FAILED ] -> Shell profile missing (~/.bashrc)
+[ 0.120 ] Security subsystem audit.............. [ ALERT  ] -> Intrusion traces detected in /var/log/
+[ 0.195 ] Process supervisor integrity.......... [CRITICAL] -> Rogue miner active @ 98% CPU (/tmp/sys_miner)
+[ 0.240 ] Network link status (apollo0)......... [  DOWN  ] -> Network interface apollo0 offline
+[ 0.310 ] Cluster restoration gateway........... [INACTIVE] -> Cluster restoration gateway offline
+================================================================================
+*** SYSTEM IN EMERGENCY RECOVERY MODE ***
+Operator: alice (tty1) | Host: apollo | Location: /home/alice
+
+ONBOARDING ACTIONS:
+  • Type 'ls' to look around your current directory.
+  • Type 'cat <filename>' (e.g. 'cat README.txt') to read file contents.
+  • Type 'exit' to disconnect from session.
+================================================================================
+
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cat README.txt
+================================================================================
+          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD
+================================================================================
+SECONDARY NAVIGATION & DIAGNOSTIC UTILITIES:
+  • cd <folder>    : Move into a folder (e.g. 'cd diagnostics' or 'cd ..' to go back).
+  • pwd            : Print the current directory path you are standing in.
+  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.
+  • manuals        : Index all recovered field manuals, cheat sheets, and guides.
+  • sync           : Save workstation recovery progress to persistent storage.
+
+OPERATOR ADVISORY:
+Explore directory branches with 'cd' and 'ls'. Inspect logs and field notes with
+'cat' to uncover incident clues and discover system restoration tools.
+================================================================================
+alice@apollo:/home/alice$ manuals
+================================================================================
+               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS
+================================================================================
+Index of recovered operational guides, cheat sheets, and field notes:
+
+  • SURVIVAL CARD          : Basic Navigation, Terminal Diagnostics & Sync
+    Location: /home/alice/README.txt  (Read: 'cat /home/alice/README.txt')
+
+  • LONG LISTING GUIDE     : File Details, Modes & Permissions Breakdown
+    Location: /opt/backup/profiles/.HOW_TO_READ_LL.txt  (Read: 'cat /opt/backup/profiles/.HOW_TO_READ_LL.txt')
+
+  • INCIDENT ADVISORY      : Shell Profile Template & Shortcuts Sync
+    Location: /opt/backup/profiles/NOTE_FROM_MORGAN.txt  (Read: 'cat /opt/backup/profiles/NOTE_FROM_MORGAN.txt')
+
+  • LOG FORENSICS MANUAL   : Log Anatomy, Event Formatting & Filtering
+    Location: /var/log/HOW_TO_READ_LOGS.txt  (Read: 'cat /var/log/HOW_TO_READ_LOGS.txt')
+
+  • SECOPS TRIAGE GUIDE    : Incident Dossier Registration Commands
+    Location: /var/log/REPAIR_COMMANDS.txt  (Read: 'cat /var/log/REPAIR_COMMANDS.txt')
+
+  • PARTITION ADVISORY     : Recovery Partition Scripts & Security Key Info
+    Location: /mnt/recovery/docs/RECOVERY_NOTES.txt  (Read: 'cat /mnt/recovery/docs/RECOVERY_NOTES.txt')
+
+  • SYSADMIN PROTOCOLS     : Process Management, File Modes & Networking
+    Location: /usr/share/doc/sysadmin_notes.txt  (Read: 'cat /usr/share/doc/sysadmin_notes.txt')
+
+================================================================================
+Tip: Use 'cat <path>' to view any manual, or 'man <command>' for command help.
+================================================================================
+alice@apollo:/home/alice$ note: these manuals should be hidden until their corresponding file has been opened with cat
+at least once
+bash: note:: command not found
+
+[HARDWARE ERROR]: Input ring buffer corrupted. Navigation history disabled.
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cat TODO.txt
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[ ] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [ ] Execute line discipline repair utility to restore history recall
+
+[ ] PHASE 1: USER SHELL ENVIRONMENT
+    • [ ] Locate backup profile template in /opt/backup/profiles/
+    • [ ] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[ ] PHASE 2: INCIDENT LOG FORENSICS
+    • [ ] Audit security daemon events in /var/log/ with 'grep'
+    • [ ] Register confirmed incident leads in dossier (0/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[OPERATOR SHORTCUT TIP]:
+Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!
+Run 'manuals' to view your collected system documentation and cheat sheets.
+================================================================================
+alice@apollo:/home/alice$ note the following steps should be hidden until the step above it has been completed
+[NOTE RECORDED]: "the following steps should be hidden until the step above it has been completed"
+alice@apollo:/home/alice$ ls
+README.txt  TODO.txt  diagnostics
+alice@apollo:/home/alice$ cd diagnostics
+alice@apollo:/home/alice/diagnostics$ ls
+BOOT_FAIL.log  INCIDENT_REPORT.log
+alice@apollo:/home/alice/diagnostics$ cat BOOT_FAIL.log
+[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.
+[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.
+alice@apollo:/home/alice/diagnostics$ repair_buffer
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Terminal Line Disciplines & Input Buffering        │
+├────────────────────────────────────────────────────────────────────────┤
+│ You just repaired the input ring buffer to restore command history.   │
+│ In real Linux systems:                                                 │
+│ • The kernel TTY line discipline handles cooked vs raw input modes.    │
+│ • Libraries like GNU Readline manage arrow key navigation and history. │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Command Memory Recall
+You can now press [UP] and [DOWN] arrow keys to cycle through previous commands.
+alice@apollo:/home/alice/diagnostics$ ls
+BOOT_FAIL.log  INCIDENT_REPORT.log
+alice@apollo:/home/alice/diagnostics$ cat INCIDENT_REPORT.log
+================================================================================
+        APOLLO WORKSTATION // INCIDENT RECOVERY DOSSIER [CLASSIFIED DOSSIER (0/4 LEADS UNMASKED)]
+================================================================================
+ [ALERT-0x01] INTRUDER PROCESS : Attacker deployed rogue miner -> [ REDACTED_PID ]
+ [ALERT-0x02] TAMPERED SECTOR  : Core recovery binary stripped   -> [ REDACTED_PATH ]
+ [ALERT-0x03] HARDWARE STATUS  : Network interface knocked DOWN  -> [ REDACTED_DEVICE ]
+ [ALERT-0x04] DAEMON STATUS    : Cluster service terminated      -> [ REDACTED_SERVICE ]
+================================================================================
+INVESTIGATION DIRECTIVE: Audit compromised daemon logs in /var/log/ with 'cat',
+'head', 'tail', or 'grep' to uncover matching incident leads.
+================================================================================
+alice@apollo:/home/alice/diagnostics$ cd /var/log
+alice@apollo:/var/log$ todo
+bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' and run 'taskctl link' to activate)
+alice@apollo:/var/log$ note the error message shouldn't say to run the taskctl command, just point to the txt file
+[NOTE RECORDED]: "the error message shouldn't say to run the taskctl command, just point to the txt file"
+alice@apollo:/var/log$ taskctl link
+[taskctl]: Linking '/home/alice/TODO.txt' to shell command vector...
+[!] SHORTCUT REGISTERED: Global commands 'todo' and 'tasks' are now active!
+Type 'todo' from any directory to inspect your recovery progress.
+alice@apollo:/var/log$ tdo
+bash: tdo: command not found
+alice@apollo:/var/log$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[ ] PHASE 1: USER SHELL ENVIRONMENT
+    • [ ] Locate backup profile template in /opt/backup/profiles/
+    • [ ] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[ ] PHASE 2: INCIDENT LOG FORENSICS
+    • [ ] Audit security daemon events in /var/log/ with 'grep'
+    • [ ] Register confirmed incident leads in dossier (0/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/var/log$ cd /opt/backup/profiles
+alice@apollo:/opt/backup/profiles$ ls
+NOTE_FROM_MORGAN.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat NOTE_FROM_MORGAN.txt
+// MORGAN [03:42 AM] — INCIDENT OVERRIDE
+Alice — during the breach, your shell profile was wiped out, which broke your
+command search paths and shortcuts.
+
+I left a clean backup template right here ('alice.bashrc').
+
+To clone it back into your home directory, write it over with '>':
+  cat alice.bashrc > /home/alice/.bashrc
+
+(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)
+
+Once restored, try typing 'll' right here.
+The 'll' shortcut not only displays full file details (permissions, owner, size),
+it also reveals secret hidden files and directories starting with a dot (.)!
+
+[PRO TIP]: Restoring ~/.bashrc re-enables [TAB] autocompletion!
+Type 'cd /o' and press [TAB] anywhere to autocomplete long paths instantly.
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc > /home/alice/.bashrc
+
+[!] ABILITY UNLOCKED: Shell Profile & Command Shortcuts Synchronized
+Custom shortcuts active (try 'll' to list files).
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Shell Startup Profiles & Environment Variables    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You restored ~/.bashrc to re-enable tab autocompletion and $PATH.     │
+│ In real Linux systems:                                                 │
+│ • ~/.bashrc runs for interactive non-login shells.                     │
+│ • The $PATH variable defines directory search order for executables.   │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/opt/backup/profiles$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 .HOW_TO_READ_LL.txt
+-rw-r--r-- 1 root root 4096 NOTE_FROM_MORGAN.txt
+-rw-r--r-- 1 root root 4096 alice.bashrc
+alice@apollo:/opt/backup/profiles$ cat .HOT_TO_READ_LL.txt
+cat: .HOT_TO_READ_LL.txt: No such file or directory
+alice@apollo:/opt/backup/profiles$ cat .HOW_TO_READ_LL.txt
+================================================================================
+         SYSADMIN REFERENCE GUIDE // HOW TO READ 'll' (LONG LISTING)
+================================================================================
+Standard 'ls' only shows visible filenames.
+The 'll' shortcut reveals hidden dotfiles and prints 5 critical columns:
+
+  [ PERMISSIONS ]  [ LINKS ]  [ OWNER ]  [ SIZE ]  [ FILENAME ]
+  -rw-r--r--       1          root       4096      alice.bashrc
+  drwxr-xr-x       1          root       4096      profiles/
+  ----------       1          root       4096      recovery.sh
+
+--------------------------------------------------------------------------------
+DECODING THE PERMISSIONS COLUMN:
+--------------------------------------------------------------------------------
+• 1st character: 'd' = Directory (folder), '-' = Regular file.
+• Next 3 chars : Owner permissions:
+                 'r' = Read (can view contents with 'cat' or 'head')
+                 'w' = Write (can edit or overwrite with '>')
+                 'x' = Execute (can run programs or scripts like './tool')
+                 '-' = Permission revoked / missing.
+
+[KEY RECOVERY TAKEAWAY]:
+If a tool has '---' instead of 'r-x' or 'rwx', it cannot run!
+You can restore executable permissions on any file using 'chmod +x <filename>'.
+================================================================================
+alice@apollo:/opt/backup/profiles$ ls
+NOTE_FROM_MORGAN.txt  alice.bashrc
+alice@apollo:/opt/backup/profiles$ alice.bashrc
+bash: alice.bashrc: cannot execute binary file: Exec format error
+alice@apollo:/opt/backup/profiles$ cat alice.bashrc
+# ALICE SHELL PROFILE TEMPLATE
+# Clone to your home folder with: cat alice.bashrc > /home/alice/.bashrc
+export PATH=/bin:/usr/bin:/mnt/recovery/bin
+alias ll='ls -la'
+alice@apollo:/opt/backup/profiles$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 .HOW_TO_READ_LL.txt
+-rw-r--r-- 1 root root 4096 NOTE_FROM_MORGAN.txt
+-rw-r--r-- 1 root root 4096 alice.bashrc
+alice@apollo:/opt/backup/profiles$ cd ..
+alice@apollo:/opt/backup$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 phoenix.conf
+drwxr-xr-x 1 root root 4096 profiles
+alice@apollo:/opt/backup$ phoenix.conf
+bash: phoenix.conf: cannot execute binary file: Exec format error
+alice@apollo:/opt/backup$ cat phoenix.conf
+[PHOENIX_DAEMON_CONFIG]
+LISTEN_PORT=8080
+GATEWAY=10.0.42.1
+alice@apollo:/opt/backup$ cd ~
+alice@apollo:/home/alice$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 alice alice 4096 .bash_history
+-rw-r--r-- 1 alice alice 4096 .bashrc
+-rw-r--r-- 1 alice alice 4096 .note.txt
+-rw-r--r-- 1 alice alice 4096 README.txt
+-rw-r--r-- 1 alice alice 4096 TODO.txt
+drwxr-xr-x 1 root root 4096 diagnostics
+alice@apollo:/home/alice$ cat .note.txt
+// STICKY NOTE TAPED TO MONITOR:
+Alice — your shell profile (.bashrc) got deleted during the incident.
+I stored a backup template in /opt/backup/profiles/.
+Head over there ('cd /opt/backup/profiles') and read my note to get your shortcuts back!
+— Morgan
+alice@apollo:/home/alice$ note this sticky note is redundant and doesn't serve a purpose. It should instead give a clud
+e on phase 3
+[NOTE RECORDED]: "this sticky note is redundant and doesn't serve a purpose. It should instead give a clude on phase 3"
+alice@apollo:/home/alice$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[ ] PHASE 2: INCIDENT LOG FORENSICS
+    • [ ] Audit security daemon events in /var/log/ with 'grep'
+    • [ ] Register confirmed incident leads in dossier (0/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/home/alice$ cd /var/log
+alice@apollo:/var/log$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 HOW_TO_READ_LOGS.txt
+-rw-r--r-- 1 root root 4096 REPAIR_COMMANDS.txt
+-rw-r--r-- 1 root root 4096 auth.log
+-rw-r--r-- 1 root root 4096 syslog
+-rw-r--r-- 1 root root 4096 system.log
+alice@apollo:/var/log$ cat REPAIR_COMMANDS.txt
+================================================================================
+         SECOPS TRIAGE REGISTRATION // INCIDENT REPAIR COMMANDS
+================================================================================
+To verify breach leads and register findings into the incident dossier, run the
+matching triage command with the parameter extracted from the log files:
+
+ [ALERT-0x01] INTRUDER PROCESS PID:
+   • Source Log : /var/log/auth.log
+   • Command    : triage_process <PID>
+   • Example    : triage_process 4991
+
+ [ALERT-0x02] TAMPERED SECTOR PATH:
+   • Source Log : /var/log/auth.log
+   • Command    : triage_sector <FILE_PATH>
+   • Example    : triage_sector /opt/data/corrupted_agent.sh
+
+ [ALERT-0x03] DEGRADED NETWORK INTERFACE:
+   • Source Log : /var/log/syslog
+   • Command    : triage_interface <DEVICE_NAME>
+   • Example    : triage_interface eth1
+
+ [ALERT-0x04] TERMINATED CLUSTER SERVICE:
+   • Source Log : /var/log/syslog
+   • Command    : triage_service <SERVICE_NAME>
+   • Example    : triage_service cron.service
+================================================================================
+alice@apollo:/var/log$ cat syslog
+03:40:01 apollo systemd[1]: Starting System Logging Service...
+03:40:02 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)
+03:40:02 apollo kernel: [    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-apollo root=/dev/sda1 ro quiet
+03:40:03 apollo kernel: [    0.042100] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+03:40:03 apollo kernel: [    0.042105] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+03:40:04 apollo systemd[1]: Mounted Huge Pages File System.
+03:40:04 apollo systemd[1]: Mounted POSIX Message Queue File System.
+03:40:05 apollo systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+03:40:06 apollo kernel: [    0.108420] e1000e: Intel(R) PRO/1000 Network Driver
+03:40:07 apollo kernel: [    0.108422] e1000e 0000:00:03.0 eth0: (PCI Express:2.5GT/s:Width x1) 52:54:00:12:34:56
+03:40:08 apollo systemd[1]: Reached target Local Encrypted Volumes.
+03:40:09 apollo systemd[1]: Listening on Syslog Socket.
+03:40:10 apollo systemd[1]: Reached target Network (Pre).
+03:40:12 apollo kernel: [ALERT-0x03] Interface apollo0 link state degraded: DOWN
+03:40:15 apollo systemd[1]: Starting Network Time Synchronization...
+03:40:18 apollo systemd-timesyncd[110]: Network configuration changed, trying to establish connection.
+03:40:22 apollo systemd[1]: Started Network Time Synchronization.
+03:40:30 apollo systemd[1]: Reached target System Time Set.
+03:40:45 apollo systemd[1]: Starting Rotate log files...
+03:40:50 apollo systemd[1]: logrotate.service: Deactivated successfully.
+03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0
+03:41:15 apollo kernel: [   12.401920] perf: interrupt took too long (2510 > 2500), lowering kernel.perf_event_max_sample_rate to 50000
+03:41:30 apollo systemd[1]: Starting Periodic ext4 Online Metadata Check...
+03:41:40 apollo systemd[1]: e4defrag.service: Deactivated successfully.
+03:42:00 apollo kernel: [   14.881200] CPU0: Core temperature above threshold, cpu clock throttled
+03:42:19 apollo systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL
+03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.
+03:42:25 apollo systemd[1]: phoenix-sync.service: Scheduled restart job, restart counter is at 1.
+03:42:30 apollo systemd[1]: Stopped Phoenix Synchronization Service.
+03:43:00 apollo kernel: [   18.109200] audit: type=1100 audit(1652341380.120:45): pid=104 uid=0 auid=1000 ses=1 msg='op=PAM:accounting grantors=pam_unix,pam_permit acct="root" exe="/tmp/sys_miner" hostname=? addr=? terminal=? res=success'
+03:43:15 apollo systemd[1]: Starting Daily Cleanup of Temporary Directories...
+03:43:20 apollo systemd[1]: systemd-tmpfiles-clean.service: Deactivated successfully.
+alice@apollo:/var/log$ note lets remove the color coding
+[NOTE RECORDED]: "lets remove the color coding"
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  REPAIR_COMMANDS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ note there should be a file called .grep_juice that explains how to use grep to search for alert
+s in the logs
+[NOTE RECORDED]: "there should be a file called .grep_juice that explains how to use grep to search for alerts in the logs"
+alice@apollo:/var/log$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 HOW_TO_READ_LOGS.txt
+-rw-r--r-- 1 root root 4096 REPAIR_COMMANDS.txt
+-rw-r--r-- 1 root root 4096 auth.log
+-rw-r--r-- 1 root root 4096 syslog
+-rw-r--r-- 1 root root 4096 system.log
+alice@apollo:/var/log$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[ ] PHASE 2: INCIDENT LOG FORENSICS
+    • [ ] Audit security daemon events in /var/log/ with 'grep'
+    • [ ] Register confirmed incident leads in dossier (0/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/var/log$ grep
+Usage: grep [OPTION]... PATTERNS [FILE]...
+alice@apollo:/var/log$ man grep
+NAME
+    grep - print lines that match patterns
+
+SYNOPSIS
+    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...
+
+EXAMPLES
+    grep -i 'error' /var/log/system.log
+    grep -r 'PHOENIX' /opt
+alice@apollo:/var/log$ note yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
+[NOTE RECORDED]: "yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS"
+alice@apollo:/var/log$ ls
+HOW_TO_READ_LOGS.txt  REPAIR_COMMANDS.txt  auth.log  syslog  system.log
+alice@apollo:/var/log$ auth.log
+bash: auth.log: cannot execute binary file: Exec format error
+alice@apollo:/var/log$ cat auth.log
+[INFO]: System boot complete (Linux 5.15.0-apollo).
+May 12 03:28:01 apollo systemd[1]: Starting System Logging Service...
+May 12 03:28:05 apollo kernel: Initializing cgroup subsys cpuset
+May 12 03:28:10 apollo systemd-logind[102]: Watching system buttons on /dev/input/event0
+May 12 03:29:14 apollo CRON[180]: pam_unix(cron:session): session opened for user root by (uid=0)
+May 12 03:29:15 apollo CRON[180]: pam_unix(cron:session): session closed for user root
+May 12 03:30:01 apollo systemd-logind[102]: New session c1 of user root.
+May 12 03:30:02 apollo pam_unix(sshd:session): session opened for user systemd
+May 12 03:31:00 apollo pam_unix(sshd:session): session closed for user systemd
+May 12 03:32:15 apollo CRON[185]: pam_unix(cron:session): session opened for user alice by (uid=1000)
+May 12 03:32:20 apollo CRON[185]: pam_unix(cron:session): session closed for user alice
+May 12 03:33:01 apollo systemd[1]: Created slice User Slice of UID 1000.
+May 12 03:34:10 apollo sshd[190]: Server listening on 0.0.0.0 port 22.
+May 12 03:35:00 apollo systemd[1]: Starting Daily apt download activities...
+May 12 03:35:12 apollo systemd[1]: apt-daily.service: Deactivated successfully.
+May 12 03:36:01 apollo CRON[195]: pam_unix(cron:session): session opened for user root
+May 12 03:36:05 apollo CRON[195]: pam_unix(cron:session): session closed for user root
+May 12 03:37:00 apollo pam_unix(sudo:session): session opened for user root by alice(uid=1000)
+May 12 03:37:05 apollo pam_unix(sudo:session): session closed for user root
+May 12 03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218
+May 12 03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2
+May 12 03:38:15 apollo sshd[204]: Connection closed by invalid user operator 192.168.1.105 port 44218 [preauth]
+May 12 03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2
+May 12 03:39:02 apollo pam_unix(sshd:session): session opened for user alice by (uid=0)
+May 12 03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status
+May 12 03:39:46 apollo pam_unix(sudo:session): session opened for user root by alice(uid=0)
+[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).
+[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.
+May 12 03:40:01 apollo systemd-logind[102]: Session c1 logged out. Waiting for processes to exit.
+May 12 03:40:05 apollo systemd[1]: Removed slice User Slice of UID 0.
+May 12 03:40:15 apollo CRON[215]: pam_unix(cron:session): session opened for user root
+May 12 03:40:18 apollo CRON[215]: pam_unix(cron:session): session closed for user root
+May 12 03:41:00 apollo pam_unix(sshd:session): session opened for user systemd
+May 12 03:41:05 apollo pam_unix(sshd:session): session closed for user systemd
+May 12 03:42:00 apollo sshd[220]: Received disconnect from 192.168.1.105 port 44218: 11: Normal Shutdown
+May 12 03:42:15 apollo systemd[1]: Stopped User Manager for UID 1000.
+May 12 03:43:00 apollo systemd-logind[102]: System idle check complete.
+alice@apollo:/var/log$ man grep
+NAME
+    grep - print lines that match patterns
+
+SYNOPSIS
+    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...
+
+EXAMPLES
+    grep -i 'error' /var/log/system.log
+    grep -r 'PHOENIX' /opt
+alice@apollo:/var/log$ grep -i 'error syslog
+bash: syntax error: No closing quotation
+alice@apollo:/var/log$ grep -i 'error' syslog
+alice@apollo:/var/log$ grep -i 'error' auth.log
+alice@apollo:/var/log$ grep -i 'alert' auth.log
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: Log Triaging & Stream Filtering                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ You filtered security logs in /var/log to isolate the intrusion.       │
+│ In real Linux systems:                                                 │
+│ • 'grep -i' searches case-insensitively for key strings in logs.       │
+│ • 'tail -n' and 'tail -f' monitor the latest append-only kernel events.│
+└────────────────────────────────────────────────────────────────────────┘
+[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).
+[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [!] INCIDENT DOSSIER UPDATED (2/4 Leads Unmasked)                      │
+├────────────────────────────────────────────────────────────────────────┤
+│   ✓ [ALERT-0x01] Rogue Miner identified -> PID: 104 (sys_miner)        │
+│   ✓ [ALERT-0x02] Tampered Sector located -> /mnt/recovery/bin/recovery.sh (stripped) │
+└────────────────────────────────────────────────────────────────────────┘
+alice@apollo:/var/log$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[x] PHASE 2: INCIDENT LOG FORENSICS
+    • [x] Audit security daemon events in /var/log/ with 'grep'
+    • [x] Register confirmed incident leads in dossier (2/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/var/log$ cd /mnt/recovery/bin
+alice@apollo:/mnt/recovery/bin$ ls
+apollo-net  phoenix_ctl  recovery-tool  recovery.sh
+alice@apollo:/mnt/recovery/bin$ apollo-net
+[APOLLO-NET v1.0]: Subnet link state is DOWN. Gateway 10.0.42.1
+alice@apollo:/mnt/recovery/bin$ phoenix_ctl
+[PHOENIX ERROR]: Network gateway unreachable. Interface 'apollo0' is DOWN.
+alice@apollo:/mnt/recovery/bin$ recovery-tool
+bash: recovery-tool: Permission denied
+alice@apollo:/mnt/recovery/bin$ chmod +x recovery-tool
+[chmod]: mode of 'recovery-tool' changed to 755
+alice@apollo:/mnt/recovery/bin$ recovery-tool
+bash: recovery-tool: cannot execute binary file: Exec format error
+alice@apollo:/mnt/recovery/bin$ cat recovery-tool
+ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]
+alice@apollo:/mnt/recovery/bin$ cat recovery.sh
+cat: recovery.sh: Permission denied
+alice@apollo:/mnt/recovery/bin$ chmod +x recovery.sh
+[chmod]: mode of 'recovery.sh' changed to 755
+alice@apollo:/mnt/recovery/bin$ cat recovery.sh
+#!/bin/bash
+echo '[KERNEL]: Rebuilding filesystem index table...'
+echo 'Partition query registers synchronized. Filesystem search (find) online.'
+alice@apollo:/mnt/recovery/bin$ man find
+NAME
+    find - search for files in a directory hierarchy
+
+SYNOPSIS
+    find [PATH] -name PATTERN [-type f|d]
+
+EXAMPLES
+    find / -name '*.sh'
+    find /home/alice -type f
+alice@apollo:/mnt/recovery/bin$ tasks
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[x] PHASE 2: INCIDENT LOG FORENSICS
+    • [x] Audit security daemon events in /var/log/ with 'grep'
+    • [x] Register confirmed incident leads in dossier (2/4 unmasked)
+
+[ ] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [ ] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [ ] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/mnt/recovery/bin$ recovery.sh
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: POSIX File Permissions & Filesystem Search         │
+├────────────────────────────────────────────────────────────────────────┤
+│ You made recovery.sh executable and rebuilt the partition search index.│
+│ In real Linux systems:                                                 │
+│ • 'chmod +x' or 'chmod 755' restores executable mode bits on binaries. │
+│ • 'find' traverses directory hierarchies matching names, types, & size.│
+│ • Example: find / -name "*.key" or find /mnt/recovery -type f          │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TAKE IT TO LINUX]: POSIX File Permissions & Filesystem Search         │
+├────────────────────────────────────────────────────────────────────────┤
+│ You made recovery.sh executable and rebuilt the partition search index.│
+│ In real Linux systems:                                                 │
+│ • 'chmod +x' or 'chmod 755' restores executable mode bits on binaries. │
+│ • 'find' traverses directory hierarchies matching names, types, & size.│
+│ • Example: find / -name "*.key" or find /mnt/recovery -type f          │
+└────────────────────────────────────────────────────────────────────────┘
+[!] ABILITY UNLOCKED: Filesystem Search Utility ('find')
+Partition index registered. You can now use 'find <path> -name "<pattern>"' to scan trees.
+alice@apollo:/mnt/recovery/bin$ note Take it to linix card printed twice
+[NOTE RECORDED]: "Take it to linix card printed twice"
+alice@apollo:/mnt/recovery/bin$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[x] PHASE 2: INCIDENT LOG FORENSICS
+    • [x] Audit security daemon events in /var/log/ with 'grep'
+    • [x] Register confirmed incident leads in dossier (2/4 unmasked)
+
+[x] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [x] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [x] Run recovery.sh to rebuild filesystem search index (find)
+    • [ ] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/mnt/recovery/bin$ man find
+NAME
+    find - search for files in a directory hierarchy
+
+SYNOPSIS
+    find [PATH] -name PATTERN [-type f|d]
+
+EXAMPLES
+    find / -name '*.sh'
+    find /home/alice -type f
+alice@apollo:/mnt/recovery/bin$ find / -name '*.sh'
+/mnt/recovery/bin/recovery.sh
+/opt/phoenix/recovery/recovery.sh
+alice@apollo:/mnt/recovery/bin$ find / -name '*.key'
+/mnt/recovery/keys/phoenix.key
+alice@apollo:/mnt/recovery/bin$ /mnt/recovery/keys/phoenix.key
+bash: /mnt/recovery/keys/phoenix.key: cannot execute binary file: Exec format error
+alice@apollo:/mnt/recovery/bin$ cd /mnt/recovery/keys
+alice@apollo:/mnt/recovery/keys$ ls
+phoenix.key
+alice@apollo:/mnt/recovery/keys$ ll
+drwxr-xr-x 1 root root 4096 .
+drwxr-xr-x 1 root root 4096 ..
+-rw-r--r-- 1 root root 4096 phoenix.key
+alice@apollo:/mnt/recovery/keys$ cat phoenix.key
+PX-KEY-7701-ALPHA
+alice@apollo:/mnt/recovery/keys$ todo
+================================================================================
+               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[x] PHASE 0: COLD BOOT & MEMORY RECALL
+    • [x] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+    • [x] Execute line discipline repair utility to restore history recall
+
+[x] PHASE 1: USER SHELL ENVIRONMENT
+    • [x] Locate backup profile template in /opt/backup/profiles/
+    • [x] Synchronize ~/.bashrc to restore command paths and shortcuts
+
+[x] PHASE 2: INCIDENT LOG FORENSICS
+    • [x] Audit security daemon events in /var/log/ with 'grep'
+    • [x] Register confirmed incident leads in dossier (2/4 unmasked)
+
+[x] PHASE 3: RECOVERY PARTITION & SEARCH INDEX
+    • [x] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)
+    • [x] Run recovery.sh to rebuild filesystem search index (find)
+    • [x] Scan partition for cluster authentication key (*.key)
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+    • [ ] Inspect active Process Status table to isolate rogue PID (98% CPU)
+    • [ ] Send forceful termination signal (SIGKILL) to halt runaway miner
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+    • [ ] Review interface configuration in /etc/network/interfaces
+    • [ ] Bring physical link state of device 'apollo0' to UP
+    • [ ] Verify subnet gateway reachability with ICMP echo probe
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+    • [ ] Append cryptographic recovery key to /etc/phoenix/phoenix.conf
+    • [ ] Secure configuration file permissions (chmod 644)
+    • [ ] Launch PHOENIX restoration service and verify socket on port 8080
+================================================================================
+[SHORTCUT ACTIVE]:
+Type 'todo' or 'tasks' from any directory to inspect your recovery progress.
+Type 'manuals' or 'docs' to browse all discovered field manuals and guides.
+================================================================================
+alice@apollo:/mnt/recovery/keys$ note is there a way to reword phase 4 so that it's not so technically worded? As i und
+erstand it i need to find something called a process status tatble and then find a thing called a PID. Not sure what th
+at means
+[NOTE RECORDED]: "is there a way to reword phase 4 so that it's not so technically worded? As i understand it i need to find something called a process status tatble and then find a thing called a PID. Not sure what that means"
+alice@apollo:/mnt/recovery/keys$ exit
+PS C:\Active Projects\Terminal Zero>

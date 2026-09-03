@@ -196,60 +196,164 @@ def get_primary_goal(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = 
     if not flags.get("BUFFER_REPAIRED", False):
         return "CURRENT MISSION: Command history memory offline. Check 'diagnostics/BOOT_FAIL.log' and run the repair utility."
     elif not flags.get("BASHRC_RESTORED", False):
-        return "CURRENT MISSION: Shell profile missing. Explore '/opt/backup/profiles/' and restore ~/.bashrc."
+        return "CURRENT MISSION: Shell profile missing. Explore '/opt/backup/profiles/' and restore ~/.bashrc template."
     elif not flags.get("LOGS_AUDITED", False):
         if count == 0:
-            return "CURRENT MISSION: Investigate the security breach. Audit daemon logs in '/var/log/' to unmask incident clues."
+            return "CURRENT MISSION: Investigate security breach. Audit daemon logs in '/var/log/' with 'grep' or 'cat' to unmask leads."
         else:
-            return f"CURRENT MISSION: Triage breach logs in '/var/log/'. ({count}/4 incident leads unmasked)."
-    elif not (flags.get("PERMISSIONS_RESTORED", False) and flags.get("SIGINT_UNLOCKED", False)):
-        return "CURRENT MISSION: Recovery tools locked. Explore '/mnt/recovery/bin/', restore execution permissions, and run recovery.sh."
+            return f"CURRENT MISSION: Register security breach leads in '/var/log/'. ({count}/4 incident leads unmasked)."
+    elif not (flags.get("PERMISSIONS_RESTORED", False) and flags.get("FIND_UNLOCKED", False)):
+        return "CURRENT MISSION: Recovery partition locked. Elevate execution permissions on '/mnt/recovery/bin/recovery.sh' (chmod +x) and execute to rebuild search index."
     elif not flags.get("MALWARE_TERMINATED", False):
-        return "CURRENT MISSION: CPU threshold critical. Audit process table with 'ps' and terminate the rogue miner PID."
+        return "CURRENT MISSION: CPU threshold critical @ 98%. Check running programs with 'ps' to find the rogue miner's process ID (PID), then terminate with 'kill -9 <PID>'."
     elif not flags.get("NETWORK_ONLINE", False):
-        return "CURRENT MISSION: Network interface offline. Inspect '/etc/network/' and bring interface 'apollo0' online."
+        return "CURRENT MISSION: Physical network adapter offline. Inspect '/etc/network/interfaces', bring device 'apollo0' UP, and probe gateway reachability."
     elif not flags.get("PHOENIX_ONLINE", False):
-        return "CURRENT MISSION: Final hurdle! Re-authenticate PHOENIX daemon with recovery key and start service in '/etc/phoenix/'."
+        return "CURRENT MISSION: Cluster supervisor offline. Search for cryptographic key (*.key), append to '/etc/phoenix/phoenix.conf', lock permissions (chmod 644), and launch daemon."
     else:
-        return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO is fully restored."
+        return "MISSION ACCOMPLISHED: All workstation subsystems nominal! APOLLO cluster gateway is fully restored."
 
 
 def get_todo_content(flags: Dict[str, bool], clues: Optional[Dict[str, bool]] = None) -> str:
     if clues is None:
         clues = {}
 
-    m0 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
-    m1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
-    m2 = "x" if flags.get("LOGS_AUDITED", False) else " "
-    m3 = "x" if flags.get("RECOVERY_LOCATED", False) else " "
-    m5 = "x" if flags.get("MALWARE_TERMINATED", False) else " "
-    m6 = "x" if flags.get("NETWORK_ONLINE", False) else " "
-    m7 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
-
     count = sum(1 for k in ["ALERT_0x01", "ALERT_0x02", "ALERT_0x03", "ALERT_0x04"] if clues.get(k))
-    m2_label = "2. TRIAGE BREACH     : All incident leads unmasked (4/4)" if flags.get("LOGS_AUDITED") else f"2. TRIAGE BREACH     : Audit daemons in /var/log/ ({count}/4 unmasked)"
+
+    if not flags.get("BUFFER_REPAIRED", False):
+        active_phase = 0
+    elif not flags.get("BASHRC_RESTORED", False):
+        active_phase = 1
+    elif not flags.get("LOGS_AUDITED", False):
+        active_phase = 2
+    elif not flags.get("FIND_UNLOCKED", False):
+        active_phase = 3
+    elif not flags.get("MALWARE_TERMINATED", False):
+        active_phase = 4
+    elif not flags.get("NETWORK_ONLINE", False):
+        active_phase = 5
+    elif not flags.get("PHOENIX_ONLINE", False):
+        active_phase = 6
+    else:
+        active_phase = 7
+
+    p0 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
+    p0_1 = "x" if flags.get("README_INSPECTED", False) or flags.get("BUFFER_REPAIRED", False) else " "
+    p0_2 = "x" if flags.get("BUFFER_REPAIRED", False) else " "
+
+    p1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
+    p1_1 = "x" if flags.get("BASHRC_RESTORED", False) else " "
+    p1_2 = "x" if flags.get("BASHRC_RESTORED", False) else " "
+
+    p2 = "x" if flags.get("LOGS_AUDITED", False) else " "
+    p2_1 = "x" if count > 0 or flags.get("LOGS_AUDITED", False) else " "
+    p2_2 = "x" if flags.get("LOGS_AUDITED", False) else " "
+
+    p3 = "x" if flags.get("FIND_UNLOCKED", False) else " "
+    p3_1 = "x" if flags.get("PERMISSIONS_RESTORED", False) or flags.get("FIND_UNLOCKED", False) else " "
+    p3_2 = "x" if flags.get("FIND_UNLOCKED", False) else " "
+    p3_3 = "x" if flags.get("PHOENIX_ONLINE", False) or flags.get("KEY_DISCOVERED", False) else " "
+
+    p4 = "x" if flags.get("MALWARE_TERMINATED", False) else " "
+    p4_1 = "x" if flags.get("MALWARE_TERMINATED", False) or flags.get("PROCESS_CHECKED", False) else " "
+    p4_2 = "x" if flags.get("MALWARE_TERMINATED", False) else " "
+
+    p5 = "x" if flags.get("NETWORK_ONLINE", False) else " "
+    p5_1 = "x" if flags.get("NETWORK_ONLINE", False) else " "
+    p5_2 = "x" if flags.get("NETWORK_ONLINE", False) else " "
+    p5_3 = "x" if flags.get("NETWORK_ONLINE", False) else " "
+
+    p6 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+    p6_1 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+    p6_2 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+    p6_3 = "x" if flags.get("PHOENIX_ONLINE", False) else " "
+
+    p0_text = (
+        f"[{p0}] PHASE 0: COLD BOOT & MEMORY RECALL\n"
+        f"    • [{p0_1}] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault\n"
+        f"    • [{p0_2}] Execute line discipline repair utility to restore history recall\n\n"
+    )
+
+    p1_text = (
+        f"[{p1}] PHASE 1: USER SHELL ENVIRONMENT\n"
+        f"    • [{p1_1}] Locate backup profile template in /opt/backup/profiles/\n"
+        f"    • [{p1_2}] Synchronize ~/.bashrc to restore command paths and shortcuts\n\n"
+    ) if 1 <= active_phase else (
+        f"[{p1}] PHASE 1: USER SHELL ENVIRONMENT\n"
+        f"    • [ ] ??? [Classified Directives]\n\n"
+    )
+
+    p2_text = (
+        f"[{p2}] PHASE 2: INCIDENT LOG FORENSICS\n"
+        f"    • [{p2_1}] Audit security daemon events in /var/log/ with 'grep'\n"
+        f"    • [{p2_2}] Register confirmed incident leads in dossier ({count}/4 unmasked)\n\n"
+    ) if 2 <= active_phase else (
+        f"[{p2}] PHASE 2: INCIDENT LOG FORENSICS\n"
+        f"    • [ ] ??? [Classified Directives]\n\n"
+    )
+
+    p3_text = (
+        f"[{p3}] PHASE 3: RECOVERY PARTITION & SEARCH INDEX\n"
+        f"    • [{p3_1}] Elevate script execution permissions in /mnt/recovery/bin/ (chmod +x)\n"
+        f"    • [{p3_2}] Run recovery.sh to rebuild filesystem search index (find)\n"
+        f"    • [{p3_3}] Scan partition for cluster authentication key (*.key)\n\n"
+    ) if 3 <= active_phase else (
+        f"[{p3}] PHASE 3: RECOVERY PARTITION & SEARCH INDEX\n"
+        f"    • [ ] ??? [Classified Directives]\n\n"
+    )
+
+    p4_text = (
+        f"[{p4}] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER\n"
+        f"    • [{p4_1}] Check running programs with 'ps' to find the high-CPU rogue miner (PID)\n"
+        f"    • [{p4_2}] Stop the rogue miner with 'kill -9 <PID>' using its process ID number\n\n"
+    ) if 4 <= active_phase else (
+        f"[{p4}] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER\n"
+        f"    • [ ] ??? [Classified Directives]\n\n"
+    )
+
+    p5_text = (
+        f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
+        f"    • [{p5_1}] Review interface configuration in /etc/network/interfaces\n"
+        f"    • [{p5_2}] Bring physical link state of device 'apollo0' to UP\n"
+        f"    • [{p5_3}] Verify subnet gateway reachability with ICMP echo probe\n\n"
+    ) if 5 <= active_phase else (
+        f"[{p5}] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK\n"
+        f"    • [ ] ??? [Classified Directives]\n\n"
+    )
+
+    p6_text = (
+        f"[{p6}] PHASE 6: CLUSTER SUPERVISOR DAEMON\n"
+        f"    • [{p6_1}] Append cryptographic recovery key to /etc/phoenix/phoenix.conf\n"
+        f"    • [{p6_2}] Secure configuration file permissions (chmod 644)\n"
+        f"    • [{p6_3}] Launch PHOENIX restoration service and verify socket on port 8080\n"
+    ) if 6 <= active_phase else (
+        f"[{p6}] PHASE 6: CLUSTER SUPERVISOR DAEMON\n"
+        f"    • [ ] ??? [Classified Directives]\n"
+    )
 
     footer = (
         "[SHORTCUT ACTIVE]:\n"
         "Type 'todo' or 'tasks' from any directory to inspect your recovery progress.\n"
+        "Type 'manuals' or 'docs' to browse all discovered field manuals and guides."
     ) if flags.get("TODO_LINKED", False) else (
         "[OPERATOR SHORTCUT TIP]:\n"
         "Run 'taskctl link' to enable the 'todo' and 'tasks' global shortcuts anywhere!\n"
+        "Run 'manuals' to view your collected system documentation and cheat sheets."
     )
 
     return (
         "================================================================================\n"
         "               APOLLO WORKSTATION // INCIDENT RECOVERY CHECKLIST\n"
         "================================================================================\n"
-        f"[{m0}] 0. RESTORE RECALL    : Input ring buffer dead -> Inspect diagnostics/BOOT_FAIL.log\n"
-        f"[{m1}] 1. REBUILD PROFILE   : Shell shortcuts missing-> Find backup template in /opt/backup/\n"
-        f"[{m2}] {m2_label}\n"
-        f"[{m3}] 3. UNLOCK RECOVERY   : Tools stripped (chmod) -> Restore permissions in /mnt/recovery/\n"
-        f"[{m5}] 4. HUNT ROGUE MINER  : 98% CPU drain          -> Find intruder in process table & terminate\n"
-        f"[{m6}] 5. ACTIVATE UPLINK   : Network offline        -> Inspect network interfaces in /etc/network/\n"
-        f"[{m7}] 6. RESTART DAEMON    : PHOENIX offline        -> Re-authenticate cluster daemon in /etc/phoenix/\n"
+        f"{p0_text}"
+        f"{p1_text}"
+        f"{p2_text}"
+        f"{p3_text}"
+        f"{p4_text}"
+        f"{p5_text}"
+        f"{p6_text}"
         "================================================================================\n"
-        f"{footer}"
+        f"{footer}\n"
         "================================================================================\n"
     )
 
@@ -322,11 +426,11 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "apollo-diagnostics",
         "chmod", "man", "ps", "kill", "ip", "ss", "ping", "head", "tail", "grep", "find",
         "repair_buffer", "phoenix_ctl", "phoenix_daemon", "apollo-net", "tree",
-        "note", "feedback", "taskctl", "todo", "tasks",
+        "note", "feedback", "taskctl", "todo", "tasks", "manuals", "docs", "fieldguide",
         "triage_process", "triage_sector", "triage_interface", "triage_service"
     ]:
-        add_file(f"/bin/{b}", "ELF 64-bit LSB executable", perms="755")
-        add_file(f"/usr/bin/{b}", "ELF 64-bit LSB executable", perms="755")
+        add_file(f"/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
+        add_file(f"/usr/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
 
     # Milestone 0: /home/alice & /home/alice/diagnostics
     add_file(
@@ -334,16 +438,15 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "================================================================================\n"
         "          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD\n"
         "================================================================================\n"
-        "BASIC NAVIGATION ACTIONS:\n"
-        "  • ls             : Look around (list visible files and folders).\n"
+        "SECONDARY NAVIGATION & DIAGNOSTIC UTILITIES:\n"
         "  • cd <folder>    : Move into a folder (e.g. 'cd diagnostics' or 'cd ..' to go back).\n"
-        "  • cat <file>     : Open and read a file's contents (e.g. 'cat README.txt').\n"
-        "  • pwd            : Check what folder you are currently standing in.\n"
+        "  • pwd            : Print the current directory path you are standing in.\n"
         "  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.\n"
-        "  • sync           : Save workstation progress to persistent disk.\n\n"
+        "  • manuals        : Index all recovered field manuals, cheat sheets, and guides.\n"
+        "  • sync           : Save workstation recovery progress to persistent storage.\n\n"
         "OPERATOR ADVISORY:\n"
-        "Explore your environment with 'ls' and 'cd'. Inspect logs with 'cat' to diagnose\n"
-        "faults and discover emergency recovery utilities.\n"
+        "Explore directory branches with 'cd' and 'ls'. Inspect logs and field notes with\n"
+        "'cat' to uncover incident clues and discover system restoration tools.\n"
         "================================================================================\n",
         perms="644",
         owner="alice"
@@ -363,13 +466,26 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="alice"
     )
 
+    # /etc/os-release (System Information)
+    add_file(
+        "/etc/os-release",
+        "NAME=\"Apollo Workstation OS\"\n"
+        "VERSION=\"2.4 LTS (Recovery Build 0x42)\"\n"
+        "ID=apollo\n"
+        "ID_LIKE=debian\n"
+        "PRETTY_NAME=\"Apollo OS 2.4 (x86_64-apollo-linux-gnu)\"\n"
+        "HOME_URL=\"https://apollo.internal/workstation\"\n",
+        perms="644",
+        owner="root"
+    )
+
     # Milestone 1: /opt/backup/profiles & /home/alice
     add_file(
         "/home/alice/.note.txt",
         "// STICKY NOTE TAPED TO MONITOR:\n"
-        "Alice — your shell profile (.bashrc) got deleted during the incident.\n"
-        "I stored a backup template in /opt/backup/profiles/.\n"
-        "Head over there ('cd /opt/backup/profiles') and read my note to get your shortcuts back!\n"
+        "Alice — during the breach, strange logs and alerts were generated in /var/log/.\n"
+        "Use 'grep' to filter log noise and unmask the attacker's traces.\n"
+        "Emergency recovery scripts are locked down under /mnt/recovery/bin/.\n"
         "— Morgan\n",
         perms="644",
         owner="alice"
@@ -384,7 +500,9 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "(Note: '~' is shorthand for your home folder, so 'cat alice.bashrc > ~/.bashrc' also works!)\n\n"
         "Once restored, try typing 'll' right here.\n"
         "The 'll' shortcut not only displays full file details (permissions, owner, size),\n"
-        "it also reveals secret hidden files and directories starting with a dot (.)!\n"
+        "it also reveals secret hidden files and directories starting with a dot (.)!\n\n"
+        "[PRO TIP]: Restoring ~/.bashrc re-enables [TAB] autocompletion!\n"
+        "Type 'cd /o' and press [TAB] anywhere to autocomplete long paths instantly.\n"
     )
     add_file("/opt/backup/profiles/NOTE_FROM_MORGAN.txt", morgan_note, perms="644", owner="root")
     
@@ -431,7 +549,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file(
         "/home/alice/.bash_history",
-        "ps aux | grep miner\nkill -9 104\nip link set apollo0 up\nping -c 4 10.0.42.1\nchmod +x /mnt/recovery/bin/apollo-net\n/opt/phoenix/phoenix_daemon --sync\n",
+        "uptime\nfree -h\ndf -h\nls -la /var/log\nsystemctl status\ncat /etc/os-release\n",
         perms="644",
         owner="alice"
     )
@@ -449,7 +567,20 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file(
         "/usr/share/doc/sysadmin_notes.txt",
-        "SYSADMIN LOG - RECOVERY PROTOCOLS:\n1. Use 'grep' to search error streams.\n2. Ensure recovery binaries have execution permissions via 'chmod'.\n3. Bring interfaces up using 'ip link set <dev> up'.\n",
+        "================================================================================\n"
+        "             SYSADMIN PROTOCOLS // PROCESSES, MODES & NETWORKING\n"
+        "================================================================================\n"
+        "1. PROCESS SUPERVISION & SIGNALS:\n"
+        "   • 'ps aux'         : Inspect the active Process Status table (PID, %CPU, COMMAND).\n"
+        "   • 'kill -9 <PID>'  : Dispatch forceful SIGKILL signal to terminate runaway tasks.\n\n"
+        "2. PERMISSIONS & FILE MODES:\n"
+        "   • 'chmod +x <file>': Grant executable rights (r-x) to recovery scripts.\n"
+        "   • 'chmod 644 <file>': Lock down configuration files to read-only security.\n\n"
+        "3. NETWORKING & RECOVERY TOOLS:\n"
+        "   • 'ip link set <dev> up'      : Bring offline network interfaces to UP state.\n"
+        "   • 'ping <gateway>'            : Verify ICMP reachability to core gateway nodes.\n"
+        "   • 'find <path> -name \"<pat>\"'  : Scan partition trees for hidden keys.\n"
+        "================================================================================\n",
         perms="644",
         owner="root"
     )
@@ -487,6 +618,26 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file("/var/log/HOW_TO_READ_LOGS.txt", how_to_read_logs_content, perms="644", owner="root")
 
+    grep_juice_content = (
+        "================================================================================\n"
+        "           SYSADMIN CHEAT SHEET // PRACTICAL 'grep' LOG FORENSICS\n"
+        "================================================================================\n"
+        "When triaging system breaches, raw logs contain hundreds of noisy events.\n"
+        "Use 'grep' recipes to isolate critical incident keywords:\n\n"
+        "1. ISOLATE ALERTS & ERRORS (Case-Insensitive):\n"
+        "   • grep -i 'alert' /var/log/auth.log\n"
+        "   • grep -i 'alert' /var/log/syslog\n"
+        "   • grep -i 'error' /var/log/syslog\n\n"
+        "2. FILTER RUNAWAY PROCESSES & HARDWARE LINKS:\n"
+        "   • grep -i 'miner' /var/log/auth.log\n"
+        "   • grep -i 'apollo0' /var/log/syslog\n\n"
+        "3. SHOW LINE NUMBERS & EXCLUDE NOISY DAEMONS:\n"
+        "   • grep -n -i 'failed' /var/log/auth.log   (Show line numbers)\n"
+        "   • grep -v 'systemd' /var/log/syslog      (Invert match: strip daemon noise)\n"
+        "================================================================================\n"
+    )
+    add_file("/var/log/.grep_juice", grep_juice_content, perms="644", owner="root")
+
     repair_commands_content = (
         "================================================================================\n"
         "         SECOPS TRIAGE REGISTRATION // INCIDENT REPAIR COMMANDS\n"
@@ -496,51 +647,104 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         " \033[1;31m[ALERT-0x01]\033[0m INTRUDER PROCESS PID:\n"
         "   • Source Log : /var/log/auth.log\n"
         "   • Command    : \033[1;31mtriage_process <PID>\033[0m\n"
-        "   • Example    : triage_process 999\n\n"
+        "   • Example    : triage_process 4991\n\n"
         " \033[1;33m[ALERT-0x02]\033[0m TAMPERED SECTOR PATH:\n"
         "   • Source Log : /var/log/auth.log\n"
         "   • Command    : \033[1;33mtriage_sector <FILE_PATH>\033[0m\n"
-        "   • Example    : triage_sector /mnt/recovery/bin/recovery.sh\n\n"
+        "   • Example    : triage_sector /opt/data/corrupted_agent.sh\n\n"
         " \033[1;36m[ALERT-0x03]\033[0m DEGRADED NETWORK INTERFACE:\n"
         "   • Source Log : /var/log/syslog\n"
         "   • Command    : \033[1;36mtriage_interface <DEVICE_NAME>\033[0m\n"
-        "   • Example    : triage_interface eth0\n\n"
+        "   • Example    : triage_interface eth1\n\n"
         " \033[1;35m[ALERT-0x04]\033[0m TERMINATED CLUSTER SERVICE:\n"
         "   • Source Log : /var/log/syslog\n"
         "   • Command    : \033[1;35mtriage_service <SERVICE_NAME>\033[0m\n"
-        "   • Example    : triage_service nginx.service\n"
+        "   • Example    : triage_service cron.service\n"
         "================================================================================\n"
     )
     add_file("/var/log/REPAIR_COMMANDS.txt", repair_commands_content, perms="644", owner="root")
 
-    auth_content = (
-        "[INFO]: System boot complete.\n"
-        " [WARN]: Normal PAM session opened for user root.\n"
-        " [WARN]: Normal PAM session closed for user root.\n"
-        " [WARN]: Normal PAM session opened for user alice.\n"
-        " [WARN]: Normal PAM session closed for user alice.\n"
-        "03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218\n"
-        "03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2\n"
-        "03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2\n"
-        "03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status\n"
-        "\033[1;31m[ALERT-0x01]\033[0m: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).\n"
-        "\033[1;33m[ALERT-0x02]\033[0m: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.\n"
-    )
-    add_file("/var/log/auth.log", auth_content, perms="640", owner="root")
-    add_file(
-        "/var/log/syslog",
-        "03:40:01 apollo systemd[1]: Starting System Logging Service...\n"
-        "03:40:05 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)\n"
-        "03:40:12 apollo kernel: \033[1;36m[ALERT-0x03]\033[0m Interface apollo0 link state degraded: DOWN\n"
-        "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0\n"
-        "03:42:19 apollo systemd[1]: \033[1;35m[ALERT-0x04]\033[0m phoenix-sync.service: Main process exited, code=killed, status=9/KILL\n"
-        "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.\n",
-        perms="644"
-    )
+    auth_lines = [
+        "[INFO]: System boot complete (Linux 5.15.0-apollo).",
+        "May 12 03:28:01 apollo systemd[1]: Starting System Logging Service...",
+        "May 12 03:28:05 apollo kernel: Initializing cgroup subsys cpuset",
+        "May 12 03:28:10 apollo systemd-logind[102]: Watching system buttons on /dev/input/event0",
+        "May 12 03:29:14 apollo CRON[180]: pam_unix(cron:session): session opened for user root by (uid=0)",
+        "May 12 03:29:15 apollo CRON[180]: pam_unix(cron:session): session closed for user root",
+        "May 12 03:30:01 apollo systemd-logind[102]: New session c1 of user root.",
+        "May 12 03:30:02 apollo pam_unix(sshd:session): session opened for user systemd",
+        "May 12 03:31:00 apollo pam_unix(sshd:session): session closed for user systemd",
+        "May 12 03:32:15 apollo CRON[185]: pam_unix(cron:session): session opened for user alice by (uid=1000)",
+        "May 12 03:32:20 apollo CRON[185]: pam_unix(cron:session): session closed for user alice",
+        "May 12 03:33:01 apollo systemd[1]: Created slice User Slice of UID 1000.",
+        "May 12 03:34:10 apollo sshd[190]: Server listening on 0.0.0.0 port 22.",
+        "May 12 03:35:00 apollo systemd[1]: Starting Daily apt download activities...",
+        "May 12 03:35:12 apollo systemd[1]: apt-daily.service: Deactivated successfully.",
+        "May 12 03:36:01 apollo CRON[195]: pam_unix(cron:session): session opened for user root",
+        "May 12 03:36:05 apollo CRON[195]: pam_unix(cron:session): session closed for user root",
+        "May 12 03:37:00 apollo pam_unix(sudo:session): session opened for user root by alice(uid=1000)",
+        "May 12 03:37:05 apollo pam_unix(sudo:session): session closed for user root",
+        "May 12 03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218",
+        "May 12 03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2",
+        "May 12 03:38:15 apollo sshd[204]: Connection closed by invalid user operator 192.168.1.105 port 44218 [preauth]",
+        "May 12 03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2",
+        "May 12 03:39:02 apollo pam_unix(sshd:session): session opened for user alice by (uid=0)",
+        "May 12 03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status",
+        "May 12 03:39:46 apollo pam_unix(sudo:session): session opened for user root by alice(uid=0)",
+        "[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).",
+        "[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.",
+        "May 12 03:40:01 apollo systemd-logind[102]: Session c1 logged out. Waiting for processes to exit.",
+        "May 12 03:40:05 apollo systemd[1]: Removed slice User Slice of UID 0.",
+        "May 12 03:40:15 apollo CRON[215]: pam_unix(cron:session): session opened for user root",
+        "May 12 03:40:18 apollo CRON[215]: pam_unix(cron:session): session closed for user root",
+        "May 12 03:41:00 apollo pam_unix(sshd:session): session opened for user systemd",
+        "May 12 03:41:05 apollo pam_unix(sshd:session): session closed for user systemd",
+        "May 12 03:42:00 apollo sshd[220]: Received disconnect from 192.168.1.105 port 44218: 11: Normal Shutdown",
+        "May 12 03:42:15 apollo systemd[1]: Stopped User Manager for UID 1000.",
+        "May 12 03:43:00 apollo systemd-logind[102]: System idle check complete."
+    ]
+    add_file("/var/log/auth.log", "\n".join(auth_lines) + "\n", perms="640", owner="root")
+
+    syslog_lines = [
+        "03:40:01 apollo systemd[1]: Starting System Logging Service...",
+        "03:40:02 apollo kernel: [    0.000000] Linux version 5.15.0-apollo (gcc 11.2.0)",
+        "03:40:02 apollo kernel: [    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-apollo root=/dev/sda1 ro quiet",
+        "03:40:03 apollo kernel: [    0.042100] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'",
+        "03:40:03 apollo kernel: [    0.042105] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'",
+        "03:40:04 apollo systemd[1]: Mounted Huge Pages File System.",
+        "03:40:04 apollo systemd[1]: Mounted POSIX Message Queue File System.",
+        "03:40:05 apollo systemd[1]: Started Dispatch Password Requests to Console Directory Watch.",
+        "03:40:06 apollo kernel: [    0.108420] e1000e: Intel(R) PRO/1000 Network Driver",
+        "03:40:07 apollo kernel: [    0.108422] e1000e 0000:00:03.0 eth0: (PCI Express:2.5GT/s:Width x1) 52:54:00:12:34:56",
+        "03:40:08 apollo systemd[1]: Reached target Local Encrypted Volumes.",
+        "03:40:09 apollo systemd[1]: Listening on Syslog Socket.",
+        "03:40:10 apollo systemd[1]: Reached target Network (Pre).",
+        "03:40:12 apollo kernel: [ALERT-0x03] Interface apollo0 link state degraded: DOWN",
+        "03:40:15 apollo systemd[1]: Starting Network Time Synchronization...",
+        "03:40:18 apollo systemd-timesyncd[110]: Network configuration changed, trying to establish connection.",
+        "03:40:22 apollo systemd[1]: Started Network Time Synchronization.",
+        "03:40:30 apollo systemd[1]: Reached target System Time Set.",
+        "03:40:45 apollo systemd[1]: Starting Rotate log files...",
+        "03:40:50 apollo systemd[1]: logrotate.service: Deactivated successfully.",
+        "03:41:00 apollo sys_miner[104]: CPU threshold exceeded: 98.2% allocation on core 0",
+        "03:41:15 apollo kernel: [   12.401920] perf: interrupt took too long (2510 > 2500), lowering kernel.perf_event_max_sample_rate to 50000",
+        "03:41:30 apollo systemd[1]: Starting Periodic ext4 Online Metadata Check...",
+        "03:41:40 apollo systemd[1]: e4defrag.service: Deactivated successfully.",
+        "03:42:00 apollo kernel: [   14.881200] CPU0: Core temperature above threshold, cpu clock throttled",
+        "03:42:19 apollo systemd[1]: [ALERT-0x04] phoenix-sync.service: Main process exited, code=killed, status=9/KILL",
+        "03:42:19 apollo systemd[1]: phoenix-sync.service: Failed with result 'signal'.",
+        "03:42:25 apollo systemd[1]: phoenix-sync.service: Scheduled restart job, restart counter is at 1.",
+        "03:42:30 apollo systemd[1]: Stopped Phoenix Synchronization Service.",
+        "03:43:00 apollo kernel: [   18.109200] audit: type=1100 audit(1652341380.120:45): pid=104 uid=0 auid=1000 ses=1 msg='op=PAM:accounting grantors=pam_unix,pam_permit acct=\"root\" exe=\"/tmp/sys_miner\" hostname=? addr=? terminal=? res=success'",
+        "03:43:15 apollo systemd[1]: Starting Daily Cleanup of Temporary Directories...",
+        "03:43:20 apollo systemd[1]: systemd-tmpfiles-clean.service: Deactivated successfully."
+    ]
+    add_file("/var/log/syslog", "\n".join(syslog_lines) + "\n", perms="644", owner="root")
     add_file(
         "/var/log/system.log",
         "03:40:12 apollo kernel: eth0 link down\n03:42:19 apollo systemd: phoenix-sync terminated\n",
-        perms="644"
+        perms="644",
+        owner="root"
     )
 
     # Milestone 3 & 4: /mnt/recovery/
@@ -549,36 +753,35 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "================================================================================\n"
         "                 SECOPS RECOVERY MANIFEST // PARTITION ADVISORY\n"
         "================================================================================\n"
-        "1. PERMISSION RECOVERY:\n"
+        "1. PERMISSION RECOVERY & SEARCH INDEXING:\n"
         "   The intruder stripped execution permissions (mode 000) on scripts in bin/.\n"
         "   Restore execute permissions with: chmod +x /mnt/recovery/bin/recovery.sh\n"
-        "   Then execute recovery.sh to link kernel signal handling (unlocking Ctrl+C).\n\n"
+        "   Then execute recovery.sh to rebuild the partition index and unlock 'find'.\n\n"
         "2. PHOENIX CLUSTER AUTHENTICATION:\n"
-        "   The cryptographic cluster key is preserved under:\n"
-        "   /mnt/recovery/keys/phoenix.key\n"
-        "   This key must be appended to the PHOENIX daemon configuration in /etc/phoenix/\n"
-        "   to restore the restoration gateway.\n"
+        "   The cryptographic cluster key is preserved across this partition.\n"
+        "   Use 'find /mnt/recovery -name \"*.key\"' to locate authentication tokens.\n"
+        "   Append the key to /etc/phoenix/phoenix.conf to restore the gateway.\n"
         "================================================================================\n",
         perms="644",
         owner="root"
     )
     add_file(
         "/mnt/recovery/bin/recovery.sh",
-        "#!/bin/bash\necho '[KERNEL]: Restoring signal trap vector...'\necho 'SIGINT handler online.'\n",
+        "#!/bin/bash\necho '[KERNEL]: Rebuilding filesystem index table...'\necho 'Partition query registers synchronized. Filesystem search (find) online.'\n",
         perms="000",
         owner="root"
     )
-    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]", perms="000", owner="root")
-    add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]", perms="000", owner="root")
-    add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]\n", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]\n", perms="000", owner="root")
+    add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]\n", perms="000", owner="root")
     add_file("/mnt/recovery/keys/phoenix.key", "PX-KEY-7701-ALPHA\n", perms="600", owner="root")
 
     # Soft-Gated & Diegetic Tool Binaries
-    add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/grep", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/find", "ELF 64-bit LSB executable", perms="755")
-    add_file("/opt/phoenix/recovery/recovery.sh", "#!/bin/bash\necho 'Restoring core nodes...'", perms="755")
-    add_file("/opt/phoenix/phoenix_daemon", "ELF 64-bit LSB executable [PHOENIX-DAEMON v2.5]", perms="755")
+    add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable\n", perms="755")
+    add_file("/opt/phoenix/recovery/grep", "ELF 64-bit LSB executable\n", perms="755")
+    add_file("/opt/phoenix/recovery/find", "ELF 64-bit LSB executable\n", perms="755")
+    add_file("/opt/phoenix/recovery/recovery.sh", "#!/bin/bash\necho 'Restoring core nodes...'\n", perms="755")
+    add_file("/opt/phoenix/phoenix_daemon", "ELF 64-bit LSB executable [PHOENIX-DAEMON v2.5]\n", perms="755")
     add_file(
         "/opt/phoenix/phoenix.conf",
         "# PHOENIX EMERGENCY RESTORATION DAEMON CONFIG\nSERVICE_ENABLED=1\nLISTEN_PORT=8080\nGATEWAY_IP=10.0.42.1\nRECOVERY_KEY=0x7F_PHOENIX_INIT_2042\n",
@@ -660,6 +863,11 @@ class TerminalState:
             "BUFFER_REPAIRED": False,
             "BASHRC_RESTORED": False,
             "LOGS_AUDITED": False,
+            "RECOVERY_LOCATED": False,
+            "PERMISSIONS_RESTORED": False,
+            "FIND_UNLOCKED": False,
+            "KEY_DISCOVERED": False,
+            "PROCESS_CHECKED": False,
             "MALWARE_TERMINATED": False,
             "NETWORK_ONLINE": False,
             "PHOENIX_ONLINE": False
@@ -670,6 +878,7 @@ class TerminalState:
             "ALERT_0x03": False,
             "ALERT_0x04": False,
         }
+        self.discovered_manuals: Dict[str, bool] = {}
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
             ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),
@@ -771,7 +980,32 @@ MAN_PAGES: Dict[str, str] = {
     "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
     "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
     "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [-f] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n    tail -f /var/log/syslog\n",
-    "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
+    "grep": (
+        "NAME\n"
+        "    grep - print lines that match patterns\n\n"
+        "SYNOPSIS\n"
+        "    grep [OPTION]... PATTERN [FILE]...\n\n"
+        "DESCRIPTION\n"
+        "    grep searches input files for lines containing a match to the given PATTERN.\n"
+        "    A PATTERN is a keyword, search string, or expression you want to isolate.\n"
+        "    Matching lines are printed to standard output.\n\n"
+        "OPTIONS\n"
+        "    -i, --ignore-case\n"
+        "        Ignore case distinctions in patterns and input data (e.g. 'ALERT' matches 'alert').\n\n"
+        "    -v, --invert-match\n"
+        "        Invert the sense of matching, selecting lines that do NOT match the pattern.\n\n"
+        "    -n, --line-number\n"
+        "        Prefix each line of output with its 1-based line number within the file.\n\n"
+        "    -r, --recursive\n"
+        "        Read all files under each directory, recursively.\n\n"
+        "EXAMPLES\n"
+        "    grep -i 'alert' /var/log/auth.log\n"
+        "    grep -i 'miner' /var/log/syslog\n"
+        "    grep -v 'systemd' /var/log/syslog\n"
+        "    grep -r 'PHOENIX' /opt\n"
+    ),
+    "manuals": "NAME\n    manuals - index recovered field manuals and cheat sheets\n\nSYNOPSIS\n    manuals\n\nDESCRIPTION\n    Displays a catalog of all discovered operational guides, cheat sheets, and field notes that have been read with 'cat'.\n",
+    "docs": "NAME\n    docs - alias for manuals\n\nSYNOPSIS\n    docs\n",
     "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
     "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x script.sh\n    chmod 755 /bin/tool\n    chmod 644 config.conf\n",
     "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",
@@ -911,6 +1145,9 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
             if not ctx.state.system_flags.get("README_INSPECTED", False):
                 ctx.state.system_flags["README_INSPECTED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         output.append(node.content if node.content is not None else "")
 
     full_output = "".join(output)
@@ -962,6 +1199,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
             if not ctx.state.system_flags.get("README_INSPECTED", False):
                 ctx.state.system_flags["README_INSPECTED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
         output.append("".join(lines))
 
@@ -1024,6 +1264,9 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
             return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': Permission denied\n", exit_code=1)
         if node.is_dir():
             return ctx.result_factory(stderr=f"tail: error reading '{filepath}': Is a directory\n", exit_code=1)
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         lines = (node.content or "").splitlines(keepends=True)[-lines_count:]
         output.append("".join(lines))
 
@@ -1135,6 +1378,14 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "find", "args": args}))
+    if not ctx.state.system_flags.get("FIND_UNLOCKED", False):
+        return ctx.result_factory(
+            stderr=(
+                "[RECOVERY ERROR]: Filesystem query subsystem offline. Search index unlinked.\n"
+                "Execute '/mnt/recovery/bin/recovery.sh' to restore search registers.\n"
+            ),
+            exit_code=1
+        )
     search_path = "."
     pattern: Optional[str] = None
     target_type: Optional[str] = None  # "f" or "d"
@@ -1185,6 +1436,10 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
         if pattern:
             if not fnmatch.fnmatch(name, pattern):
                 continue
+
+        if "phoenix.key" in path_str:
+            ctx.state.system_flags["KEY_DISCOVERED"] = True
+            ctx.bus.publish(Event("flag_changed", {"flag": "KEY_DISCOVERED", "value": True}))
 
         results.append(path_str)
 
@@ -1293,6 +1548,7 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
     mode_str = args[0]
     target_paths = args[1:]
 
+    messages = []
     for target in target_paths:
         node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
         if not node:
@@ -1324,11 +1580,15 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
             ctx.state.system_flags["BASHRC_RESTORED"] = True
             ctx.bus.publish(Event("flag_changed", {"flag": "BASHRC_RESTORED", "value": True}))
 
-    return ctx.result_factory()
+        messages.append(f"[chmod]: mode of '{target}' changed to {node.permissions}\n")
+
+    return ctx.result_factory(stdout="".join(messages))
 
 
 def cmd_ps(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ps", "args": args}))
+    ctx.state.system_flags["PROCESS_CHECKED"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "PROCESS_CHECKED", "value": True}))
     header = "USER       PID %CPU COMMAND\n"
     lines = []
     for proc in ctx.state.process_table:
@@ -1578,14 +1838,15 @@ class DebriefManager:
             "│ • SIGKILL (-9) immediately revokes kernel resources; use with care!    │\n"
             "└────────────────────────────────────────────────────────────────────────┘"
         ),
-        "SIGINT_UNLOCKED": (
+        "FIND_UNLOCKED": (
             "┌────────────────────────────────────────────────────────────────────────┐\n"
-            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │\n"
+            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Filesystem Search         │\n"
             "├────────────────────────────────────────────────────────────────────────┤\n"
-            "│ You made recovery.sh executable and restored kernel signal traps.       │\n"
+            "│ You made recovery.sh executable and rebuilt the partition search index.│\n"
             "│ In real Linux systems:                                                 │\n"
-            "│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │\n"
-            "│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │\n"
+            "│ • 'chmod +x' or 'chmod 755' restores executable mode bits on binaries. │\n"
+            "│ • 'find' traverses directory hierarchies matching names, types, & size.│\n"
+            "│ • Example: find / -name \"*.key\" or find /mnt/recovery -type f          │\n"
             "└────────────────────────────────────────────────────────────────────────┘"
         ),
         "LOGS_AUDITED": (
@@ -1693,6 +1954,7 @@ def save_game_state(state: TerminalState, filepath: str = "savegame.json") -> No
         },
         "system_flags": state.system_flags,
         "discovered_clues": getattr(state, "discovered_clues", {}),
+        "discovered_manuals": getattr(state, "discovered_manuals", {}),
         "process_table": [
             {
                 "pid": p.pid,
@@ -1748,6 +2010,8 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
     state.system_flags = data.get("system_flags", state.system_flags)
     if "discovered_clues" in data:
         state.discovered_clues = data["discovered_clues"]
+    if "discovered_manuals" in data:
+        state.discovered_manuals = data["discovered_manuals"]
 
     try:
         todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
@@ -2082,6 +2346,7 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         "│   • cat <file>     : Open and read a file's contents                   │",
         "│   • pwd            : Check what folder you are currently standing in   │",
         "│   • decrypt        : Ask APOLLO AI to diagnose your last error         │",
+        "│   • manuals        : Browse collected field manuals and cheat sheets   │",
         "│   • sync           : Save your game progress to persistent storage     │",
         "│   • reboot / reset : Restart the game from cold boot                   │",
     ]
@@ -2100,11 +2365,11 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         discovered.append("  • head / tail    : Read the start or end of log streams (e.g. 'tail -n 10 auth.log').")
         discovered.append("  • grep <pattern> : Search for keywords across files (e.g. 'grep -i breach auth.log').")
 
-    if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED"):
-        discovered.append("  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name \"*.sh\"').")
+    if flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED") or flags.get("FIND_UNLOCKED"):
+        discovered.append("  • find <path>    : Scan filesystem trees (e.g. 'find /mnt/recovery -name \"*.key\"').")
         discovered.append("  • chmod <mode>   : Update file security modes (e.g. 'chmod +x <file>').")
 
-    if flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED"):
+    if flags.get("MALWARE_TERMINATED"):
         discovered.append("  • ps aux         : Scan active background processes.")
         discovered.append("  • kill -9 <PID>  : Terminate a runaway rogue process by PID.")
 
@@ -2126,9 +2391,9 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
         hidden_count += 1
     if not flags.get("LOGS_AUDITED"):
         hidden_count += 1
-    if not (flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED")):
+    if not (flags.get("RECOVERY_LOCATED") or flags.get("PERMISSIONS_RESTORED") or flags.get("FIND_UNLOCKED")):
         hidden_count += 1
-    if not (flags.get("MALWARE_TERMINATED") or flags.get("SIGINT_UNLOCKED")):
+    if not flags.get("MALWARE_TERMINATED"):
         hidden_count += 1
     if not flags.get("NETWORK_ONLINE"):
         hidden_count += 1
@@ -2185,7 +2450,7 @@ def cmd_todo(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "todo", "args": args}))
     if not ctx.state.system_flags.get("TODO_LINKED", False):
         return ctx.result_factory(
-            stderr="bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' and run 'taskctl link' to activate)\n",
+            stderr="bash: todo: command not found (Tip: inspect '/home/alice/TODO.txt' for instructions)\n",
             exit_code=127
         )
     content = get_todo_content(ctx.state.system_flags, getattr(ctx.state, 'discovered_clues', {}))
@@ -2302,6 +2567,66 @@ def cmd_triage_service(ctx: CommandContext, args: List[str]) -> CommandResult:
         )
 
 
+def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "manuals", "args": args}))
+
+    catalog = [
+        ("SURVIVAL CARD", "/home/alice/README.txt", "Basic Navigation, Terminal Diagnostics & Sync"),
+        ("LONG LISTING GUIDE", "/opt/backup/profiles/.HOW_TO_READ_LL.txt", "File Details, Modes & Permissions Breakdown"),
+        ("INCIDENT ADVISORY", "/opt/backup/profiles/NOTE_FROM_MORGAN.txt", "Shell Profile Template & Shortcuts Sync"),
+        ("LOG FORENSICS MANUAL", "/var/log/HOW_TO_READ_LOGS.txt", "Log Anatomy, Event Formatting & Filtering"),
+        ("GREP FORENSICS GUIDE", "/var/log/.grep_juice", "Log Filter Patterns & Practical Grep Recipes"),
+        ("SECOPS TRIAGE GUIDE", "/var/log/REPAIR_COMMANDS.txt", "Incident Dossier Registration Commands"),
+        ("PARTITION ADVISORY", "/mnt/recovery/docs/RECOVERY_NOTES.txt", "Recovery Partition Scripts & Security Key Info"),
+        ("SYSADMIN PROTOCOLS", "/usr/share/doc/sysadmin_notes.txt", "Process Management, File Modes & Networking"),
+    ]
+
+    discovered = getattr(ctx.state, "discovered_manuals", {})
+    available = []
+
+    for title, path, desc in catalog:
+        if discovered.get(path, False):
+            node, _ = ctx.vfs.get_node([], path)
+            if node:
+                available.append((title, path, desc))
+
+    if not available:
+        return ctx.result_factory(
+            stdout=(
+                "================================================================================\n"
+                "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS\n"
+                "================================================================================\n"
+                "[!] No field manuals recovered yet.\n"
+                "Inspect documentation files using 'cat' to register them in your manual inventory.\n"
+                "================================================================================\n"
+            )
+        )
+
+    lines = [
+        "================================================================================",
+        "               APOLLO WORKSTATION // DISCOVERED FIELD MANUALS",
+        "================================================================================",
+        f"Index of recovered operational guides and cheat sheets ({len(available)} discovered):\n"
+    ]
+
+    for title, path, desc in available:
+        lines.append(f"  • \033[1;36m{title:<22}\033[0m : {desc}")
+        lines.append(f"    Location: {path}  (Read: 'cat {path}')\n")
+
+    lines.append("================================================================================")
+    lines.append("Tip: Use 'cat <path>' to review any manual, or 'man <command>' for command help.")
+    lines.append("================================================================================")
+    return ctx.result_factory(stdout="\n".join(lines) + "\n")
+
+
+def cmd_docs(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_manuals(ctx, args)
+
+
+def cmd_fieldguide(ctx: CommandContext, args: List[str]) -> CommandResult:
+    return cmd_manuals(ctx, args)
+
+
 # --- __init__.py ---
 from typing import Any, Callable, Dict
     cmd_pwd,
@@ -2337,6 +2662,9 @@ from typing import Any, Callable, Dict
     cmd_taskctl,
     cmd_todo,
     cmd_tasks,
+    cmd_manuals,
+    cmd_docs,
+    cmd_fieldguide,
     cmd_triage_process,
     cmd_triage_sector,
     cmd_triage_interface,
@@ -2382,6 +2710,9 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "taskctl": cmd_taskctl,
         "todo": cmd_todo,
         "tasks": cmd_tasks,
+        "manuals": cmd_manuals,
+        "docs": cmd_docs,
+        "fieldguide": cmd_fieldguide,
         "triage_process": cmd_triage_process,
         "triage_sector": cmd_triage_sector,
         "triage_interface": cmd_triage_interface,
@@ -2557,16 +2888,14 @@ class PipelineEngine:
             elif base_name == "recovery.sh":
                 ctx.state.system_flags["RECOVERY_LOCATED"] = True
                 ctx.state.system_flags["PERMISSIONS_RESTORED"] = True
-                ctx.state.system_flags["SIGINT_UNLOCKED"] = True
-                ctx.state.unlocked_ergonomics["sigint"] = True
-                ctx.state.unlocked_ergonomics["sigint_trap"] = True
+                ctx.state.system_flags["FIND_UNLOCKED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "RECOVERY_LOCATED", "value": True}))
                 ctx.bus.publish(Event("flag_changed", {"flag": "PERMISSIONS_RESTORED", "value": True}))
-                ctx.bus.publish(Event("flag_changed", {"flag": "SIGINT_UNLOCKED", "value": True}))
+                ctx.bus.publish(Event("flag_changed", {"flag": "FIND_UNLOCKED", "value": True}))
                 return ctx.result_factory(
                     stdout=(
-                        "[!] ABILITY UNLOCKED: Emergency Signal Trapping (SIGINT)\n"
-                        "Kernel signal vector linked. You can now press [Ctrl+C] to abort stuck processes.\n"
+                        "[!] ABILITY UNLOCKED: Filesystem Search Utility ('find')\n"
+                        "Partition index registered. You can now use 'find <path> -name \"<pattern>\"' to scan trees.\n"
                     )
                 )
             elif base_name.endswith(".sh"):
@@ -2727,14 +3056,9 @@ def build_key_bindings(get_context):
 
     @kb.add("c-c")
     def handle_sigint(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("sigint_trap", False) or ctx.state.unlocked_ergonomics.get("sigint", False)):
-            sys.stdout.write("\n[SIGNAL FAULT]: Process signal traps unconfigured. SIGINT ignored.\n")
-            event.app.output.flush()
-        else:
-            sys.stdout.write("^C\n")
-            event.app.output.flush()
-            event.app.current_buffer.reset()
+        sys.stdout.write("^C\n")
+        event.app.output.flush()
+        event.app.current_buffer.reset()
 
     @kb.add("up")
     def handle_up_arrow(event):
@@ -2802,7 +3126,6 @@ def get_boot_screen(flags: Dict[str, bool]) -> str:
         "",
         "ONBOARDING ACTIONS:",
         "  • Type 'ls' to look around your current directory.",
-        "  • Type 'cd <folder>' (e.g. 'cd diagnostics') to move into a folder.",
         "  • Type 'cat <filename>' (e.g. 'cat README.txt') to read file contents.",
         "  • Type 'exit' to disconnect from session.",
         "================================================================================\n",

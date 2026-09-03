@@ -58,14 +58,9 @@ def build_key_bindings(get_context):
 
     @kb.add("c-c")
     def handle_sigint(event):
-        ctx = get_context()
-        if not (ctx.state.unlocked_ergonomics.get("sigint_trap", False) or ctx.state.unlocked_ergonomics.get("sigint", False)):
-            sys.stdout.write("\n[SIGNAL FAULT]: Process signal traps unconfigured. SIGINT ignored.\n")
-            event.app.output.flush()
-        else:
-            sys.stdout.write("^C\n")
-            event.app.output.flush()
-            event.app.current_buffer.reset()
+        sys.stdout.write("^C\n")
+        event.app.output.flush()
+        event.app.current_buffer.reset()
 
     @kb.add("up")
     def handle_up_arrow(event):

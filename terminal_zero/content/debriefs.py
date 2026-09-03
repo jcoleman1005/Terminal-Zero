@@ -35,14 +35,15 @@ class DebriefManager:
             "│ • SIGKILL (-9) immediately revokes kernel resources; use with care!    │\n"
             "└────────────────────────────────────────────────────────────────────────┘"
         ),
-        "SIGINT_UNLOCKED": (
+        "FIND_UNLOCKED": (
             "┌────────────────────────────────────────────────────────────────────────┐\n"
-            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Signal Trapping           │\n"
+            "│ [TAKE IT TO LINUX]: POSIX File Permissions & Filesystem Search         │\n"
             "├────────────────────────────────────────────────────────────────────────┤\n"
-            "│ You made recovery.sh executable and restored kernel signal traps.       │\n"
+            "│ You made recovery.sh executable and rebuilt the partition search index.│\n"
             "│ In real Linux systems:                                                 │\n"
-            "│ • 'chmod +x' or 'chmod 755' sets the executable mode bit on scripts.   │\n"
-            "│ • SIGINT (Ctrl+C) sends signal 2 to interrupt running foreground jobs. │\n"
+            "│ • 'chmod +x' or 'chmod 755' restores executable mode bits on binaries. │\n"
+            "│ • 'find' traverses directory hierarchies matching names, types, & size.│\n"
+            "│ • Example: find / -name \"*.key\" or find /mnt/recovery -type f          │\n"
             "└────────────────────────────────────────────────────────────────────────┘"
         ),
         "LOGS_AUDITED": (

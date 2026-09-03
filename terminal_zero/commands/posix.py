@@ -110,6 +110,9 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
             if not ctx.state.system_flags.get("README_INSPECTED", False):
                 ctx.state.system_flags["README_INSPECTED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         output.append(node.content if node.content is not None else "")
 
     full_output = "".join(output)
@@ -161,6 +164,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
             if not ctx.state.system_flags.get("README_INSPECTED", False):
                 ctx.state.system_flags["README_INSPECTED"] = True
                 ctx.bus.publish(Event("flag_changed", {"flag": "README_INSPECTED", "value": True}))
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         lines = (node.content or "").splitlines(keepends=True)[:lines_count]
         output.append("".join(lines))
 
@@ -223,6 +229,9 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
             return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': Permission denied\n", exit_code=1)
         if node.is_dir():
             return ctx.result_factory(stderr=f"tail: error reading '{filepath}': Is a directory\n", exit_code=1)
+        full_path_str = "/" + "/".join(resolved_path)
+        if hasattr(ctx.state, "discovered_manuals"):
+            ctx.state.discovered_manuals[full_path_str] = True
         lines = (node.content or "").splitlines(keepends=True)[-lines_count:]
         output.append("".join(lines))
 
@@ -334,6 +343,14 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "find", "args": args}))
+    if not ctx.state.system_flags.get("FIND_UNLOCKED", False):
+        return ctx.result_factory(
+            stderr=(
+                "[RECOVERY ERROR]: Filesystem query subsystem offline. Search index unlinked.\n"
+                "Execute '/mnt/recovery/bin/recovery.sh' to restore search registers.\n"
+            ),
+            exit_code=1
+        )
     search_path = "."
     pattern: Optional[str] = None
     target_type: Optional[str] = None  # "f" or "d"
@@ -384,6 +401,10 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
         if pattern:
             if not fnmatch.fnmatch(name, pattern):
                 continue
+
+        if "phoenix.key" in path_str:
+            ctx.state.system_flags["KEY_DISCOVERED"] = True
+            ctx.bus.publish(Event("flag_changed", {"flag": "KEY_DISCOVERED", "value": True}))
 
         results.append(path_str)
 
@@ -492,6 +513,7 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
     mode_str = args[0]
     target_paths = args[1:]
 
+    messages = []
     for target in target_paths:
         node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
         if not node:
@@ -523,11 +545,15 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
             ctx.state.system_flags["BASHRC_RESTORED"] = True
             ctx.bus.publish(Event("flag_changed", {"flag": "BASHRC_RESTORED", "value": True}))
 
-    return ctx.result_factory()
+        messages.append(f"[chmod]: mode of '{target}' changed to {node.permissions}\n")
+
+    return ctx.result_factory(stdout="".join(messages))
 
 
 def cmd_ps(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ps", "args": args}))
+    ctx.state.system_flags["PROCESS_CHECKED"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "PROCESS_CHECKED", "value": True}))
     header = "USER       PID %CPU COMMAND\n"
     lines = []
     for proc in ctx.state.process_table:

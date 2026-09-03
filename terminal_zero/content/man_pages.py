@@ -7,7 +7,32 @@ MAN_PAGES: Dict[str, str] = {
     "cat": "NAME\n    cat - concatenate files and print on the standard output\n\nSYNOPSIS\n    cat [FILE]...\n\nEXAMPLES\n    cat /home/alice/README.txt\n",
     "head": "NAME\n    head - output the first part of files\n\nSYNOPSIS\n    head [-n LINES] [FILE]...\n\nEXAMPLES\n    head -n 5 /var/log/system.log\n",
     "tail": "NAME\n    tail - output the last part of files\n\nSYNOPSIS\n    tail [-n LINES] [-f] [FILE]...\n\nEXAMPLES\n    tail -n 20 /var/log/system.log\n    tail -f /var/log/syslog\n",
-    "grep": "NAME\n    grep - print lines that match patterns\n\nSYNOPSIS\n    grep [-i] [-v] [-n] [-r] PATTERN [FILE]...\n\nEXAMPLES\n    grep -i 'error' /var/log/system.log\n    grep -r 'PHOENIX' /opt\n",
+    "grep": (
+        "NAME\n"
+        "    grep - print lines that match patterns\n\n"
+        "SYNOPSIS\n"
+        "    grep [OPTION]... PATTERN [FILE]...\n\n"
+        "DESCRIPTION\n"
+        "    grep searches input files for lines containing a match to the given PATTERN.\n"
+        "    A PATTERN is a keyword, search string, or expression you want to isolate.\n"
+        "    Matching lines are printed to standard output.\n\n"
+        "OPTIONS\n"
+        "    -i, --ignore-case\n"
+        "        Ignore case distinctions in patterns and input data (e.g. 'ALERT' matches 'alert').\n\n"
+        "    -v, --invert-match\n"
+        "        Invert the sense of matching, selecting lines that do NOT match the pattern.\n\n"
+        "    -n, --line-number\n"
+        "        Prefix each line of output with its 1-based line number within the file.\n\n"
+        "    -r, --recursive\n"
+        "        Read all files under each directory, recursively.\n\n"
+        "EXAMPLES\n"
+        "    grep -i 'alert' /var/log/auth.log\n"
+        "    grep -i 'miner' /var/log/syslog\n"
+        "    grep -v 'systemd' /var/log/syslog\n"
+        "    grep -r 'PHOENIX' /opt\n"
+    ),
+    "manuals": "NAME\n    manuals - index recovered field manuals and cheat sheets\n\nSYNOPSIS\n    manuals\n\nDESCRIPTION\n    Displays a catalog of all discovered operational guides, cheat sheets, and field notes that have been read with 'cat'.\n",
+    "docs": "NAME\n    docs - alias for manuals\n\nSYNOPSIS\n    docs\n",
     "find": "NAME\n    find - search for files in a directory hierarchy\n\nSYNOPSIS\n    find [PATH] -name PATTERN [-type f|d]\n\nEXAMPLES\n    find / -name '*.sh'\n    find /home/alice -type f\n",
     "chmod": "NAME\n    chmod - change file mode bits\n\nSYNOPSIS\n    chmod MODE FILE...\n\nEXAMPLES\n    chmod +x script.sh\n    chmod 755 /bin/tool\n    chmod 644 config.conf\n",
     "decrypt": "NAME\n    decrypt - Apollo diagnostic error translation daemon\n\nSYNOPSIS\n    decrypt\n\nDESCRIPTION\n    Analyzes the last stderr fault and emits plain-language recovery procedures.\n",

@@ -41,7 +41,6 @@ def get_boot_screen(flags: Dict[str, bool]) -> str:
         "",
         "ONBOARDING ACTIONS:",
         "  • Type 'ls' to look around your current directory.",
-        "  • Type 'cd <folder>' (e.g. 'cd diagnostics') to move into a folder.",
         "  • Type 'cat <filename>' (e.g. 'cat README.txt') to read file contents.",
         "  • Type 'exit' to disconnect from session.",
         "================================================================================\n",

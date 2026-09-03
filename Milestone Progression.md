@@ -407,22 +407,22 @@ SYNTAX OVERVIEW:
 
 ---
 
-### Milestone 4: Security Integrity & Permissions (Executable Rights)
+### Milestone 4: Security Integrity & Permissions (Executable Rights & Search Index)
 
-* **Milestone ID & Name**: Milestone 4: Security Integrity & Permissions (Executable Rights)
+* **Milestone ID & Name**: Milestone 4: Security Integrity & Permissions (Executable Rights & Search Index)
 
 
 * **Primary CLI Focus**: `ls -l`, `chmod` (`+x`, `755`, `700`), and binary execution (`./recovery.sh`).
 
 
-* **System Capability Unlocked**: Restores kernel signal traps, unlocking `Ctrl+C` / SIGINT (`unlocked_ergonomics["sigint"] = True`, `unlocked_ergonomics["sigint_trap"] = True`).
+* **System Capability Unlocked**: Rebuilds filesystem query registers, unlocking `find` (`SYSTEM_FLAGS["FIND_UNLOCKED"] = True`).
 
 
 * **Flags Evaluated & Set**:
 * *Prerequisites*: `SYSTEM_FLAGS["RECOVERY_LOCATED"] == True`.
 
 
-* *Post-Resolution*: `SYSTEM_FLAGS["PERMISSIONS_RESTORED"] = True`, `SYSTEM_FLAGS["SIGINT_UNLOCKED"] = True`.
+* *Post-Resolution*: `SYSTEM_FLAGS["PERMISSIONS_RESTORED"] = True`, `SYSTEM_FLAGS["FIND_UNLOCKED"] = True`.
 
 
 
@@ -441,10 +441,10 @@ SYNTAX OVERVIEW:
  [Action: chmod +x recovery.sh || chmod 755 recovery.sh] ──► Restore execute/read bits[cite: 1, 2]
                   │
                   ▼
- [Action: ./recovery.sh] ──► Execute script to link kernel signal traps[cite: 1, 2]
+ [Action: ./recovery.sh] ──► Execute script to rebuild search index & unlock find[cite: 1, 2]
                   │
                   ▼
- [Resolution: SIGINT_UNLOCKED = True] ──► Unlock Ctrl+C Ergonomic + Emit Debrief[cite: 1, 2]
+ [Resolution: FIND_UNLOCKED = True] ──► Unlock find utility + Emit Debrief[cite: 1, 2]
 
 ```
 

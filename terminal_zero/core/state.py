@@ -40,6 +40,11 @@ class TerminalState:
             "BUFFER_REPAIRED": False,
             "BASHRC_RESTORED": False,
             "LOGS_AUDITED": False,
+            "RECOVERY_LOCATED": False,
+            "PERMISSIONS_RESTORED": False,
+            "FIND_UNLOCKED": False,
+            "KEY_DISCOVERED": False,
+            "PROCESS_CHECKED": False,
             "MALWARE_TERMINATED": False,
             "NETWORK_ONLINE": False,
             "PHOENIX_ONLINE": False
@@ -50,6 +55,7 @@ class TerminalState:
             "ALERT_0x03": False,
             "ALERT_0x04": False,
         }
+        self.discovered_manuals: Dict[str, bool] = {}
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
             ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),
