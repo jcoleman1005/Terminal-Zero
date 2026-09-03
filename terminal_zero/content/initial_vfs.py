@@ -55,33 +55,64 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         add_file(f"/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
         add_file(f"/usr/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
 
-    # Milestone 0: /home/alice & /home/alice/diagnostics
+    # /etc/motd
     add_file(
-        "/home/alice/README.txt",
+        "/etc/motd",
         "================================================================================\n"
-        "          APOLLO WORKSTATION // EMERGENCY OPERATOR SURVIVAL CARD\n"
+        "                    APOLLO WORKSTATION // KERNEL v5.19.0-24\n"
         "================================================================================\n"
-        "SECONDARY NAVIGATION & DIAGNOSTIC UTILITIES:\n"
-        "  • cd <folder>    : Move into a folder (e.g. 'cd diagnostics' or 'cd ..' to go back).\n"
-        "  • pwd            : Print the current directory path you are standing in.\n"
-        "  • decrypt        : Ask APOLLO AI to diagnose your last error in plain language.\n"
-        "  • manuals        : Index all recovered field manuals, cheat sheets, and guides.\n"
-        "  • sync           : Save workstation recovery progress to persistent storage.\n\n"
-        "OPERATOR ADVISORY:\n"
-        "Explore directory branches with 'cd' and 'ls'. Inspect logs and field notes with\n"
-        "'cat' to uncover incident clues and discover system restoration tools.\n"
+        " [ALERT] SYSTEM INTEGRITY COMPROMISED. AUTOMATIC QUARANTINE PROTOCOL ACTIVE.\n"
+        " [ALERT] WAN LINK SEVERED. PRIMARY LINE DISCIPLINE DRIVERS CORRUPTED.\n"
+        " \n"
+        " Current Session: alice [CONSOLE TTY1]\n"
+        " Security Context: RESTRICTED SANDBOX (/home/alice)\n\n"
+        " Standard desktop services are offline. Terminal fallback active.\n"
+        " Review local incident logs and recovery instructions in your home directory.\n"
         "================================================================================\n",
         perms="644",
-        owner="alice"
+        owner="root"
     )
-    add_file(
-        "/home/alice/diagnostics/BOOT_FAIL.log",
-        "[KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
-        "[SUBSYSTEM FAULT] Command History Memory is offline. Interactive command recall (UP/DOWN arrow keys) disabled.\n"
-        "[ACTION REQUIRED] Run 'repair_buffer' to restore terminal memory registers.\n",
-        perms="644",
-        owner="alice"
+
+    # Milestone 0: /home/alice & /home/alice/diagnostics
+    readme_content = (
+        "// ============================================================================\n"
+        "// APOLLO WORKSTATION // EMERGENCY OPERATOR PROTOCOL\n"
+        "// ============================================================================\n"
+        "Alice—\n\n"
+        "If you're seeing this on your screen, the automated lockdown caught you at your\n"
+        "desk when the network dropped. Don't panic. The system put your terminal in a\n"
+        "quarantine environment (/home/alice) so the attack couldn't touch your shell.\n\n"
+        "The desktop GUI is gone. You're going to have to drive this machine through the\n"
+        "command line.\n\n"
+        "Keep these three commands in your head right now:\n"
+        "  • 'pwd'            (Print Working Directory)\n"
+        "    Tells you where you are standing in the system tree.\n"
+        "  • 'ls'             (List)\n"
+        "    Shows you all visible files and folders in your current directory.\n"
+        "  • 'cat <filename>' (Concatenate / Read)\n"
+        "    Dumps the text inside a file right onto your screen.\n"
+        "    Example: cat README.txt\n\n"
+        "Your terminal driver took a direct hit on boot, which is why your Up/Down arrow\n"
+        "keys aren't recalling previous commands.\n\n"
+        "Inspect 'diagnostics/BOOT_FAIL.log' using 'cat' to see the exact fault, then\n"
+        "run the recovery utility it specifies.\n\n"
+        "If a command fails or spits out an error you don't understand, type 'decrypt'.\n"
+        "I wrote it to catch whatever POSIX error the kernel just threw and translate\n"
+        "the sysadmin jargon into plain English.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
     )
+    add_file("/home/alice/README.txt", readme_content, perms="644", owner="alice")
+
+    boot_fail_content = (
+        "[03:41:02.109] [KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
+        "[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n"
+        "[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.\n"
+        "[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.\n"
+        "[03:41:02.125] [ACTION REQUIRED] Run the maintenance utility 'repair_buffer' to recalibrate.\n"
+    )
+    add_file("/home/alice/diagnostics/BOOT_FAIL.log", boot_fail_content, perms="644", owner="alice")
+
     add_file(
         "/home/alice/diagnostics/INCIDENT_REPORT.log",
         get_incident_dossier({}),
@@ -103,28 +134,51 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
 
     # Milestone 1: /opt/backup/profiles & /home/alice
-    add_file(
-        "/home/alice/.note.txt",
-        "// STICKY NOTE TAPED TO MONITOR:\n"
-        "Alice — during the breach, strange logs and alerts were generated in /var/log/.\n"
-        "Use 'grep' to filter log noise and unmask the attacker's traces.\n"
-        "Emergency recovery scripts are locked down under /mnt/recovery/bin/.\n"
-        "— Morgan\n",
-        perms="644",
-        owner="alice"
+    note_content = (
+        "// STICKY NOTE TAPED TO MONITOR FRAME\n"
+        "Alice—\n\n"
+        "The attacker didn't just break the drivers; they tried to bury their tracks.\n\n"
+        "Once you fix the terminal buffer, remember that Unix hides system profiles\n"
+        "and recovery caches behind a dot prefix (like this file: .note.txt).\n\n"
+        "Plain 'ls' won't show them. You need to pass the '-a' (all) flag:\n"
+        "  ls -a\n\n"
+        "I left clean shell environment templates in the system backup directory:\n"
+        "  /opt/backup/profiles/\n\n"
+        "Follow the file path from the root directory ('/').\n"
+        "Tab autocompletion is dead until you restore your profile.\n\n"
+        "— Morgan\n"
     )
+    add_file("/home/alice/.note.txt", note_content, perms="644", owner="alice")
+
     morgan_note = (
-        "// MORGAN [03:42 AM] — INCIDENT OVERRIDE\n"
-        "Alice — during the breach, your shell profile was wiped out, which broke your\n"
-        "command search paths and shortcuts.\n\n"
-        "I left a clean backup template right here ('alice.bashrc').\n\n"
-        "To clone it back into your home directory, overwrite your profile with '>':\n"
-        "  \033[1;33mcat alice.bashrc > ~/.bashrc\033[0m\n\n"
-        "Once restored, try typing '\033[1;33mll\033[0m' right here.\n"
-        "The '\033[1;33mll\033[0m' shortcut displays full file details and reveals secret hidden files\n"
-        "and cheat sheets starting with a dot (\033[1;36m.\033[0m) that I scattered across the system!\n\n"
-        "[PRO TIP]: Restoring ~/.bashrc also re-enables [TAB] autocompletion!\n"
-        "Type 'cd /o' and press [TAB] anywhere to autocomplete long paths instantly.\n"
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PRIORITY: HIGH\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM\n"
+        "// FILE: /opt/backup/profiles/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "Whoever hit our network knew exactly how to make an operator miserable.\n"
+        "They wiped out your user profile, which is why your shell feels unresponsive:\n"
+        "no search shortcuts, broken line discipline, and Tab autocompletion completely dead.\n\n"
+        "I saved a clean profile template here: 'alice.bashrc'.\n\n"
+        "To fix your environment, you need to dump this backup template directly\n"
+        "into your home profile file at /home/alice/.bashrc using stream\n"
+        "redirection (the '>' operator).\n\n"
+        "Think of '>' as a one-way pipe directing output into a destination file:\n"
+        "  cat <SOURCE_FILE> > <DESTINATION_FILE>\n\n"
+        "Syntax rules:\n"
+        "1. Always put a space before and after the '>' operator.\n"
+        "2. If your destination is in another directory, specify the full path from root:\n"
+        "   /home/alice/.bashrc\n\n"
+        "Once that file is written, your Readline bindings will link back up.\n"
+        "You'll get [TAB] autocompletion back so you never have to type long directory\n"
+        "paths by hand again.\n\n"
+        "I also added an alias for 'll' inside that profile. Use it. It runs 'ls -la'\n"
+        "under the hood, revealing file permissions and hidden dotfiles in one go.\n\n"
+        "I'm heading toward /var/log to see what kind of malware they dropped on us.\n"
+        "Fix your profile and meet me there.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
     )
     add_file("/opt/backup/profiles/NOTE_FROM_MORGAN.txt", morgan_note, perms="644", owner="root")
     
@@ -154,15 +208,20 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file("/opt/backup/profiles/.HOW_TO_READ_LL.txt", ll_guide_content, perms="644", owner="root")
     
-    add_file(
-        "/opt/backup/profiles/alice.bashrc",
-        "# ALICE SHELL PROFILE TEMPLATE\n"
-        "# Clone to your home folder with: cat alice.bashrc > /home/alice/.bashrc\n"
-        "export PATH=/bin:/usr/bin:/mnt/recovery/bin\n"
-        "alias ll='ls -la'\n",
-        perms="644",
-        owner="root"
+    alice_bashrc_content = (
+        "# Clean Operator Profile for APOLLO Workstation (User: alice)\n"
+        "# Base environment initialization & Readline recovery\n"
+        "export PATH=\"/bin:/usr/bin:/opt/phoenix/bin\"\n"
+        "export PS1=\"\\u@apollo:\\w\\$ \"\n\n"
+        "# Readline Ergonomics & Completion Hooks\n"
+        "bind 'set show-all-if-ambiguous on'\n"
+        "bind 'set completion-ignore-case on'\n"
+        "bind 'TAB:complete'\n\n"
+        "# System Aliases\n"
+        "alias ll='ls -la'\n"
+        "alias cls='clear'\n"
     )
+    add_file("/opt/backup/profiles/alice.bashrc", alice_bashrc_content, perms="644", owner="root")
     add_file(
         "/home/alice/.bashrc",
         "",
@@ -171,8 +230,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file(
         "/home/alice/.bash_history",
-        "uptime\nfree -h\ndf -h\nls -la /var/log\nsystemctl status\ncat /etc/os-release\n",
-        perms="644",
+        "pwd\nls -la\ncat diagnostics/BOOT_FAIL.log\nrepair_buffer\ncat .note.txt\ncd /opt/backup/profiles\ncat NOTE_FROM_MORGAN.txt\ncat alice.bashrc > /home/alice/.bashrc\n",
+        perms="600",
         owner="alice"
     )
     add_file(
@@ -207,7 +266,35 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="root"
     )
 
-    # Milestone 2: /var/log/ with teaching manuals and color-coded incident alert tags
+    # Milestone 2: /var/log/
+    var_log_morgan_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // LOG TRIAGE\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM\n"
+        "// FILE: /var/log/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "They hit the authentication daemon hard. The compromise logged hundreds of\n"
+        "lines into 'auth.log', but it is far too long to read with 'cat'. If you dump\n"
+        "the whole file at once, it will flood your terminal and scroll past your screen.\n\n"
+        "You need to filter the noise to isolate where they breached the boundary.\n\n"
+        "Use stream inspection tools:\n"
+        "  • 'head -n <NUMBER> <FILE>'\n"
+        "    Reads only the specified number of lines from the top of a file.\n"
+        "  • 'tail -n <NUMBER> <FILE>'\n"
+        "    Reads only the most recent lines from the bottom of a file.\n"
+        "  • 'grep -i \"<KEYWORD>\" <FILE>'\n"
+        "    Scans a file and prints ONLY lines matching your search keyword.\n"
+        "    (The -i flag makes your search case-insensitive, matching 'ALERT' or 'alert').\n\n"
+        "Search 'auth.log' for breach signatures like \"ALERT\" or \"rogue\".\n\n"
+        "Pay close attention to any Process IDs (PIDs) they spawned and any recovery\n"
+        "partitions they tried to isolate. Once you know what they touched, we can\n"
+        "reclaim the system.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
+    )
+    add_file("/var/log/NOTE_FROM_MORGAN.txt", var_log_morgan_note, perms="644", owner="root")
+
     how_to_read_logs_content = (
         "================================================================================\n"
         "          APOLLO SECOPS FIELD MANUAL // HOW TO READ SYSTEM LOGS\n"
@@ -287,43 +374,18 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/var/log/REPAIR_COMMANDS.txt", repair_commands_content, perms="644", owner="root")
 
     auth_lines = [
-        "[INFO]: System boot complete (Linux 5.15.0-apollo).",
-        "May 12 03:28:01 apollo systemd[1]: Starting System Logging Service...",
-        "May 12 03:28:05 apollo kernel: Initializing cgroup subsys cpuset",
-        "May 12 03:28:10 apollo systemd-logind[102]: Watching system buttons on /dev/input/event0",
-        "May 12 03:29:14 apollo CRON[180]: pam_unix(cron:session): session opened for user root by (uid=0)",
-        "May 12 03:29:15 apollo CRON[180]: pam_unix(cron:session): session closed for user root",
-        "May 12 03:30:01 apollo systemd-logind[102]: New session c1 of user root.",
-        "May 12 03:30:02 apollo pam_unix(sshd:session): session opened for user systemd",
-        "May 12 03:31:00 apollo pam_unix(sshd:session): session closed for user systemd",
-        "May 12 03:32:15 apollo CRON[185]: pam_unix(cron:session): session opened for user alice by (uid=1000)",
-        "May 12 03:32:20 apollo CRON[185]: pam_unix(cron:session): session closed for user alice",
-        "May 12 03:33:01 apollo systemd[1]: Created slice User Slice of UID 1000.",
-        "May 12 03:34:10 apollo sshd[190]: Server listening on 0.0.0.0 port 22.",
-        "May 12 03:35:00 apollo systemd[1]: Starting Daily apt download activities...",
-        "May 12 03:35:12 apollo systemd[1]: apt-daily.service: Deactivated successfully.",
-        "May 12 03:36:01 apollo CRON[195]: pam_unix(cron:session): session opened for user root",
-        "May 12 03:36:05 apollo CRON[195]: pam_unix(cron:session): session closed for user root",
-        "May 12 03:37:00 apollo pam_unix(sudo:session): session opened for user root by alice(uid=1000)",
-        "May 12 03:37:05 apollo pam_unix(sudo:session): session closed for user root",
-        "May 12 03:38:10 apollo sshd[204]: Invalid user operator from 192.168.1.105 port 44218",
-        "May 12 03:38:12 apollo sshd[204]: Failed password for invalid user operator from 192.168.1.105 port 44218 ssh2",
-        "May 12 03:38:15 apollo sshd[204]: Connection closed by invalid user operator 192.168.1.105 port 44218 [preauth]",
-        "May 12 03:39:01 apollo sshd[208]: Accepted password for alice from 127.0.0.1 port 51220 ssh2",
-        "May 12 03:39:02 apollo pam_unix(sshd:session): session opened for user alice by (uid=0)",
-        "May 12 03:39:45 apollo sudo: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/systemctl status",
-        "May 12 03:39:46 apollo pam_unix(sudo:session): session opened for user root by alice(uid=0)",
-        "[ALERT-0x01]: Unauthorized access detected. Rogue miner deployed to /tmp/sys_miner (PID 104).",
-        "[ALERT-0x02]: Recovery binary stripped in /mnt/recovery/bin/recovery.sh.",
-        "May 12 03:40:01 apollo systemd-logind[102]: Session c1 logged out. Waiting for processes to exit.",
-        "May 12 03:40:05 apollo systemd[1]: Removed slice User Slice of UID 0.",
-        "May 12 03:40:15 apollo CRON[215]: pam_unix(cron:session): session opened for user root",
-        "May 12 03:40:18 apollo CRON[215]: pam_unix(cron:session): session closed for user root",
-        "May 12 03:41:00 apollo pam_unix(sshd:session): session opened for user systemd",
-        "May 12 03:41:05 apollo pam_unix(sshd:session): session closed for user systemd",
-        "May 12 03:42:00 apollo sshd[220]: Received disconnect from 192.168.1.105 port 44218: 11: Normal Shutdown",
-        "May 12 03:42:15 apollo systemd[1]: Stopped User Manager for UID 1000.",
-        "May 12 03:43:00 apollo systemd-logind[102]: System idle check complete."
+        "[2042-10-11 03:00:12] apollo sshd[102]: Server listening on 0.0.0.0 port 22.",
+        "[2042-10-11 03:02:15] apollo login[115]: Accepted password for alice from 127.0.0.1.",
+        "[2042-10-11 03:15:22] apollo systemd[1]: Started User Manager for UID 1000.",
+        "[2042-10-11 03:22:40] apollo sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg",
+        "[2042-10-11 03:38:19] apollo sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]",
+        "[2042-10-11 03:40:02] apollo auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99",
+        "[2042-10-11 03:41:45] apollo auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.",
+        "[2042-10-11 03:42:01] apollo kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.",
+        "[2042-10-11 03:42:15] apollo kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).",
+        "[2042-10-11 03:42:30] apollo kernel: ALERT-0x03: apollo0 link state degraded -> Device: apollo0 (link: DOWN).",
+        "[2042-10-11 03:42:48] apollo kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.",
+        "[2042-10-11 03:43:00] apollo auth: Emergency containment active. User session sandboxed."
     ]
     add_file("/var/log/auth.log", "\n".join(auth_lines) + "\n", perms="640", owner="root")
 
@@ -370,6 +432,33 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
 
     # Milestone 3 & 4: /mnt/recovery/
+    mnt_recovery_morgan_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // RECOVERY MOUNT\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM\n"
+        "// FILE: /mnt/recovery/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "Before the quarantine locked me out, I mirrored our fallback tools and cluster\n"
+        "authorization keys to this partition (/mnt/recovery).\n\n"
+        "The problem: the automated unmount scramble threw directory branches all over\n"
+        "the place. Hunting through every subfolder by hand with 'cd' and 'ls' will take\n"
+        "hours we don't have.\n\n"
+        "Use the recursive search utility 'find':\n"
+        "  find <START_DIRECTORY> -name \"<SEARCH_PATTERN>\" -type f\n\n"
+        "How it works:\n"
+        "  • <START_DIRECTORY> : Where to begin searching (use '.' for here, or '/mnt/recovery').\n"
+        "  • -name \"<PATTERN>\" : The filename you want. You can use wildcards like \"*.sh\" or \"*.key\".\n"
+        "  • -type f           : Restricts the output to regular files (ignoring folders).\n\n"
+        "We need two critical assets from this partition:\n"
+        "1. Our subsystem recovery shell script (ends in .sh).\n"
+        "2. The cryptographic PHOENIX access token (ends in .key).\n\n"
+        "Locate them. If you need full option lists for the search utility, run 'man find'.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
+    )
+    add_file("/mnt/recovery/NOTE_FROM_MORGAN.txt", mnt_recovery_morgan_note, perms="644", owner="root")
+
     add_file(
         "/mnt/recovery/docs/RECOVERY_NOTES.txt",
         "================================================================================\n"
@@ -387,16 +476,89 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644",
         owner="root"
     )
-    add_file(
-        "/mnt/recovery/bin/recovery.sh",
-        "#!/bin/bash\necho '[KERNEL]: Rebuilding filesystem index table...'\necho 'Partition query registers synchronized. Filesystem search (find) online.'\n",
-        perms="000",
-        owner="root"
+
+    permissions_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // SECURITY LOCKDOWN\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM\n"
+        "// FILE: /mnt/recovery/bin/PERMISSIONS_NOTE.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "The containment protocol panicked and zeroed the permission mode bits on\n"
+        "'recovery.sh'. Inspect it with 'ls -l' and you'll see:\n"
+        "  ---------- 1 root root recovery.sh\n\n"
+        "Linux will not execute any file unless its execute bit ('x') is explicitly\n"
+        "flipped on. If you try to run it right now (./recovery.sh), the shell will\n"
+        "refuse with 'Permission denied'.\n\n"
+        "You have to grant execution rights using 'chmod' (Change Mode):\n"
+        "  chmod +x <FILE_PATH>\n\n"
+        "Alternatively, you can set full standard permissions numerically:\n"
+        "  chmod 755 <FILE_PATH>\n"
+        "  (7 = Read/Write/Execute for Owner, 5 = Read/Execute for Group & Others)\n\n"
+        "Once 'recovery.sh' has execute bits, run it with:\n"
+        "  ./recovery.sh\n"
+        "(The './' tells the terminal: \"look in the directory I am currently standing in\".)\n\n"
+        "Executing this script restores our kernel signal traps. Once it completes, you'll\n"
+        "get Ctrl+C (SIGINT) back so you can break out of hung processes.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
     )
+    add_file("/mnt/recovery/bin/PERMISSIONS_NOTE.txt", permissions_note, perms="644", owner="root")
+
+    recovery_sh_content = (
+        "#!/bin/bash\n"
+        "# APOLLO WORKSTATION // SUBSYSTEM RESTORATION SCRIPT\n"
+        "# Re-links kernel signal handlers and line disciplines.\n\n"
+        "echo \"[RECOVERY]: Probing line discipline vector registers...\"\n"
+        "sleep 0.5\n"
+        "echo \"[RECOVERY]: Restoring trap handler for SIGINT (Signal 2 / Ctrl+C)...\"\n"
+        "sleep 0.5\n"
+        "echo \"[SUCCESS]: Kernel signal table recalibrated. Interactive break handling online.\"\n"
+    )
+    add_file("/mnt/recovery/bin/recovery.sh", recovery_sh_content, perms="000", owner="root")
+
     add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [APOLLO-NET v1.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]\n", perms="000", owner="root")
-    add_file("/mnt/recovery/keys/phoenix.key", "PX-KEY-7701-ALPHA\n", perms="600", owner="root")
+
+    phoenix_key_content = (
+        "-----BEGIN PHOENIX CLUSTER AUTHORIZATION TOKEN-----\n"
+        "AUTH_TOKEN=PX-KEY-7701-ALPHA-SIGINT-TRAP-VECTOR-ENABLED\n"
+        "CLUSTER_ID=APOLLO-GRID-01\n"
+        "ISSUED=2042-10-11T03:30:00Z\n"
+        "SIGNATURE=d8e8fca2dc018b63b7e411b9802de922c091ad55\n"
+        "-----END PHOENIX CLUSTER AUTHORIZATION TOKEN-----\n"
+    )
+    add_file("/mnt/recovery/keys/phoenix.key", phoenix_key_content, perms="600", owner="root")
+
+    # /tmp/ Morgan Note
+    tmp_morgan_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PROCESS REMEDIATION\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM\n"
+        "// FILE: /tmp/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "Our CPU thermal alarm is firing. The intruder dropped a persistent background\n"
+        "miner into /tmp (sys_miner) that is consuming nearly 100% of our compute cycles\n"
+        "and locking socket memory.\n\n"
+        "Ctrl+C works for foreground programs, but this miner is running detached in the\n"
+        "background. You have to locate it in the system process table and stop it directly.\n\n"
+        "1. Inspect active processes:\n"
+        "   ps aux\n"
+        "   (Look for the program burning ~98% CPU and note its Process ID / PID).\n\n"
+        "2. Do not bother with a polite termination request:\n"
+        "   kill -15 <PID>\n"
+        "   The miner was designed to intercept and ignore standard SIGTERM (Signal 15) signals.\n\n"
+        "3. Use the unconditional kernel termination signal:\n"
+        "   kill -9 <PID>\n"
+        "   SIGKILL (Signal 9) cannot be caught, ignored, or blocked. The Linux kernel\n"
+        "   will forcefully drop the process from the process table.\n\n"
+        "Kill the miner so our CPU cools down and frees up the network stack.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
+    )
+    add_file("/tmp/NOTE_FROM_MORGAN.txt", tmp_morgan_note, perms="644", owner="root")
 
     # Soft-Gated & Diegetic Tool Binaries
     add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable\n", perms="755")
@@ -415,51 +577,98 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644"
     )
 
-    # Milestone 5: /etc/network/interfaces & NETWORK_ADVISORY.txt
-    add_file(
-        "/etc/network/interfaces",
-        "auto lo\niface lo inet loopback\n\nauto apollo0\niface apollo0 inet static\n  address 10.0.42.15/24\n  gateway 10.0.42.1\n",
-        perms="644",
-        owner="root"
+    # Milestone 5: /etc/network/interfaces & NOTE_FROM_MORGAN.txt
+    network_morgan_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // NETWORK RECOVERY\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM\n"
+        "// FILE: /etc/network/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "The miner is dead and CPU load is back to normal, but the machine is still\n"
+        "isolated. The attack toggled our primary network adapter off at the driver level.\n\n"
+        "Check the hardware definitions in 'interfaces' using 'cat'.\n\n"
+        "You'll see our interface name is 'apollo0' and our local subnet gateway is\n"
+        "located at 10.0.42.1.\n\n"
+        "To restore connectivity:\n"
+        "1. Inspect the current adapter link state:\n"
+        "   ip addr\n"
+        "2. Bring the physical interface link online:\n"
+        "   ip link set <DEVICE_NAME> up\n"
+        "3. Verify that network packets can actually reach the gateway:\n"
+        "   ping -c 4 <GATEWAY_IP>\n"
+        "   (The '-c 4' flag tells ping to send exactly 4 test packets and stop).\n\n"
+        "Once the ping probe confirms packet round-trips to 10.0.42.1, the network\n"
+        "uplink is secure. Meet me at /etc/phoenix for the finale.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
     )
-    network_advisory_content = (
-        "================================================================================\n"
-        "            NETWORK RECOVERY ADVISORY // ADAPTER LINK RESTORATION\n"
-        "================================================================================\n"
-        "Primary network interface was knocked offline following the intrusion.\n\n"
-        "1. Inspect link state of network adapters:\n"
-        "   \033[1;33mip link\033[0m\n\n"
-        "2. Bring adapter 'apollo0' online:\n"
-        "   \033[1;33mip link set apollo0 up\033[0m\n\n"
-        "3. Verify subnet gateway connectivity:\n"
-        "   \033[1;33mping 10.0.42.1\033[0m\n"
-        "================================================================================\n"
+    add_file("/etc/network/NOTE_FROM_MORGAN.txt", network_morgan_note, perms="644", owner="root")
+    add_file("/etc/network/NETWORK_ADVISORY.txt", network_morgan_note, perms="644", owner="root")
+
+    interfaces_content = (
+        "# APOLLO WORKSTATION NETWORK INTERFACE CONFIGURATION\n"
+        "# Local loopback interface\n"
+        "auto lo\n"
+        "iface lo inet loopback\n\n"
+        "# Primary Ethernet uplink (Degraded by automated containment)\n"
+        "# Hardware MAC: 52:54:00:12:34:56\n"
+        "auto apollo0\n"
+        "iface apollo0 inet static\n"
+        "    address 10.0.42.15/24\n"
+        "    gateway 10.0.42.1\n"
+        "    dns-nameservers 10.0.42.1\n"
     )
-    add_file("/etc/network/NETWORK_ADVISORY.txt", network_advisory_content, perms="644", owner="root")
+    add_file("/etc/network/interfaces", interfaces_content, perms="644", owner="root")
 
     # Milestone 6: /etc/phoenix/ & Fallback Backups
-    initial_conf = "[PHOENIX_DAEMON_CONFIG]\nLISTEN_PORT=8080\nGATEWAY=10.0.42.1\n"
+    phoenix_morgan_note = (
+        "// ============================================================================\n"
+        "// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PHOENIX CLUSTER DAEMON\n"
+        "// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM\n"
+        "// FILE: /etc/phoenix/NOTE_FROM_MORGAN.txt\n"
+        "// ============================================================================\n\n"
+        "Alice—\n\n"
+        "This is it. The gateway is reachable and the workstation is stable.\n"
+        "The final step is bringing the PHOENIX cluster restoration daemon online.\n\n"
+        "The daemon reads its configuration from 'phoenix.conf', but it's currently\n"
+        "missing its authorization token.\n\n"
+        "CRITICAL SYNTAX WARNING:\n"
+        "You need to append the key you found earlier (/mnt/recovery/keys/phoenix.key)\n"
+        "to the bottom of 'phoenix.conf'.\n"
+        "  • A single '>' OVERWRITES the file, erasing all the listener settings.\n"
+        "  • A double '>>' APPENDS the data cleanly to the end of the file.\n\n"
+        "Syntax Template:\n"
+        "  cat <SOURCE_KEY_FILE> >> <DESTINATION_CONFIG_FILE>\n\n"
+        "(If you accidentally overwrite the file, do not panic: I left a pristine backup\n"
+        "template at /etc/phoenix/phoenix.conf.default).\n\n"
+        "After appending the key:\n"
+        "1. Secure the configuration permissions. The daemon will refuse to start if the\n"
+        "   file is world-writable. Set it to read-only for others:\n"
+        "   chmod 644 /etc/phoenix/phoenix.conf\n\n"
+        "2. Launch the restoration daemon:\n"
+        "   phoenix_daemon start\n\n"
+        "3. Verify that the daemon socket is actively listening on port 8080:\n"
+        "   ss -tulpn | grep 8080\n\n"
+        "You brought this terminal back from zero, Alice. Bring us home.\n\n"
+        "— Morgan\n"
+        "// ============================================================================\n"
+    )
+    add_file("/etc/phoenix/NOTE_FROM_MORGAN.txt", phoenix_morgan_note, perms="644", owner="root")
+    add_file("/etc/phoenix/PHOENIX_RECOVERY.txt", phoenix_morgan_note, perms="644", owner="root")
+
+    initial_conf = (
+        "# PHOENIX EMERGENCY CLUSTER RESTORATION DAEMON CONFIG\n"
+        "LISTEN_ADDR=127.0.0.1\n"
+        "LISTEN_PORT=8080\n"
+        "GATEWAY_TARGET=10.0.42.1\n"
+        "LOG_LEVEL=VERBOSE\n"
+        "FAILOVER_MODE=AUTONOMOUS\n"
+        "# --- APPEND BEARER TOKEN BELOW ---\n"
+    )
     add_file("/etc/phoenix/phoenix.conf", initial_conf, perms="600", owner="root")
     add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="644", owner="root")
     add_file("/opt/backup/phoenix.conf", initial_conf, perms="644", owner="root")
-    phoenix_recovery_content = (
-        "================================================================================\n"
-        "      PHOENIX CLUSTER SUPERVISOR // FINAL RESTORATION DIRECTIVES\n"
-        "================================================================================\n"
-        "Alice — to recover the cluster supervisor, the PHOENIX daemon requires two steps:\n\n"
-        "1. REDIRECTION & KEY APPENDING:\n"
-        "   In Linux shells, stream redirection controls how data is written to files:\n"
-        "   • Single arrow '>'  : Overwrites the destination file completely.\n"
-        "   • Double arrow '>>' : Appends data to the end of a file without overwriting it!\n\n"
-        "   Append our cryptographic key to the daemon configuration:\n"
-        "   \033[1;33mcat /mnt/recovery/keys/phoenix.key >> /etc/phoenix/phoenix.conf\033[0m\n\n"
-        "2. SECURE FILE PERMISSIONS:\n"
-        "   Lock down config permissions to read-only security mode (0644):\n"
-        "   \033[1;33mchmod 644 /etc/phoenix/phoenix.conf\033[0m\n\n"
-        "3. LAUNCH CLUSTER RESTORATION SERVICE:\n"
-        "   \033[1;33mphoenix_daemon start\033[0m\n"
-        "================================================================================\n"
-    )
-    add_file("/etc/phoenix/PHOENIX_RECOVERY.txt", phoenix_recovery_content, perms="644", owner="root")
 
     return root
+

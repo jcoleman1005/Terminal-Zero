@@ -550,15 +550,18 @@ def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "manuals", "args": args}))
 
     catalog = [
-        ("SURVIVAL CARD", "/home/alice/README.txt", "Basic Navigation, Terminal Diagnostics & Sync"),
+        ("SURVIVAL CARD", "/home/alice/README.txt", "Basic Navigation, Terminal Diagnostics & Decrypt"),
         ("LONG LISTING GUIDE", "/opt/backup/profiles/.HOW_TO_READ_LL.txt", "File Details, Modes & Permissions Breakdown"),
-        ("INCIDENT ADVISORY", "/opt/backup/profiles/NOTE_FROM_MORGAN.txt", "Shell Profile Template & Shortcuts Sync"),
+        ("PROFILE SCRATCHPAD", "/opt/backup/profiles/NOTE_FROM_MORGAN.txt", "Shell Profile Template & Redirection Overwrite"),
+        ("LOG TRIAGE SCRATCHPAD", "/var/log/NOTE_FROM_MORGAN.txt", "Log Streams, Filtering Noise & Search Signatures"),
         ("LOG FORENSICS MANUAL", "/var/log/HOW_TO_READ_LOGS.txt", "Log Anatomy, Event Formatting & Filtering"),
         ("GREP FORENSICS GUIDE", "/var/log/.grep_juice", "Log Filter Patterns & Practical Grep Recipes"),
         ("SECOPS TRIAGE GUIDE", "/var/log/REPAIR_COMMANDS.txt", "Incident Dossier Registration Commands"),
-        ("PARTITION ADVISORY", "/mnt/recovery/docs/RECOVERY_NOTES.txt", "Recovery Partition Scripts & Security Key Info"),
-        ("NETWORK ADVISORY", "/etc/network/NETWORK_ADVISORY.txt", "Interface Link State & Gateway Ping Verification"),
-        ("PHOENIX DIRECTIVES", "/etc/phoenix/PHOENIX_RECOVERY.txt", "Redirection Modes, Permissions & Service Startup"),
+        ("RECOVERY SCRATCHPAD", "/mnt/recovery/NOTE_FROM_MORGAN.txt", "Recursive Search Utility & Key Location"),
+        ("PERMISSIONS SCRATCHPAD", "/mnt/recovery/bin/PERMISSIONS_NOTE.txt", "Octal Mode Bits, Execute Rights & Signal Traps"),
+        ("PROCESS SCRATCHPAD", "/tmp/NOTE_FROM_MORGAN.txt", "Process Tables, High CPU & Unconditional Signals"),
+        ("NETWORK SCRATCHPAD", "/etc/network/NOTE_FROM_MORGAN.txt", "Interface Link State & Gateway Ping Verification"),
+        ("PHOENIX SCRATCHPAD", "/etc/phoenix/NOTE_FROM_MORGAN.txt", "Append Mode (>>), Config Permissions & Daemon"),
         ("SYSADMIN PROTOCOLS", "/usr/share/doc/sysadmin_notes.txt", "Process Management, File Modes & Networking"),
     ]
 
