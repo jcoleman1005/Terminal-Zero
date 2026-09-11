@@ -19,6 +19,10 @@ from terminal_zero.commands.posix import (
     cmd_echo,
     cmd_tree,
     cmd_append,
+    cmd_stty,
+    cmd_rm,
+    cmd_cp,
+    cmd_touch,
 )
 from terminal_zero.commands.diegetic import (
     cmd_decrypt,
@@ -26,7 +30,6 @@ from terminal_zero.commands.diegetic import (
     cmd_phoenix_daemon,
     cmd_phoenix_ctl,
     cmd_osiris_net,
-    cmd_apollo_net,
     cmd_sync,
     cmd_reboot,
     cmd_man,
@@ -47,11 +50,17 @@ from terminal_zero.commands.diegetic import (
     cmd_triage_sector,
     cmd_triage_interface,
     cmd_triage_service,
+    cmd_cluster_probe,
 )
 
 
 def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandResult]]:
     return {
+        "stty": cmd_stty,
+        "rm": cmd_rm,
+        "cp": cmd_cp,
+        "touch": cmd_touch,
+        "cluster_probe": cmd_cluster_probe,
         "pwd": cmd_pwd,
         "cd": cmd_cd,
         "ls": cmd_ls,
@@ -67,7 +76,6 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "?": cmd_help,
         "decrypt": cmd_decrypt,
         "osiris-diagnostics": cmd_decrypt,
-        "apollo-diagnostics": cmd_decrypt,
         "sync": cmd_sync,
         "tree": cmd_tree,
         "ps": cmd_ps,
@@ -80,7 +88,6 @@ def build_command_table() -> Dict[str, Callable[[CommandContext, list], CommandR
         "phoenix_ctl": cmd_phoenix_ctl,
         "phoenix_daemon": cmd_phoenix_daemon,
         "osiris-net": cmd_osiris_net,
-        "apollo-net": cmd_apollo_net,
         "restore": cmd_restore,
         "reboot": cmd_reboot,
         "reset": cmd_reboot,

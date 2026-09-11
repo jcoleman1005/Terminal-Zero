@@ -32,7 +32,8 @@ class TerminalState:
             "sigint": False,
             "history_arrows": False,
             "tab_completion": False,
-            "sigint_trap": False
+            "sigint_trap": False,
+            "ctrl_c": False,
         }
         self.system_flags: Dict[str, bool] = {
             "README_INSPECTED": False,
@@ -46,8 +47,12 @@ class TerminalState:
             "KEY_DISCOVERED": False,
             "PROCESS_CHECKED": False,
             "MALWARE_TERMINATED": False,
+            "CPU_NORMAL": False,
+            "SIGINT_UNLOCKED": False,
+            "NET_LINK_UP": False,
             "NETWORK_ONLINE": False,
-            "PHOENIX_ONLINE": False
+            "PHOENIX_ONLINE": False,
+            "VERTICAL_SLICE_COMPLETE": False,
         }
         self.discovered_clues: Dict[str, bool] = {
             "ALERT_0x01": False,
@@ -59,6 +64,7 @@ class TerminalState:
         self.unlocked_cards: Dict[str, bool] = {}
         self.process_table: List[ProcessEntry] = [
             ProcessEntry(pid=1, name="systemd", user="root", cpu=0.1, command="/sbin/init"),
+            ProcessEntry(pid=102, name="task_audit", user="root", cpu=0.0, command="/usr/bin/task_audit --watch"),
             ProcessEntry(pid=104, name="sys_miner", user="root", cpu=98.2, command="/tmp/sys_miner --stealth"),
             ProcessEntry(pid=210, name="sshd", user="root", cpu=0.0, command="/usr/sbin/sshd -D")
         ]
@@ -75,56 +81,33 @@ class TerminalState:
         # Hook state observer for ergonomic flags synchronization
         self.bus.subscribe(self._on_event)
 
-        # Update dynamic TODO.txt & INCIDENT_REPORT.log if present in VFS
-        self._sync_todo()
-
-        # Soft-gate /opt/phoenix based on initial system flags
-        self._sync_phoenix_perms()
-
-    def _sync_todo(self):
-        try:
-            from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
-            todo_node, _ = self.vfs.get_node([], "/home/alice/TODO.txt")
-            if todo_node:
-                todo_node.content = get_todo_content(self.system_flags, self.discovered_clues)
-            
-            dossier_node, _ = self.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
-            if dossier_node:
-                dossier_node.content = get_incident_dossier(self.discovered_clues)
-        except ImportError:
-            pass
-
-    def _sync_phoenix_perms(self):
-        if self.system_flags.get("LOGS_AUDITED") or self.system_flags.get("RECOVERY_LOCATED"):
-            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
-            if ph_node:
-                ph_node.permissions = "755"
-        else:
-            ph_node, _ = self.vfs.get_node([], "/opt/phoenix")
-            if ph_node:
-                ph_node.permissions = "700"
-
     def _on_event(self, event: Event):
         if event.type == "flag_changed":
             flag = event.data.get("flag")
             val = bool(event.data.get("value"))
             self.system_flags[flag] = val
-            self._sync_todo()
-            self._sync_phoenix_perms()
             if flag == "BUFFER_REPAIRED" and val:
                 self.unlocked_ergonomics["history"] = True
                 self.unlocked_ergonomics["history_arrows"] = True
             elif flag == "BASHRC_RESTORED" and val:
                 self.unlocked_ergonomics["autocomplete"] = True
                 self.unlocked_ergonomics["tab_completion"] = True
-            elif (flag == "MALWARE_TERMINATED" or flag == "SIGINT_REPAIRED") and val:
+            elif (flag in ["MALWARE_TERMINATED", "SIGINT_REPAIRED", "SIGINT_UNLOCKED"]) and val:
                 self.unlocked_ergonomics["sigint"] = True
                 self.unlocked_ergonomics["sigint_trap"] = True
+                self.unlocked_ergonomics["ctrl_c"] = True
         elif event.type == "clue_discovered":
             clue_id = event.data.get("clue_id")
             if clue_id in self.discovered_clues:
                 self.discovered_clues[clue_id] = True
-            self._sync_todo()
+
+    @property
+    def current_user(self) -> str:
+        return self.env.get("USER", "alice")
+
+    @current_user.setter
+    def current_user(self, value: str) -> None:
+        self.env["USER"] = value
 
     @property
     def cwd_str(self) -> str:

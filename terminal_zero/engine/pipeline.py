@@ -6,18 +6,6 @@ from terminal_zero.core.vfs import VirtualFilesystem
 from terminal_zero.core.state import CommandContext, CommandResult, TerminalState
 
 
-def check_bashrc_restoration(vfs: VirtualFilesystem, state: TerminalState, bus: EventBus, target_path: Optional[str] = None):
-    if target_path is not None and not target_path.endswith(".bashrc"):
-        return
-    node, _ = vfs.get_node([], "/home/alice/.bashrc")
-    if node and node.is_file() and node.content and len(node.content.strip()) > 0:
-        if not state.system_flags.get("BASHRC_RESTORED", False):
-            state.system_flags["BASHRC_RESTORED"] = True
-            state.unlocked_ergonomics["autocomplete"] = True
-            state.unlocked_ergonomics["tab_completion"] = True
-            bus.publish(Event("flag_changed", {"flag": "BASHRC_RESTORED", "value": True}))
-
-
 def split_unquoted(text: str, delimiter: str) -> List[str]:
     """Splits a string by delimiter only when not enclosed in quotes."""
     parts = []
@@ -78,9 +66,16 @@ class ParsedCommand:
 
 
 class PipelineEngine:
-    def __init__(self, commands: Dict[str, Any], bus: EventBus):
+    def __init__(self, commands: Dict[str, Any], bus: EventBus, state: Optional[TerminalState] = None, vfs: Optional[VirtualFilesystem] = None):
         self.commands = commands
         self.bus = bus
+        self.state = state
+        self.vfs = vfs or (state.vfs if state else None)
+
+    def execute(self, raw_input: str) -> CommandResult:
+        if self.state is None:
+            raise ValueError("TerminalState must be provided to PipelineEngine to call execute()")
+        return self.run(raw_input, self.state)
 
     def parse_stage(self, stage_text: str) -> Tuple[Optional[ParsedCommand], Optional[str]]:
         stage_text = stage_text.strip()
@@ -126,23 +121,19 @@ class PipelineEngine:
         return ParsedCommand(args=tokens, redirect_out=redirect_out, redirect_append=append_mode), None
 
     def execute_binary_or_command(self, cmd_name: str, args: List[str], ctx: CommandContext) -> CommandResult:
-        # Direct lookup in registered command table
-        if cmd_name in self.commands:
+        # Direct lookup in registered command table if not explicitly invoked by path
+        if "/" not in cmd_name and cmd_name in self.commands:
             return self.commands[cmd_name](ctx, args)
 
-        # Check in VFS paths or relative/absolute path execution
-        vfs_node, resolved_parts = ctx.vfs.get_node(ctx.state.current_path, cmd_name)
-        if not vfs_node and "/" not in cmd_name:
-            # Check $PATH directories
-            path_env = ctx.state.env.get("PATH", "/bin:/usr/bin")
-            for p_dir in path_env.split(":"):
-                cand_node, cand_parts = ctx.vfs.get_node([], f"{p_dir}/{cmd_name}")
-                if cand_node:
-                    vfs_node = cand_node
-                    resolved_parts = cand_parts
-                    break
+        # Path-based command execution (e.g. ./recovery.sh or /mnt/recovery/bin/recovery.sh)
+        if "/" in cmd_name:
+            vfs_node, resolved_parts = ctx.vfs.get_node(ctx.state.current_path, cmd_name)
+            if not vfs_node:
+                return ctx.result_factory(stderr=f"bash: {cmd_name}: No such file or directory\n", exit_code=127)
 
-        if vfs_node and vfs_node.is_file():
+            if vfs_node.is_dir():
+                return ctx.result_factory(stderr=f"bash: {cmd_name}: Is a directory\n", exit_code=126)
+
             # Guard against executing text / log / config data files directly
             if any(cmd_name.endswith(ext) for ext in [".txt", ".log", ".conf", ".key", ".md", ".bash_history", ".bashrc"]):
                 return ctx.result_factory(
@@ -150,28 +141,25 @@ class PipelineEngine:
                     exit_code=126
                 )
 
-            user = ctx.state.env.get("USER", "alice")
-            allowed, _ = ctx.vfs.check_permissions(resolved_parts[:-1], user)
-            if not allowed or vfs_node.permissions in ["000", "644", "600", "444"]:
+            # Verify executable permission bitmask: mode & 0o111
+            mode = int(vfs_node.permissions, 8) if (vfs_node.permissions and vfs_node.permissions.isdigit()) else 0
+            if not (mode & 0o111):
                 return ctx.result_factory(stderr=f"bash: {cmd_name}: Permission denied\n", exit_code=126)
-            
-            # Executable file dispatch
+
             base_name = cmd_name.split("/")[-1]
-            if base_name in self.commands:
-                return self.commands[base_name](ctx, args)
-            elif base_name == "recovery.sh":
-                ctx.state.system_flags["RECOVERY_LOCATED"] = True
-                ctx.state.system_flags["PERMISSIONS_RESTORED"] = True
-                ctx.state.system_flags["FIND_UNLOCKED"] = True
-                ctx.bus.publish(Event("flag_changed", {"flag": "RECOVERY_LOCATED", "value": True}))
-                ctx.bus.publish(Event("flag_changed", {"flag": "PERMISSIONS_RESTORED", "value": True}))
-                ctx.bus.publish(Event("flag_changed", {"flag": "FIND_UNLOCKED", "value": True}))
-                return ctx.result_factory(
-                    stdout=(
-                        "[!] ABILITY UNLOCKED: Filesystem Search Utility ('find')\n"
-                        "Partition index registered. You can now use 'find <path> -name \"<pattern>\"' to scan trees.\n"
-                    )
+            if base_name == "recovery.sh":
+                ctx.state.unlocked_ergonomics["ctrl_c"] = True
+                ctx.state.unlocked_ergonomics["sigint"] = True
+                ctx.state.unlocked_ergonomics["sigint_trap"] = True
+                ctx.state.system_flags["SIGINT_UNLOCKED"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "SIGINT_UNLOCKED", "value": True}))
+                msg = (
+                    "[RECOVERY]: Kernel signal traps restored. Signal 2 (SIGINT / Ctrl+C) mapped to active console line discipline.\n"
+                    "Foreground processes can now be safely interrupted.\n"
                 )
+                return ctx.result_factory(stdout=msg, exit_code=0)
+            elif base_name in self.commands:
+                return self.commands[base_name](ctx, args)
             elif base_name.endswith(".sh"):
                 return ctx.result_factory(stdout=f"[EXEC]: Executed shell script '{cmd_name}'\n")
             else:
@@ -179,6 +167,17 @@ class PipelineEngine:
                     stderr=f"bash: {cmd_name}: cannot execute binary file: Exec format error\n",
                     exit_code=126
                 )
+
+        # Non-path command not directly in commands: Check $PATH directories
+        path_env = ctx.state.env.get("PATH", "/bin:/usr/bin")
+        for p_dir in path_env.split(":"):
+            cand_node, cand_parts = ctx.vfs.get_node([], f"{p_dir}/{cmd_name}")
+            if cand_node and cand_node.is_file():
+                mode = int(cand_node.permissions, 8) if (cand_node.permissions and cand_node.permissions.isdigit()) else 0
+                if not (mode & 0o111):
+                    return ctx.result_factory(stderr=f"bash: {cmd_name}: Permission denied\n", exit_code=126)
+                if cmd_name in self.commands:
+                    return self.commands[cmd_name](ctx, args)
 
         return ctx.result_factory(stderr=f"bash: {cmd_name}: command not found\n", exit_code=127)
 
@@ -206,7 +205,7 @@ class PipelineEngine:
         current_stdin = ""
         last_result = CommandResult()
         first_cmd = stages_text[0].strip().split()[0] if stages_text else ""
-        is_decrypt = first_cmd in ["decrypt", "osiris-diagnostics", "apollo-diagnostics", "note", "feedback"]
+        is_decrypt = first_cmd in ["decrypt", "osiris-diagnostics", "note", "feedback"]
 
         for idx, stage_text in enumerate(stages_text):
             parsed, err = self.parse_stage(stage_text)
@@ -254,35 +253,17 @@ class PipelineEngine:
                     state.last_stderr = res.stderr.strip()
                     return res
 
-                target_node, _ = state.vfs.get_node(state.current_path, redirect_target)
-                if target_node:
-                    if target_node.is_dir():
-                        res = CommandResult(stderr=f"bash: {redirect_target}: Is a directory\n", exit_code=1)
-                        state.last_stderr = res.stderr.strip()
-                        return res
-                    if target_node.permissions in ["000", "444"]:
-                        res = CommandResult(stderr=f"bash: {redirect_target}: Permission denied\n", exit_code=1)
-                        state.last_stderr = res.stderr.strip()
-                        return res
-                    if parsed.redirect_append:
-                        target_node.content = (target_node.content or "") + stage_result.stdout
-                    else:
-                        target_node.content = stage_result.stdout
-                else:
-                    success, w_err = state.vfs.write_file(
-                        state.current_path,
-                        redirect_target,
-                        stage_result.stdout,
-                        append=parsed.redirect_append,
-                        owner=state.env.get("USER", "alice")
-                    )
-                    if not success:
-                        res = CommandResult(stderr=f"bash: {redirect_target}: {w_err}\n", exit_code=1)
-                        state.last_stderr = res.stderr.strip()
-                        return res
-
-                # Automatic write hook evaluation for .bashrc
-                check_bashrc_restoration(state.vfs, state, self.bus, redirect_target)
+                success, w_err = state.vfs.write_file(
+                    state.current_path,
+                    redirect_target,
+                    stage_result.stdout,
+                    append=parsed.redirect_append,
+                    owner=state.env.get("USER", "alice")
+                )
+                if not success:
+                    res = CommandResult(stderr=f"bash: {redirect_target}: {w_err}\n", exit_code=1)
+                    state.last_stderr = res.stderr.strip()
+                    return res
 
                 # Output was consumed by file redirection
                 current_stdin = ""

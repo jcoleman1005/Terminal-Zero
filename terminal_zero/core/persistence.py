@@ -12,6 +12,7 @@ def serialize_vfs_node(node: VFSNode) -> Dict[str, Any]:
         "type": node.type,
         "permissions": node.permissions,
         "owner": node.owner,
+        "group": getattr(node, "group", "root"),
     }
     if node.is_file():
         serialized["content"] = node.content if node.content is not None else ""
@@ -27,6 +28,7 @@ def deserialize_vfs_node(data: Dict[str, Any]) -> VFSNode:
         type=data.get("type", "file"),
         permissions=data.get("permissions", "644"),
         owner=data.get("owner", "root"),
+        group=data.get("group", "root"),
         content=data.get("content", None)
     )
     if node.is_dir() and "children" in data:
@@ -122,27 +124,6 @@ def load_game_state(filepath: str = "savegame.json", bus: Optional[EventBus] = N
         state.discovered_manuals = data["discovered_manuals"]
     if "unlocked_cards" in data:
         state.unlocked_cards = data["unlocked_cards"]
-
-    try:
-        from terminal_zero.content.narrative import get_todo_content, get_incident_dossier
-        todo_node, _ = state.vfs.get_node([], "/home/alice/TODO.txt")
-        if todo_node:
-            todo_node.content = get_todo_content(state.system_flags, state.discovered_clues)
-
-        dossier_node, _ = state.vfs.get_node([], "/home/alice/INCIDENT_REPORT.log")
-        if dossier_node:
-            dossier_node.content = get_incident_dossier(state.discovered_clues)
-    except ImportError:
-        pass
-
-    if state.system_flags.get("LOGS_AUDITED") or state.system_flags.get("RECOVERY_LOCATED"):
-        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
-        if ph_node:
-            ph_node.permissions = "755"
-    else:
-        ph_node, _ = state.vfs.get_node([], "/opt/phoenix")
-        if ph_node:
-            ph_node.permissions = "700"
 
     loaded_processes = []
     for p_data in data.get("process_table", []):

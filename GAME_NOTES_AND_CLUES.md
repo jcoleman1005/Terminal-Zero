@@ -2,7 +2,7 @@
 
 **Version:** 2.2-PROD
 
-**Target:** Virtual Filesystem Image (`apollo-vfs-root`)
+**Target:** Virtual Filesystem Image (`osiris-vfs-root`)
 
 **Security Classification:** RESTRICTED // INCIDENT RESPONSE
 
@@ -14,7 +14,7 @@
 
 ```text
 ================================================================================
-                    APOLLO WORKSTATION // KERNEL v5.19.0-24
+                    OSIRIS WORKSTATION // KERNEL v5.19.0-24
 ================================================================================
  [ALERT] SYSTEM INTEGRITY COMPROMISED. AUTOMATIC QUARANTINE PROTOCOL ACTIVE.
  [ALERT] WAN LINK SEVERED. PRIMARY LINE DISCIPLINE DRIVERS CORRUPTED.
@@ -35,7 +35,7 @@
 ### `/home/alice/diagnostics/BOOT_FAIL.log`
 
 ```text
-[03:41:02.109] [KERNEL ALERT] Apollo Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
 [03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.
 [03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.
 [03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.
@@ -53,7 +53,7 @@
 
 ```text
 // ============================================================================
-// APOLLO WORKSTATION // EMERGENCY OPERATOR PROTOCOL
+// OSIRIS WORKSTATION // EMERGENCY OPERATOR PROTOCOL
 // ============================================================================
 Alice—
 
@@ -126,8 +126,8 @@ Tab autocompletion is dead until you restore your profile.
 
 ```text
 // ============================================================================
-// INCIDENT SCRATCHPAD // APOLLO WORKSTATION // PRIORITY: HIGH
-// HOST: apollo-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM
+// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PRIORITY: HIGH
+// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM
 // FILE: /opt/backup/profiles/NOTE_FROM_MORGAN.txt
 // ============================================================================
 
@@ -173,10 +173,10 @@ Fix your profile and meet me there.
 ### `/opt/backup/profiles/alice.bashrc`
 
 ```bash
-# Clean Operator Profile for APOLLO Workstation (User: alice)
+# Clean Operator Profile for OSIRIS Workstation (User: alice)
 # Base environment initialization & Readline recovery
 export PATH="/bin:/usr/bin:/opt/phoenix/bin"
-export PS1="\u@apollo:\w\$ "
+export PS1="\u@osiris:\w\$ "
 
 # Readline Ergonomics & Completion Hooks
 bind 'set show-all-if-ambiguous on'

@@ -6,39 +6,45 @@ from terminal_zero.content.narrative import get_todo_content, get_incident_dossi
 def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     if flags is None:
         flags = {}
-    root = VFSNode(type="dir", permissions="755", owner="root")
+    root = VFSNode(type="dir", permissions="755", owner="root", group="root")
 
-    def add_dir(path: str, perms: str = "755", owner: str = "root") -> VFSNode:
+    def add_dir(path: str, perms: str = "755", owner: str = "root", group: str = "root") -> VFSNode:
         parts = [p for p in path.split("/") if p]
         curr = root
         for p in parts:
             if p not in curr.children:
-                curr.children[p] = VFSNode(type="dir", permissions=perms, owner=owner)
+                curr.children[p] = VFSNode(type="dir", permissions=perms, owner=owner, group=group)
             curr = curr.children[p]
         return curr
 
-    def add_file(path: str, content: str, perms: str = "644", owner: str = "root") -> VFSNode:
+    def add_file(path: str, content: str, perms: str = "644", owner: str = "root", group: str = "root") -> VFSNode:
         parts = [p for p in path.split("/") if p]
         parent_parts = parts[:-1]
         filename = parts[-1]
         parent = root
         for p in parent_parts:
             if p not in parent.children:
-                parent.children[p] = VFSNode(type="dir", permissions="755", owner=owner)
+                parent.children[p] = VFSNode(type="dir", permissions="755", owner=owner, group=group)
             parent = parent.children[p]
-        node = VFSNode(type="file", permissions=perms, owner=owner, content=content)
+        node = VFSNode(type="file", permissions=perms, owner=owner, group=group, content=content)
         parent.children[filename] = node
         return node
 
     # Standard POSIX & FHS Structure across all sectors
     dirs = [
-        "bin", "usr/bin", "usr/share/doc", "home/alice", "home/alice/diagnostics", "var/log", "tmp", 
+        "bin", "usr/bin", "usr/share/doc", "var/log", "tmp", 
+        "mnt/recovery", "mnt/recovery/archive/2038", "mnt/recovery/backups/stale", "mnt/recovery/tools/legacy",
         "mnt/recovery/bin", "mnt/recovery/keys", "mnt/recovery/docs",
-        "opt/backup", "opt/backup/profiles", "etc/network", "etc/phoenix",
-        "opt/phoenix", "opt/phoenix/recovery", "opt/phoenix/config"
+        "opt/backup", "opt/backup/profiles", "etc/network", "etc/phoenix", "etc/skel",
+        "opt/phoenix", "opt/phoenix/bin", "opt/phoenix/recovery", "opt/phoenix/config"
     ]
     for d in dirs:
         add_dir("/" + d)
+
+    add_dir("/home", perms="755", owner="root", group="root")
+    add_dir("/home/alice", perms="755", owner="alice", group="alice")
+    add_dir("/home/alice/diagnostics", perms="755", owner="alice", group="alice")
+    add_dir("/etc/skel", perms="0755", owner="root", group="root")
 
     # Soft-Gate /opt/phoenix via Permissions (0700 until LOGS_AUDITED or RECOVERY_LOCATED is set)
     phoenix_perms = "755" if (flags.get("LOGS_AUDITED", False) or flags.get("RECOVERY_LOCATED", False)) else "700"
@@ -46,14 +52,18 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     # Standard Binaries in /bin and /usr/bin
     for b in [
-        "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "osiris-diagnostics", "apollo-diagnostics",
+        "cat", "cd", "echo", "exit", "ls", "pwd", "sync", "decrypt", "osiris-diagnostics",
         "chmod", "man", "ps", "kill", "ip", "ss", "ping", "head", "tail", "grep", "find",
-        "repair_buffer", "phoenix_ctl", "phoenix_daemon", "osiris-net", "apollo-net", "tree",
+        "stty", "rm", "cp", "touch", "cluster_probe",
+        "repair_buffer", "phoenix_ctl", "phoenix_daemon", "osiris-net", "tree",
         "note", "feedback", "taskctl", "todo", "tasks", "manuals", "docs", "fieldguide",
         "triage_process", "triage_sector", "triage_interface", "triage_service"
     ]:
         add_file(f"/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
         add_file(f"/usr/bin/{b}", "ELF 64-bit LSB executable\n", perms="755")
+
+    # Evaluator binary in /opt/phoenix/bin
+    add_file("/opt/phoenix/bin/cluster_probe", "ELF 64-bit LSB executable [CLUSTER-PROBE v2.4]\n", perms="755", owner="root")
 
     # /etc/motd
     add_file(
@@ -94,7 +104,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "    Example: cat README.txt\n\n"
         "Your terminal driver took a direct hit on boot, which is why your Up/Down arrow\n"
         "keys aren't recalling previous commands.\n\n"
-        "Inspect 'diagnostics/BOOT_FAIL.log' using 'cat' to see the exact fault, then\n"
+        "Inspect 'BOOT_FAIL.log' using 'cat' to see the exact fault, then\n"
         "run the recovery utility it specifies.\n\n"
         "If a command fails or spits out an error you don't understand, type 'decrypt'.\n"
         "I wrote it to catch whatever POSIX error the kernel just threw and translate\n"
@@ -108,9 +118,11 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).\n"
         "[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.\n"
         "[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.\n"
+        "[03:41:02.118] [DRIVER STATE] Line discipline running in raw unbuffered mode (-icanon echo).\n"
         "[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.\n"
-        "[03:41:02.125] [ACTION REQUIRED] Run the maintenance utility 'repair_buffer' to recalibrate.\n"
+        "[03:41:02.125] [ACTION REQUIRED] Reset line discipline to sane defaults by running: 'stty sane'\n"
     )
+    add_file("/home/alice/BOOT_FAIL.log", boot_fail_content, perms="644", owner="alice")
     add_file("/home/alice/diagnostics/BOOT_FAIL.log", boot_fail_content, perms="644", owner="alice")
 
     add_file(
@@ -138,17 +150,52 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// STICKY NOTE TAPED TO MONITOR FRAME\n"
         "Alice—\n\n"
         "The attacker didn't just break the drivers; they tried to bury their tracks.\n\n"
-        "Once you fix the terminal buffer, remember that Unix hides system profiles\n"
+        "Once you fix the terminal buffer ('stty sane'), remember that Unix hides system profiles\n"
         "and recovery caches behind a dot prefix (like this file: .note.txt).\n\n"
         "Plain 'ls' won't show them. You need to pass the '-a' (all) flag:\n"
         "  ls -a\n\n"
-        "I left clean shell environment templates in the system backup directory:\n"
-        "  /opt/backup/profiles/\n\n"
-        "Follow the file path from the root directory ('/').\n"
+        "First, delete the corrupted configuration artifact:\n"
+        "  rm /home/alice/.bashrc.corrupt\n\n"
+        "Then copy the clean template from the system backup directory:\n"
+        "  cp /opt/backup/profiles/alice.bashrc /home/alice/.bashrc\n\n"
         "Tab autocompletion is dead until you restore your profile.\n\n"
         "— Morgan\n"
     )
-    add_file("/home/alice/.note.txt", note_content, perms="644", owner="alice")
+    add_file("/home/alice/.note.txt", note_content, perms="644", owner="alice", group="alice")
+    add_file(
+        "/home/alice/.bashrc.corrupt",
+        "# CORRUPTED ENVIRONMENT PROFILE\n# SYNTAX ERROR AT LINE 1: BAD RECOVERY DESCRIPTOR\n",
+        perms="0644",
+        owner="alice",
+        group="alice"
+    )
+    alice_bashrc_content = (
+        "# Clean Operator Profile for OSIRIS Workstation (User: alice)\n"
+        "# Base environment initialization & Readline recovery\n"
+        "export PATH=\"/bin:/usr/bin:/opt/phoenix/bin\"\n"
+        "export PS1=\"\\u@osiris:\\w\\$ \"\n\n"
+        "# Readline Ergonomics & Completion Hooks\n"
+        "bind 'set show-all-if-ambiguous on'\n"
+        "bind 'set completion-ignore-case on'\n"
+        "bind 'TAB:complete'\n\n"
+        "# System Aliases\n"
+        "alias ll='ls -la'\n"
+        "alias cls='clear'\n"
+    )
+    add_file(
+        "/home/alice/.bashrc.default",
+        alice_bashrc_content,
+        perms="0444",
+        owner="root",
+        group="root"
+    )
+    add_file(
+        "/etc/skel/.bashrc",
+        alice_bashrc_content,
+        perms="0644",
+        owner="root",
+        group="root"
+    )
 
     morgan_note = (
         "// ============================================================================\n"
@@ -208,37 +255,27 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file("/opt/backup/profiles/.HOW_TO_READ_LL.txt", ll_guide_content, perms="644", owner="root")
     
-    alice_bashrc_content = (
-        "# Clean Operator Profile for OSIRIS Workstation (User: alice)\n"
-        "# Base environment initialization & Readline recovery\n"
-        "export PATH=\"/bin:/usr/bin:/opt/phoenix/bin\"\n"
-        "export PS1=\"\\u@osiris:\\w\\$ \"\n\n"
-        "# Readline Ergonomics & Completion Hooks\n"
-        "bind 'set show-all-if-ambiguous on'\n"
-        "bind 'set completion-ignore-case on'\n"
-        "bind 'TAB:complete'\n\n"
-        "# System Aliases\n"
-        "alias ll='ls -la'\n"
-        "alias cls='clear'\n"
-    )
     add_file("/opt/backup/profiles/alice.bashrc", alice_bashrc_content, perms="644", owner="root")
     add_file(
         "/home/alice/.bashrc",
         "",
-        perms="644",
-        owner="alice"
+        perms="0644",
+        owner="alice",
+        group="alice"
     )
     add_file(
         "/home/alice/.bash_history",
         "pwd\nls -la\ncat diagnostics/BOOT_FAIL.log\nrepair_buffer\ncat .note.txt\ncd /opt/backup/profiles\ncat NOTE_FROM_MORGAN.txt\ncat alice.bashrc > /home/alice/.bashrc\n",
         perms="600",
-        owner="alice"
+        owner="alice",
+        group="alice"
     )
     add_file(
         "/home/alice/TODO.txt",
         get_todo_content(flags),
         perms="644",
-        owner="alice"
+        owner="alice",
+        group="alice"
     )
     add_file(
         "/usr/share/doc/mapping_tool.txt",
@@ -275,25 +312,17 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "They hit the authentication daemon hard. The compromise logged hundreds of\n"
-        "lines into 'auth.log', but it is far too long to read with 'cat'. If you dump\n"
-        "the whole file at once, it will flood your terminal and scroll past your screen.\n\n"
-        "You need to filter the noise to isolate where they breached the boundary.\n\n"
-        "Use stream inspection tools:\n"
-        "  • 'head -n <NUMBER> <FILE>'\n"
-        "    Reads only the specified number of lines from the top of a file.\n"
-        "  • 'tail -n <NUMBER> <FILE>'\n"
-        "    Reads only the most recent lines from the bottom of a file.\n"
-        "  • 'grep -i \"<KEYWORD>\" <FILE>'\n"
-        "    Scans a file and prints ONLY lines matching your search keyword.\n"
-        "    (The -i flag makes your search case-insensitive, matching 'ALERT' or 'alert').\n\n"
-        "Search 'auth.log' for breach signatures like \"ALERT\" or \"rogue\".\n\n"
-        "Pay close attention to any Process IDs (PIDs) they spawned and any recovery\n"
-        "partitions they tried to isolate. Once you know what they touched, we can\n"
-        "reclaim the system.\n\n"
+        "lines into 'auth.log', making it far too massive to read directly with 'cat'.\n\n"
+        "The parsing directive is in the first 6 lines of the log:\n"
+        "  head -n 6 auth.log\n\n"
+        "Then filter for critical breach indicators:\n"
+        "  grep -i \"ALERT\" auth.log\n\n"
+        "You can also create an optional scratchpad to take notes:\n"
+        "  touch ~/incident_notes.txt\n\n"
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/var/log/NOTE_FROM_MORGAN.txt", var_log_morgan_note, perms="644", owner="root")
+    add_file("/var/log/NOTE_FROM_MORGAN.txt", var_log_morgan_note, perms="644", owner="alice")
 
     how_to_read_logs_content = (
         "================================================================================\n"
@@ -374,20 +403,23 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/var/log/REPAIR_COMMANDS.txt", repair_commands_content, perms="644", owner="root")
 
     auth_lines = [
-        "[2042-10-11 03:00:12] osiris sshd[102]: Server listening on 0.0.0.0 port 22.",
-        "[2042-10-11 03:02:15] osiris login[115]: Accepted password for alice from 127.0.0.1.",
-        "[2042-10-11 03:15:22] osiris systemd[1]: Started User Manager for UID 1000.",
-        "[2042-10-11 03:22:40] osiris sudo[142]: alice : TTY=tty1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/dmesg",
-        "[2042-10-11 03:38:19] osiris sshd[188]: Connection closed by authenticating user root 10.0.42.99 port 41220 [preauth]",
-        "[2042-10-11 03:40:02] osiris auth: PAM-WARN: Multiple authentication failures for user root from 10.0.42.99",
-        "[2042-10-11 03:41:45] osiris auth: ALERT-0x01: Ingress breach detected on line discipline TTY1.",
-        "[2042-10-11 03:42:01] osiris kernel: ALERT-0x01: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp.",
-        "[2042-10-11 03:42:15] osiris kernel: ALERT-0x02: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000).",
-        "[2042-10-11 03:42:30] osiris kernel: ALERT-0x03: osiris0 link state degraded -> Device: osiris0 (link: DOWN).",
-        "[2042-10-11 03:42:48] osiris kernel: ALERT-0x04: phoenix-sync daemon failed -> phoenix-sync terminated by signal 9.",
-        "[2042-10-11 03:43:00] osiris auth: Emergency containment active. User session sandboxed."
+        "# ==============================================================================",
+        "# OSIRIS SYSTEM AUTHENTICATION LOG (/var/log/auth.log)",
+        "# DIRECTIVE: Inspect security events using pattern filtration.",
+        "# SYNTAX   : grep \"<PATTERN>\" <FILE>",
+        "# EXAMPLE  : grep -i \"ALERT\" /var/log/auth.log",
+        "# ==============================================================================",
     ]
-    add_file("/var/log/auth.log", "\n".join(auth_lines) + "\n", perms="640", owner="root")
+    for i in range(1, 201):
+        pid = 1000 + i
+        auth_lines.append(f"[2042-10-11 03:{i//60:02d}:{i%60:02d}] osiris sshd[{pid}]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.0.42.{100 + (i%50)} user=root")
+        if i == 45:
+            auth_lines.append("[2042-10-11 03:00:45] osiris kernel: ALERT: Rogue miner deployed -> PID: 104 (sys_miner) in /tmp [ALERT-0x01]")
+        elif i == 90:
+            auth_lines.append("[2042-10-11 03:01:30] osiris kernel: ALERT: Recovery binary stripped -> /mnt/recovery/bin/recovery.sh (mode 0000) [ALERT-0x02]")
+        elif i == 135:
+            auth_lines.append("[2042-10-11 03:02:15] osiris kernel: ALERT: osiris0 link state degraded -> Device: osiris0 (state DOWN) [ALERT-0x03]")
+    add_file("/var/log/auth.log", "\n".join(auth_lines) + "\n", perms="644", owner="root")
 
     syslog_lines = [
         "03:40:01 osiris systemd[1]: Starting System Logging Service...",
@@ -457,7 +489,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/mnt/recovery/NOTE_FROM_MORGAN.txt", mnt_recovery_morgan_note, perms="644", owner="root")
+    add_file("/mnt/recovery/NOTE_FROM_MORGAN.txt", mnt_recovery_morgan_note, perms="644", owner="alice")
 
     add_file(
         "/mnt/recovery/docs/RECOVERY_NOTES.txt",
@@ -467,11 +499,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "1. PERMISSION RECOVERY & SEARCH INDEXING:\n"
         "   The intruder stripped execution permissions (mode 000) on scripts in bin/.\n"
         "   Restore execute permissions with: \033[1;33mchmod +x /mnt/recovery/bin/recovery.sh\033[0m\n"
-        "   Then execute recovery.sh to rebuild the partition index and unlock 'find'.\n\n"
+        "   Then execute recovery.sh to rebuild the partition index and restore signal traps.\n\n"
         "2. PHOENIX CLUSTER AUTHENTICATION:\n"
         "   The cryptographic cluster key is preserved across this partition.\n"
         "   Use '\033[1;33mfind /mnt/recovery -name \"*.key\"\033[0m' to locate authentication tokens.\n"
-        "   Append the key to /etc/phoenix/phoenix.conf to restore the gateway.\n"
         "================================================================================\n",
         perms="644",
         owner="root"
@@ -481,14 +512,14 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // SECURITY LOCKDOWN\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM\n"
-        "// FILE: /mnt/recovery/bin/PERMISSIONS_NOTE.txt\n"
+        "// FILE: /mnt/recovery/bin/NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "The containment protocol panicked and zeroed the permission mode bits on\n"
         "'recovery.sh'. Inspect it with 'ls -l' and you'll see:\n"
         "  ---------- 1 root root recovery.sh\n\n"
         "Linux will not execute any file unless its execute bit ('x') is explicitly\n"
-        "flipped on. If you try to run it right now (./recovery.sh), the shell will\n"
+        "flipped on. If you try to run it right now (/mnt/recovery/bin/recovery.sh), the shell will\n"
         "refuse with 'Permission denied'.\n\n"
         "You have to grant execution rights using 'chmod' (Change Mode):\n"
         "  chmod +x <FILE_PATH>\n\n"
@@ -496,14 +527,14 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "  chmod 755 <FILE_PATH>\n"
         "  (7 = Read/Write/Execute for Owner, 5 = Read/Execute for Group & Others)\n\n"
         "Once 'recovery.sh' has execute bits, run it with:\n"
-        "  ./recovery.sh\n"
-        "(The './' tells the terminal: \"look in the directory I am currently standing in\".)\n\n"
+        "  /mnt/recovery/bin/recovery.sh\n\n"
         "Executing this script restores our kernel signal traps. Once it completes, you'll\n"
         "get Ctrl+C (SIGINT) back so you can break out of hung processes.\n\n"
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/mnt/recovery/bin/PERMISSIONS_NOTE.txt", permissions_note, perms="644", owner="root")
+    add_file("/mnt/recovery/bin/NOTE.txt", permissions_note, perms="644", owner="alice")
+    add_file("/mnt/recovery/bin/PERMISSIONS_NOTE.txt", permissions_note, perms="644", owner="alice")
 
     recovery_sh_content = (
         "#!/bin/bash\n"
@@ -515,10 +546,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "sleep 0.5\n"
         "echo \"[SUCCESS]: Kernel signal table recalibrated. Interactive break handling online.\"\n"
     )
-    add_file("/mnt/recovery/bin/recovery.sh", recovery_sh_content, perms="000", owner="root")
+    add_file("/mnt/recovery/bin/recovery.sh", recovery_sh_content, perms="0000", owner="alice", group="alice")
+    add_file("/mnt/recovery/bin/recovery.sh.default", recovery_sh_content, perms="0444", owner="root", group="root")
 
     add_file("/mnt/recovery/bin/osiris-net", "ELF 64-bit LSB executable [OSIRIS-NET v1.0]\n", perms="000", owner="root")
-    add_file("/mnt/recovery/bin/apollo-net", "ELF 64-bit LSB executable [OSIRIS-NET v1.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/phoenix_ctl", "ELF 64-bit LSB executable [PHOENIX-CTL v2.0]\n", perms="000", owner="root")
     add_file("/mnt/recovery/bin/recovery-tool", "ELF 64-bit LSB executable [RECOVERY-TOOL v2.1]\n", perms="000", owner="root")
 
@@ -530,36 +561,32 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "SIGNATURE=d8e8fca2dc018b63b7e411b9802de922c091ad55\n"
         "-----END PHOENIX CLUSTER AUTHORIZATION TOKEN-----\n"
     )
-    add_file("/mnt/recovery/keys/phoenix.key", phoenix_key_content, perms="600", owner="root")
+    add_file("/mnt/recovery/keys/phoenix.key", phoenix_key_content, perms="644", owner="root")
 
-    # /tmp/ Morgan Note
+    # /tmp/ Notes
     tmp_morgan_note = (
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PROCESS REMEDIATION\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM\n"
-        "// FILE: /tmp/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /tmp/NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "Our CPU thermal alarm is firing. The intruder dropped a persistent background\n"
         "miner into /tmp (sys_miner) that is consuming nearly 100% of our compute cycles\n"
         "and locking socket memory.\n\n"
-        "Ctrl+C works for foreground programs, but this miner is running detached in the\n"
-        "background. You have to locate it in the system process table and stop it directly.\n\n"
         "1. Inspect active processes:\n"
-        "   ps aux\n"
-        "   (Look for the program burning ~98% CPU and note its Process ID / PID).\n\n"
-        "2. Do not bother with a polite termination request:\n"
-        "   kill -15 <PID>\n"
-        "   The miner was designed to intercept and ignore standard SIGTERM (Signal 15) signals.\n\n"
-        "3. Use the unconditional kernel termination signal:\n"
-        "   kill -9 <PID>\n"
-        "   SIGKILL (Signal 9) cannot be caught, ignored, or blocked. The Linux kernel\n"
-        "   will forcefully drop the process from the process table.\n\n"
+        "   ps aux\n\n"
+        "2. Clear stalled audit tasks:\n"
+        "   kill 102\n\n"
+        "3. Watch out for uncooperative daemons: PID 104 traps Signal 15.\n"
+        "   Use non-maskable SIGKILL:\n"
+        "   kill -9 104\n\n"
         "Kill the miner so our CPU cools down and frees up the network stack.\n\n"
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/tmp/NOTE_FROM_MORGAN.txt", tmp_morgan_note, perms="644", owner="root")
+    add_file("/tmp/NOTE.txt", tmp_morgan_note, perms="644", owner="alice")
+    add_file("/tmp/NOTE_FROM_MORGAN.txt", tmp_morgan_note, perms="644", owner="alice")
 
     # Soft-Gated & Diegetic Tool Binaries
     add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable\n", perms="755")
@@ -595,17 +622,17 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "1. Inspect the current adapter link state:\n"
         "   ip addr\n"
         "2. Bring the physical interface link online:\n"
-        "   ip link set <DEVICE_NAME> up\n"
+        "   ip link set osiris0 up\n"
         "3. Verify that network packets can actually reach the gateway:\n"
-        "   ping -c 4 <GATEWAY_IP>\n"
+        "   ping -c 4 10.0.42.1\n"
         "   (The '-c 4' flag tells ping to send exactly 4 test packets and stop).\n\n"
         "Once the ping probe confirms packet round-trips to 10.0.42.1, the network\n"
-        "uplink is secure. Meet me at /etc/phoenix for the finale.\n\n"
+        "uplink is secure.\n\n"
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/etc/network/NOTE_FROM_MORGAN.txt", network_morgan_note, perms="644", owner="root")
-    add_file("/etc/network/NETWORK_ADVISORY.txt", network_morgan_note, perms="644", owner="root")
+    add_file("/etc/network/NOTE_FROM_MORGAN.txt", network_morgan_note, perms="644", owner="alice")
+    add_file("/etc/network/NETWORK_ADVISORY.txt", network_morgan_note, perms="644", owner="alice")
 
     interfaces_content = (
         "# OSIRIS WORKSTATION NETWORK INTERFACE CONFIGURATION\n"
@@ -667,8 +694,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "FAILOVER_MODE=AUTONOMOUS\n"
         "# --- APPEND BEARER TOKEN BELOW ---\n"
     )
-    add_file("/etc/phoenix/phoenix.conf", initial_conf, perms="600", owner="root")
-    add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="644", owner="root")
+    add_file("/etc/phoenix/phoenix.conf", initial_conf, perms="0644", owner="alice", group="alice")
+    add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="0444", owner="root", group="root")
     add_file("/opt/backup/phoenix.conf", initial_conf, perms="644", owner="root")
 
     return root

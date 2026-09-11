@@ -23,17 +23,15 @@
 
  |
 | **Scoring System** | *Cut* | Completely removed point scoring, hint penalties, and grade screens. Progression and puzzle resolution are the sole victory conditions.
-
- |
-| **Campaign Model** | *Systemic Pivot* | Converted episodic mission levels into a single, **continuous Metroidvania-style workstation map** (`APOLLO`) with state flags, organic mounting, and environmental backtracking. Standardized network tooling on `ip` and `ss`.
-
- |
+|
+| **Campaign Model** | *Systemic Pivot* | Converted episodic mission levels into a single, **continuous Metroidvania-style workstation map** (`OSIRIS`) with state flags, organic mounting, and environmental backtracking. Standardized network tooling on `ip` and `ss`.
+|
 | **Persistence Engine** | *Modification* | Replaced out-of-character `save`/`load` commands with automatic background checkpointing on state transitions and a diegetic `sync` command. Persists full virtual filesystem, process table, unlocks, and story flags to `savegame.json`.
-
- |
+|
 | **MVP & Roadmap** | *Modification* | Redefined MVP around the continuous workstation slice and driver repairs. Formatted a 5-phase engineering roadmap and isolated expansions to conceptual-only status.
-
- |
+|
+| **Incident Investigation & Tooling** | *Addition (v2.2)* | Renamed workstation from `APOLLO` to `OSIRIS` (with interface `osiris0` and diagnostic `osiris-diagnostics`). Added forensic triage mechanics (`triage_*`), discovered manuals inventory (`manuals`), debrief card vault (`fieldguide`), and fog-of-war checklist (`todo`).
+|
 
 ---
 
@@ -67,19 +65,18 @@
 
 The year is 2042. A catastrophic cyber incident has crippled global infrastructure, taking down emergency grids, routing backbones, and municipal services.
 
-The player assumes control of **`APOLLO`**, a damaged local workstation running a degraded Linux environment. Through `APOLLO`, the player must troubleshoot damaged subsystems, discover encrypted keys, and orchestrate the recovery of **`PHOENIX`**—a dormant, distributed emergency restoration network.
+The player assumes control of **`OSIRIS`**, a damaged local workstation running a degraded Linux environment. Through `OSIRIS`, the player must troubleshoot damaged subsystems, discover encrypted keys, and orchestrate the recovery of **`PHOENIX`**—a dormant, distributed emergency restoration network.
 
 ```
 +-------------------------------------------------------------+
-|                      WORKSTATION: APOLLO                    |
+|                      WORKSTATION: OSIRIS                    |
 |                                                             |
 |  [Filesystem]         [Process Table]       [Network Stack] |
 |  / (Root)             - PID 1 (init)        - lo (127.0.0.1)|
-|  ├── /etc             - PID 104 (malware)   - eth0 (offline)|
-|  ├── /var/log         - PID 412 (phoenix)   - Sockets (ss)  |
+|  ├── /etc             - PID 104 (malware)   - osiris0 (down)|
+|  ├── /var/log         - PID 500 (phoenix)   - Sockets (ss)  |
 |  └── /mnt/recovery                                          |
 +-------------------------------------------------------------+
-
 ```
 
 ### 2.2 Environmental Storytelling & Historical Authenticity
@@ -161,60 +158,39 @@ Commands are never artificially blocked by arbitrary game locks. Instead, progre
 
 | Command | Supported Flags / Syntax | Primary Mechanical Purpose |
 | --- | --- | --- |
-| `pwd` | None | Verify active working directory.
-
- |
-| `ls` | `-a`, `-l`, `-la`, `-al`, `-h` | Traversal, hidden file discovery, permission inspection.
-
- |
-| `cd` | Relative paths, absolute paths, `..`, `~`, `-` | Filesystem navigation.
-
- |
-| `cat` | File paths | Standard file reading and log dumping.
-
- |
-| `head` | `-n <lines>` | Inspect header metadata and log origins.
-
- |
-| `tail` | `-n <lines>`, `-f` (simulated event stream) | Inspect recent log entries and active events.
-
- |
-| `grep` | `-i`, `-r` / `-R`, `-n`, `-v` | Filtering incident logs and identifying error traces.
-
- |
-| `find` | `-name <pattern>`, `-type [f|d]` | Locating scattered system keys and recovery scripts.
-
- |
-| `chmod` | Symbolic (`+x`, `-w`, `u+rwx`), Numeric (`644`, `755`, `700`, `777`) | Restoring utility execution permissions and locking configs.
-
- |
-| `ps` | `aux`, `-ef` | Process table auditing and PID identification.
-
- |
-| `kill` | `-9` (SIGKILL), `-15` (SIGTERM) | Halting hostile/runaway process daemons.
-
- |
-| `ip` | `addr`, `link`, `route` | Identifying virtual network interfaces and subnet states.
-
- |
-| `ss` | `-tulpn`, `-t`, `-u` | Auditing active listening sockets and ports.
-
- |
-| `ping` | `-c <count>` | Verifying network connectivity across recovery gateways.
-
- |
-| `sync` | None | Diegetic manual save-state flush to persistent storage.
-
- |
-| `man` / `--help` | Valid command names | High-utility, diegetic summaries with practical examples.
-
- |
-| `decrypt` | None (Fictional utility) | Analyzes the last `stderr` output to provide educational guidance. |
+| `pwd` | None | Verify active working directory. |
+| `ls` | `-a`, `-l`, `-la`, `-al`, `-h` | Traversal, hidden file discovery, permission inspection. |
+| `ll` | Shortcut for `ls -la` | Quickly reveals permissions, owners, and hidden files. |
+| `cd` | Relative paths, absolute paths, `..`, `~`, `-` | Filesystem navigation. |
+| `cat` | File paths | Standard file reading and log dumping. |
+| `head` | `-n <lines>` | Inspect header metadata and log origins. |
+| `tail` | `-n <lines>`, `-f` (simulated event stream) | Inspect recent log entries and active events. |
+| `grep` | `-i`, `-r` / `-R`, `-n`, `-v` | Filtering incident logs and identifying error traces. |
+| `find` | `-name <pattern>`, `-type [f\|d]` | Locating scattered system keys and recovery scripts. |
+| `chmod` | Symbolic (`+x`, `-w`, `u+rwx`), Numeric (`644`, `755`, `700`, `777`) | Restoring utility execution permissions and locking configs. |
+| `ps` | `aux`, `-ef` | Process table auditing and PID identification. |
+| `kill` | `-9` (SIGKILL), `-15` (SIGTERM) | Halting hostile/runaway process daemons. |
+| `ip` | `addr`, `link`, `route` | Identifying virtual network interfaces and subnet states (`osiris0`). |
+| `ss` | `-tulpn`, `-t`, `-u` | Auditing active listening sockets and ports. |
+| `ping` | `-c <count>` | Verifying network connectivity across recovery gateways. |
+| `append` | `append <file> "<content>"` | Helper for appending content (alternative to `>>`). |
+| `tree` | `[path]` | Visual filesystem directory hierarchy overview. |
+| `repair_buffer` | None (Diegetic recovery binary) | Calibrates TTY line discipline registers and unlocks command history. |
+| `osiris-net` | None (Alias: `apollo-net`) | Queries `osiris0` interface state and gateway link reachability. |
+| `phoenix_daemon` | `start`, `stop`, `status` (Alias: `phoenix_ctl`) | Restores and runs the emergency restoration cluster supervisor. |
+| `taskctl` / `todo` | `todo`, `tasks`, `taskctl link` | In-game mission checklist with fog-of-war tracking. |
+| `manuals` / `docs` | `manuals [name]` | Discovered field manuals, guides, and cheat sheets library. |
+| `fieldguide` / `cards` | `fieldguide [card_id]` (Aliases: `debriefs`, `lore`) | Vault of real-world "Take It to Linux" system administration debrief cards. |
+| `triage_*` | `triage_process`, `triage_sector`, `triage_interface`, `triage_service` | Audits and logs security breach leads into the incident dossier. |
+| `sync` | None | Diegetic manual save-state flush to persistent storage. |
+| `reboot` / `reset` | None | Restarts the workstation session from cold boot. |
+| `man` / `--help` | Valid command names | High-utility, diegetic summaries with practical examples. |
+| `decrypt` | None (Fictional utility; alias: `osiris-diagnostics`) | Analyzes the last `stderr` output to provide educational guidance. |
 
 ### 4.3 Pipeline & Stream Operations
 
 * **Pipes (`|`):** Supports single-stage chaining (`cmd1 | cmd2`, e.g., `ps aux | grep phoenix` or `cat /var/log/syslog | grep error`).
-* **Redirection (`>`, `>>`):** Supports standard output redirection and appending to files (e.g., `cat key.pub >> /etc/phoenix/authorized_keys`).
+* **Redirection (`>`, `>>`):** Supports standard output redirection and appending to files (e.g., `cat alice.bashrc > ~/.bashrc` or `cat key >> phoenix.conf`).
 
 ---
 
@@ -236,7 +212,7 @@ Commands are never artificially blocked by arbitrary game locks. Instead, progre
                │
                ▼
 [Diegetic Diagnostic Output Emitted]
-"[APOLLO-DIAGNOSTIC]: Target path is a file, not a directory. Use 'cat' to read."
+"[OSIRIS-DIAGNOSTIC]: Target path is a file, not a directory. Use 'cat' to read."
 
 ```
 
@@ -248,7 +224,7 @@ The terminal emulator renders standard POSIX/GNU error messages verbatim. The sy
 
 To assist beginners without breaking real-world command habits:
 
-* The game includes a specialized diagnostic binary (`decrypt` / `apollo-diagnostics`).
+* The game includes a specialized diagnostic binary (`decrypt` / `osiris-diagnostics`, aliased as `apollo-diagnostics`).
 * Running `decrypt` immediately after an error evaluates the last entry in the `stderr` buffer and prints a plain-language explanation and recovery hint.
 * Styled distinctly with fictional terminal formatting to prevent players from expecting this utility on production Linux servers.
 
@@ -256,13 +232,15 @@ To assist beginners without breaking real-world command habits:
 
 All systemic hints are embedded directly within the environment:
 
-* Corrupted bash histories in `/home/operator/.bash_history` illustrating previous administrative commands.
-* Post-it scratchpads (`TODO.txt`, `notes.md`) left in damaged user home directories.
-* Diagnostic kernel messages broadcast to the TUI via simulated `wall` broadcasts.
+* Corrupted bash profiles and manuals (`.HOW_TO_READ_LL.txt`, `.grep_juice`) explaining syntax and conventions.
+* Post-it scratchpads (`NOTE_FROM_MORGAN.txt`) left in damaged user home and recovery directories.
+* Diagnostic kernel messages broadcast to the TUI via simulated boot logs and kernel alerts.
 
-### 5.4 "Take It to Linux" Transition Reference
+### 5.4 "Take It to Linux" Transition Reference & Field Guide Vault
 
-Upon resolving major system milestones, players receive an optional, reference debrief detailing how the commands they used function on a live, real-world Linux installation.
+Upon resolving major system milestones, players receive an optional reference debrief detailing how the commands they used function on a live, real-world Linux installation.
+* These cards are automatically preserved in the in-game `fieldguide` vault (accessible at any time via `fieldguide` or `cards`).
+* Similarly, all recovered reference sheets are cataloged in the `manuals` command inventory.
 
 ---
 
@@ -270,11 +248,11 @@ Upon resolving major system milestones, players receive an optional, reference d
 
 ```
 +-------------------------------------------------------------------------+
-|                    APOLLO SYSTEM RECOVERY PROGRESSION                   |
+|                    OSIRIS SYSTEM RECOVERY PROGRESSION                   |
 |                                                                         |
 |  [Sector 0: Boot] ──────► [Sector 1: Home/Base] ───► [Sector 2: System Logs]
 |  - pwd, ls, cd            - History Unlock           - grep, head, tail |
-|                           - Tab Autocomplete         - /var/log/syslog  |
+|                           - Tab Autocomplete         - Triage Verification|
 |                                                              │          |
 |  [Sector 5: Subnet] ◄─── [Sector 4: Process Core] ◄──────────┘          |
 |  - ip, ss, ping          - ps, kill, SIGINT                             |
@@ -289,90 +267,43 @@ Upon resolving major system milestones, players receive an optional, reference d
 
 ### 6.1 Continuous Workstation Map
 
-* The entire game takes place on a unified, persistent machine (`APOLLO`).
+* The entire game takes place on a unified, persistent machine (`OSIRIS`).
 
+* Progression is non-linear and event-driven: restoring a driver or gaining permission opens access to subdirectories (`/opt/phoenix/`, `/mnt/recovery/`, `/etc/network/`) encountered earlier in the campaign.
 
-* Progression is non-linear and event-driven: restoring a driver or gaining permission opens access to subdirectories (`/opt/phoenix/`, `/root/`, `/var/backups/`) encountered earlier in the campaign.
+* World state is governed by an internal event flag registry (`SYSTEM_FLAGS`) and clue discovery table.
 
+### 6.2 Major Campaign Phase Breakdown (Production Phases 0–6)
 
-* World state is governed by an internal event flag registry (`SYSTEM_FLAGS`).
+* **Phase 0: Cold Boot & Orientation (Buffer Repair)**
+  * *Focus:* `pwd`, `ls`, `cat`, input buffer restoration.
+  * *Action:* Boot workstation `OSIRIS`, inspect `diagnostics/BOOT_FAIL.log`, run maintenance utility `repair_buffer` to recalibrate TTY ring registers and unlock **Command History (Up/Down arrows)**.
 
-### 6.2 Major Milestone Breakdown
+* **Phase 1: The Operator's Cache (Traversal & Shell Config)**
+  * *Focus:* `ls -a`, `ll`, `cd`, relative/absolute paths, output redirection (`>`).
+  * *Action:* Discover hidden dotfiles in home directory, locate clean profile template in `/opt/backup/profiles/alice.bashrc`, redirect it to `/home/alice/.bashrc` to restore Readline bindings and unlock **Tab Autocompletion** and the `ll` shortcut.
 
-* **Milestone 0: Cold Boot (Orientation & Buffer Repair)**
-* *Focus:* `pwd`, `ls`, `cd`, input buffer restoration.
+* **Phase 2: Incident Log Forensics & Triage (Text Filtering & Dossier)**
+  * *Focus:* `grep` (`-i`, `-v`), `head`, `tail`, piping (`|`), forensic triage commands.
+  * *Action:* Filter extensive authentication logs in `/var/log/auth.log` to isolate security breach indicators. Log confirmed findings into the incident dossier via `triage_process`, `triage_sector`, `triage_interface`, and `triage_service` to unmask all 4 attack vectors.
 
+* **Phase 3: Recovery Partition & Recursive Search (Search & Executable Rights)**
+  * *Focus:* `find` (`-name`), `chmod` (`+x`, `755`), script execution (`./recovery.sh`).
+  * *Action:* Traverse `/mnt/recovery`, locate stripped recovery tools and the PHOENIX cluster authorization key, restore executable permissions on `/mnt/recovery/bin/recovery.sh`, run the script to link signal traps and unlock the `find` utility across the system.
 
-* *Action:* Boot workstation, identify offline status, repair terminal ring buffer to unlock **Command History**.
+* **Phase 4: Runaway Mitigation & Process Control (Process Signaling)**
+  * *Focus:* `ps aux`, `kill` (`-9`, `-15`).
+  * *Action:* Audit the system process table to identify high-CPU runaway miner process (`sys_miner`, PID 104) deployed in `/tmp`, and issue unconditional `kill -9 104` to eliminate malware and liberate system resources.
 
+* **Phase 5: Network Hardware & Gateway Uplink (Sockets & Routing)**
+  * *Focus:* `ip addr`, `ip link set <dev> up`, `osiris-net`, `ss -tulpn`, `ping -c <count>`.
+  * *Action:* Inspect `/etc/network/interfaces`, discover degraded interface `osiris0`, bring link state `UP`, audit network sockets, and verify gateway reachability (`ping -c 4 10.0.42.1`).
 
+* **Phase 6: PHOENIX Restoration & Cluster Activation (Campaign Finale)**
+  * *Focus:* Stream appending (`>>` / `append`), `chmod 644`, daemon supervisor management.
+  * *Action:* Safely append recovered cluster authorization key from `/mnt/recovery/keys/phoenix.key` into `/etc/phoenix/phoenix.conf`, lock down secure permissions (`chmod 644`), and launch `phoenix_daemon start` on port 8080 to restore the emergency grid.
 
-
-* **Milestone 1: The Operator's Cache (Traversal & Shell Config)**
-* *Focus:* `ls -a`, `cat`, relative paths.
-
-
-* *Action:* Discover hidden dotfiles in home directory; restore `.bashrc` to unlock **Tab Autocompletion**.
-
-
-
-
-* **Milestone 2: Forensic Log Analysis (Text Filtering)**
-* *Focus:* `grep`, `head`, `tail`, `/var/log` navigation.
-
-
-* *Action:* Filter extensive authentication logs to isolate malicious ingress timestamps and locate damaged binary paths.
-
-
-
-
-* **Milestone 3: Recovery Partition Mounting (Filesystem Discovery)**
-* *Focus:* `find`, `man`, path resolution.
-
-
-* *Action:* Search unmounted volumes to locate backup copies of stripped system utilities.
-
-
-
-
-* **Milestone 4: Security Integrity & Permissions (Executable Rights)**
-* *Focus:* `chmod` (symbolic and numeric: `+x`, `755`).
-
-
-* *Action:* Repair permissions on locked diagnostic utilities to make them executable.
-
-
-
-
-* **Milestone 5: Runaway Mitigation (Process Signaling)**
-* *Focus:* `ps aux`, `kill -9`, process signal handlers.
-
-
-* *Action:* Repair signal handlers to unlock **`Ctrl+C` (SIGINT)**; identify and terminate runaway mining threads consuming CPU cycles.
-
-
-
-
-* **Milestone 6: Network Uplink Diagnostic (Sockets & Routing)**
-* *Focus:* `ip addr`, `ss -tulpn`, `ping`.
-
-
-* *Action:* Bring virtual network interfaces online, audit open listener ports, and verify connectivity with remote gateway nodes.
-
-
-
-
-* **Milestone 7: PHOENIX Restoration (Campaign Finale)**
-* *Focus:* Full multi-tool synthesis, piping, configuration redirection.
-
-
-* *Action:* Reconstruct main PHOENIX daemon configuration, set appropriate file rights, and launch the restoration service.
-
-
-
-
-
-*(Note: Detailed puzzle dependency graphs, file manifests, and exact clue paths are scheduled for a dedicated mission design breakdown pass).*
+*(Note: In-game checklists and objectives are dynamically tracked via `taskctl` and `todo`, and collected reference debriefs are archived in `manuals` and `fieldguide`).*
 
 ---
 
@@ -427,7 +358,7 @@ The game state serializes into a clean, human-readable JSON schema:
 * **Diegetic Manual Sync:** Running the standard `sync` command writes all in-memory buffers to `savegame.json`.
 
 
-* **Replay & Fresh Runs:** Players can reset workstation `APOLLO` to its corrupted boot state to attempt clean incident runs.
+* **Replay & Fresh Runs:** Players can reset workstation `OSIRIS` to its corrupted boot state to attempt clean incident runs.
 
 
 

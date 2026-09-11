@@ -1,4 +1,8 @@
-## Complete Milestone Progression Specification (Milestones 0 – 7)
+## Complete Milestone Progression Specification (Milestones 0 – 7 / Phases 0 – 6)
+
+> [!NOTE]
+> **Campaign Structure & Workstation Context:**  
+> This specification defines the technical system milestones on workstation **OSIRIS**. In the in-game player interface (`todo`, incident checklist, and `GAME_NOTES_AND_CLUES.md`), technical Milestones 3 & 4 (Recovery Partition search and execution rights) are unified under **Phase 3**, resulting in a cohesive 7-phase player campaign (Phases 0 through 6).
 
 ---
 
@@ -30,13 +34,13 @@
     [Action: ls] ──► List directory contents
                         │
                         ▼
-      [Artifact: BOOT_FAIL.log & README.txt]
+      [Artifact: diagnostics/BOOT_FAIL.log & README.txt]
                         │
                         ▼
  [Action: cat README.txt] ──► Learn 'cat <file>' syntax & read operator notes
                         │
                         ▼
- [Action: cat BOOT_FAIL.log] ──► Discover desynced ring buffer fault
+ [Action: cat diagnostics/BOOT_FAIL.log] ──► Discover desynced ring buffer fault
                         │
                         ▼
       [Action: repair_buffer] ──► Synchronize input line discipline registers[cite: 1, 2]
@@ -48,15 +52,16 @@
 
 **File Manifest & Initial Machine State**
 
-* Directories: `/home/alice`, `/var/log`, `/bin`, `/usr/bin`.
+* Directories: `/home/alice`, `/home/alice/diagnostics`, `/var/log`, `/bin`, `/usr/bin`.
 
 
-* `/home/alice/BOOT_FAIL.log` (`0644`, `alice:alice`):
+* `/home/alice/diagnostics/BOOT_FAIL.log` (`0644`, `alice:alice`):
 ```text
-[KERNEL ALERT] Apollo Core Subsystem Degraded (Boot ID: 0x42-INIT).
-[ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.
-[DIAGNOSTIC] Interactive command recall (UP/DOWN keys) disabled to prevent buffer overflow.
-[ACTION REQUIRED] Run the command 'repair_buffer' to recalibrate the TTY ring registers.
+[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.
+[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.
+[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.
+[03:41:02.125] [ACTION REQUIRED] Run the maintenance utility 'repair_buffer' to recalibrate.
 
 ```
 
@@ -64,7 +69,7 @@
 * `/home/alice/README.txt` (`0644`, `alice:alice`):
 ```text
 ================================================================================
-                    APOLLO WORKSTATION RECOVERY TERMINAL
+                    OSIRIS WORKSTATION RECOVERY TERMINAL
 ================================================================================
 BASIC NAVIGATION CHEAT SHEET:
   • ls             : Lists visible files in your current working directory.
@@ -91,7 +96,7 @@ OPERATOR INCIDENT NOTE:
 
 
 2. Run `cat README.txt` to learn file reading syntax.
-3. Run `cat BOOT_FAIL.log` to inspect the ring buffer failure.
+3. Run `cat diagnostics/BOOT_FAIL.log` to inspect the ring buffer failure.
 4. Run `repair_buffer` to clear the fault, unlock history navigation, and trigger the debrief panel.
 
 
@@ -114,7 +119,7 @@ OPERATOR INCIDENT NOTE:
 * **Primary CLI Focus**: `ls -a`, `cd`, `cat`, relative/absolute path traversal, and output redirection (`>`).
 
 
-* **System Capability Unlocked**: Tab Autocompletion (`unlocked_ergonomics["autocomplete"] = True`, `unlocked_ergonomics["tab_completion"] = True`).
+* **System Capability Unlocked**: Tab Autocompletion (`unlocked_ergonomics["autocomplete"] = True`, `unlocked_ergonomics["tab_completion"] = True`) and the `ll` alias shortcut.
 
 
 * **Flags Evaluated & Set**:
@@ -140,10 +145,13 @@ OPERATOR INCIDENT NOTE:
  [Action: cd /opt/backup/profiles || cat /opt/backup/profiles/CHEAT_SHEET.txt][cite: 1]
                   │
                   ▼
+ [Artifact: /opt/backup/profiles/.HOW_TO_READ_LL.txt] ──► Learn permissions columns and 'll' shortcut
+                  │
+                  ▼
  [Action: cat /opt/backup/profiles/alice.bashrc > ~/.bashrc] ──► Stream redirection[cite: 1, 2]
                   │
                   ▼
- [Resolution: BASHRC_RESTORED = True] ──► Unlock Tab Autocompletion + Debrief Panel[cite: 1, 2]
+ [Resolution: BASHRC_RESTORED = True] ──► Unlock Tab Autocompletion + 'll' shortcut + Debrief Panel[cite: 1, 2]
 
 ```
 
@@ -180,7 +188,10 @@ TO RESTORE ALICE'S ENVIRONMENT:
 ```
 
 
-* `/opt/backup/profiles/alice.bashrc` (`0644`, `root:root`): Backup readline configuration.
+* `/opt/backup/profiles/.HOW_TO_READ_LL.txt` (`0644`, `root:root`): Reference guide decoding file permissions columns, ownership, and introducing `chmod +x`.
+
+
+* `/opt/backup/profiles/alice.bashrc` (`0644`, `root:root`): Backup readline and alias configuration.
 
 
 
@@ -235,32 +246,31 @@ TO RESTORE ALICE'S ENVIRONMENT:
       [Action: cd /var/log] ──► Navigate to system log repository[cite: 1]
                   │
                   ▼
- [Artifact: /var/log/NOTE.txt & CHEAT_SHEET.txt] ──► Learn head, tail, grep & piping[cite: 1, 2]
+  [Artifact: /var/log/NOTE_FROM_MORGAN.txt, HOW_TO_READ_LOGS.txt, .grep_juice] ──► Learn head, tail, grep & piping[cite: 1, 2]
                   │
                   ▼
- [Action: grep -i "failed" auth.log | tail -n 5] ──► Isolate breach vector & rogue binary[cite: 1, 2]
+  [Action: grep -i "alert" auth.log || tail -n 20 auth.log] ──► Isolate breach signatures ALERT-0x01 to 0x04[cite: 1, 2]
                   │
                   ▼
- [Clue Discovered: Rogue /tmp/sys_miner & unmounted volume /mnt/recovery][cite: 1, 2]
+  [Action: triage_process, triage_sector, triage_interface, triage_service] ──► Verify dossier leads[cite: 1, 2]
                   │
                   ▼
- [Resolution: LOGS_AUDITED = True] ──► Save checkpoint & emit Debrief Panel[cite: 1, 2]
+  [Resolution: LOGS_AUDITED = True] ──► All 4 leads unmasked in INCIDENT_REPORT.log; /opt/phoenix/ unlocked[cite: 1, 2]
 
 ```
 
 **File Manifest & Initial Machine State**
 
-* Directories: `/var/log`, `/tmp`, `/mnt/recovery`.
+* Directories: `/var/log`, `/tmp`, `/mnt/recovery`, `/home/alice/diagnostics`.
 
 
-* `/var/log/NOTE.txt` (`0644`, `root:root`):
-```text
-[MORGAN'S LOG - 04:22 AM]
-The intrusion hit through the TTY line discipline before spreading.
-auth.log is 200+ lines; use 'head', 'tail', and 'grep' rather than dumping with 'cat'.
-Check CHEAT_SHEET.txt for filter and piping examples.
+* `/var/log/NOTE_FROM_MORGAN.txt` (`0644`, `root:root`): Guidance on using `head`, `tail`, and `grep` rather than dumping with `cat`.
 
-```
+
+* `/var/log/HOW_TO_READ_LOGS.txt` (`0644`, `root:root`): Guide explaining syslog timestamp, host, daemon, and PID structure.
+
+
+* `/var/log/.grep_juice` (`0644`, `root:root`): Tactical memo explaining flags `-i`, `-n`, `-v`, and `-r`.
 
 
 * `/var/log/CHEAT_SHEET.txt` (`0644`, `root:root`):
@@ -278,19 +288,29 @@ SYNTAX OVERVIEW:
 ```
 
 
-* `/var/log/auth.log` (`0640`, `root:adm`): Contains ~180 simulated PAM lines, ending with breach notifications referencing `/tmp/sys_miner` (PID `104`) and `/mnt/recovery`.
+* `/var/log/auth.log` (`0640`, `root:adm`): Contains ~180 simulated PAM lines, ending with breach notifications referencing `/tmp/sys_miner` (PID `104`), `/mnt/recovery/bin/recovery.sh`, `osiris0`, and `phoenix-sync`.
+
+
+* `/home/alice/diagnostics/INCIDENT_REPORT.log` (`0644`, `alice:alice`): Dynamic dossier unmasking leads as triage commands are executed.
 
 
 
 **Step-by-Step Clue Path**
 
-1. Run `cd /var/log` and inspect `NOTE.txt` and `CHEAT_SHEET.txt`.
+1. Run `cd /var/log` and inspect `NOTE_FROM_MORGAN.txt` and `CHEAT_SHEET.txt`.
 
 
-2. Run `tail -n 10 auth.log` or `grep -i "breach" auth.log`.
+2. Run `tail -n 15 auth.log` or `grep -i "alert" auth.log` to reveal security breach signatures.
 
 
-3. Run `grep -i "rogue" auth.log` to identify PID `104` and `/mnt/recovery`.
+3. Verify findings using the incident triage suite:
+   - `triage_process 104`
+   - `triage_sector /mnt/recovery`
+   - `triage_interface osiris0`
+   - `triage_service phoenix-sync`
+
+
+4. Inspect `/home/alice/diagnostics/INCIDENT_REPORT.log` to verify all 4 incident leads are unmasked, setting `LOGS_AUDITED = True`.
 
 
 
@@ -618,10 +638,10 @@ SYNTAX OVERVIEW:
 * **Milestone ID & Name**: Milestone 6: Network Uplink Diagnostic (Sockets & Routing)
 
 
-* **Primary CLI Focus**: `ip addr`, `ip link set <iface> up`, `ss -tulpn`, `ping -c <count>`, and `apollo-net`.
+* **Primary CLI Focus**: `ip addr`, `ip link set <iface> up`, `ss -tulpn`, `ping -c <count>`, and `osiris-net`.
 
 
-* **System Capability Unlocked**: `apollo0` brought to `UP` status; routing confirmed with gateway `10.0.42.1`.
+* **System Capability Unlocked**: `osiris0` brought to `UP` status; routing confirmed with gateway `10.0.42.1`.
 
 
 * **Flags Evaluated & Set**:
@@ -644,10 +664,10 @@ SYNTAX OVERVIEW:
  [Artifact: /etc/network/NOTE.txt & CHEAT_SHEET.txt] ──► Learn ip, ss, and ping syntax[cite: 1, 2]
                   │
                   ▼
- [Action: ip addr || apollo-net] ──► Discover apollo0 link state is DOWN[cite: 1, 2]
+ [Action: ip addr || osiris-net] ──► Discover osiris0 link state is DOWN[cite: 1, 2]
                   │
                   ▼
- [Action: ip link set apollo0 up] ──► Bring link state online[cite: 1, 2]
+ [Action: ip link set osiris0 up] ──► Bring link state online[cite: 1, 2]
                   │
                   ▼
  [Action: ss -tulpn] ──► Verify socket ports and confirm port 8080 is available[cite: 1, 2]
@@ -668,9 +688,9 @@ SYNTAX OVERVIEW:
 * `/etc/network/NOTE.txt` (`0644`, `root:root`):
 ```text
 [MORGAN'S LOG - 07:05 AM]
-The malware administratively disabled interface apollo0.
+The malware administratively disabled interface osiris0.
 1. Inspect network devices with 'ip addr'.
-2. Bring the interface online: 'ip link set apollo0 up'.
+2. Bring the interface online: 'ip link set osiris0 up'.
 3. Audit open listening ports with 'ss -tulpn'.
 4. Ping gateway 10.0.42.1 to confirm routing.
 
@@ -692,7 +712,7 @@ SYNTAX OVERVIEW:
 ```
 
 
-* `/etc/network/interfaces` (`0644`, `root:root`): Network map defining `apollo0` on `10.0.42.15/24` with gateway `10.0.42.1`.
+* `/etc/network/interfaces` (`0644`, `root:root`): Network map defining `osiris0` on `10.0.42.15/24` with gateway `10.0.42.1`.
 
 
 
@@ -701,10 +721,10 @@ SYNTAX OVERVIEW:
 1. Run `cd /etc/network` and read `NOTE.txt`.
 
 
-2. Run `ip addr` or `apollo-net` to verify `apollo0` is `DOWN`.
+2. Run `ip addr` or `osiris-net` to verify `osiris0` is `DOWN`.
 
 
-3. Run `ip link set apollo0 up`.
+3. Run `ip link set osiris0 up`.
 
 
 4. Run `ss -tulpn` to verify open sockets.

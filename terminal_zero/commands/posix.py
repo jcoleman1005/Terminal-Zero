@@ -57,6 +57,209 @@ def check_clue_discovery(ctx: CommandContext, text_displayed: str, source_target
     return "\n" + "\n".join(notice) + "\n"
 
 
+def cmd_stty(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "stty", "args": args}))
+    raw_args = " ".join(args).lower().strip()
+    if "sane" in raw_args or ("icanon" in raw_args and "echo" in raw_args):
+        ctx.state.unlocked_ergonomics["history"] = True
+        ctx.state.unlocked_ergonomics["history_arrows"] = True
+        ctx.state.system_flags["BUFFER_REPAIRED"] = True
+        ctx.bus.publish(Event("flag_changed", {"flag": "BUFFER_REPAIRED", "value": True}))
+        return ctx.result_factory(stdout="[stty]: Line discipline reset to sane defaults. Cooked mode and input buffer active.\n")
+    elif not args or args == ["-a"]:
+        mode_status = "icanon echo" if ctx.state.system_flags.get("BUFFER_REPAIRED", False) else "-icanon -echo (raw/degraded)"
+        return ctx.result_factory(stdout=f"speed 38400 baud; rows 24; columns 80; line = 0;\nmode: {mode_status}\n")
+    else:
+        return ctx.result_factory(stdout=f"[stty]: Settings applied: {' '.join(args)}\n")
+
+
+def cmd_rm(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "rm", "args": args}))
+    if not args:
+        return ctx.result_factory(stderr="rm: missing operand\n", exit_code=1)
+
+    recursive = False
+    force = False
+    targets = []
+    for arg in args:
+        if arg.startswith("-") and len(arg) > 1:
+            if "r" in arg or "R" in arg:
+                recursive = True
+            if "f" in arg:
+                force = True
+        else:
+            targets.append(arg)
+
+    if not targets:
+        return ctx.result_factory(stderr="rm: missing operand\n", exit_code=1)
+
+    user = ctx.state.current_user
+    for target in targets:
+        target_node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, target)
+        if not target_node:
+            if force:
+                continue
+            return ctx.result_factory(stderr=f"rm: cannot remove '{target}': No such file or directory\n", exit_code=1)
+
+        if target_node.is_dir() and not recursive:
+            return ctx.result_factory(stderr=f"rm: cannot remove '{target}': Is a directory\n", exit_code=1)
+
+        parent_parts = resolved_path[:-1]
+        parent_node = ctx.vfs.root if not parent_parts else ctx.vfs.resolve_path(parent_parts)
+
+        # Deletion Protection Check: containing directory permissions or root-owned read-only target
+        if parent_node and (not ctx.vfs.can_write(parent_node, user) or not ctx.vfs.can_execute(parent_node, user)):
+            return ctx.result_factory(
+                stderr=f"rm: cannot remove '{target}': Permission denied\n",
+                exit_code=1
+            )
+        if target_node.owner == "root" and not ctx.vfs.can_write(target_node, user):
+            return ctx.result_factory(
+                stderr=f"rm: cannot remove '{target}': Permission denied\n",
+                exit_code=1
+            )
+
+        success, err = ctx.vfs.delete_node(ctx.state.current_path, target, recursive=recursive, user=user)
+        if not success:
+            if force and "No such file or directory" in err:
+                continue
+            return ctx.result_factory(stderr=f"rm: {err}\n", exit_code=1)
+
+    return ctx.result_factory()
+
+
+def cmd_cp(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "cp", "args": args}))
+    if not args:
+        return ctx.result_factory(stderr="cp: missing file operand\n", exit_code=1)
+
+    recursive = False
+    clean_args = []
+    for arg in args:
+        if arg.startswith("-") and len(arg) > 1:
+            if "r" in arg or "R" in arg or "a" in arg:
+                recursive = True
+        else:
+            clean_args.append(arg)
+
+    if len(clean_args) < 2:
+        return ctx.result_factory(stderr="cp: missing destination file operand\n", exit_code=1)
+
+    src_path = clean_args[0]
+    dest_path = clean_args[1]
+
+    src_node, _ = ctx.vfs.get_node(ctx.state.current_path, src_path)
+    if not src_node:
+        return ctx.result_factory(stderr=f"cp: cannot stat '{src_path}': No such file or directory\n", exit_code=1)
+
+    user = ctx.state.current_user
+    if not ctx.vfs.can_read(src_node, user):
+        return ctx.result_factory(stderr=f"cp: cannot open '{src_path}' for reading: Permission denied\n", exit_code=1)
+
+    if src_node.is_dir() and not recursive:
+        return ctx.result_factory(stderr=f"cp: -r not specified; omitting directory '{src_path}'\n", exit_code=1)
+
+    dest_node, resolved_dest = ctx.vfs.get_node(ctx.state.current_path, dest_path)
+    if dest_node and dest_node.is_dir():
+        src_filename = src_path.rstrip("/").split("/")[-1]
+        final_dest = f"{dest_path.rstrip('/')}/{src_filename}"
+    else:
+        final_dest = dest_path
+
+    # Check permission to write at destination
+    actual_dest_node, actual_resolved_dest = ctx.vfs.get_node(ctx.state.current_path, final_dest)
+    if actual_dest_node:
+        if not ctx.vfs.can_write(actual_dest_node, user):
+            return ctx.result_factory(stderr=f"cp: cannot create regular file '{final_dest}': Permission denied\n", exit_code=1)
+    else:
+        parent_parts = actual_resolved_dest[:-1]
+        parent_node = ctx.vfs.root if not parent_parts else ctx.vfs.resolve_path(parent_parts)
+        if not parent_node or not parent_node.is_dir():
+            return ctx.result_factory(stderr=f"cp: cannot create regular file '{final_dest}': No such file or directory\n", exit_code=1)
+        if not ctx.vfs.can_write(parent_node, user):
+            return ctx.result_factory(stderr=f"cp: cannot create regular file '{final_dest}': Permission denied\n", exit_code=1)
+
+    if src_node.is_dir():
+        def _copy_tree(src: VFSNode, dst_parent: VFSNode, dirname: str):
+            new_dir = VFSNode(type="dir", permissions="755", owner=user, group=user)
+            dst_parent.children[dirname] = new_dir
+            for c_name, c_node in src.children.items():
+                if c_node.is_dir():
+                    _copy_tree(c_node, new_dir, c_name)
+                else:
+                    d_mode = "0644"
+                    try:
+                        m = int(c_node.permissions, 8) if (c_node.permissions and c_node.permissions.isdigit()) else 0
+                        if m & 0o111:
+                            d_mode = "0755"
+                    except ValueError:
+                        pass
+                    new_dir.children[c_name] = VFSNode(type="file", permissions=d_mode, owner=user, group=user, content=c_node.content)
+
+        dest_parent_parts = actual_resolved_dest[:-1]
+        dest_parent_node = ctx.vfs.root if not dest_parent_parts else ctx.vfs.resolve_path(dest_parent_parts)
+        if not dest_parent_node or not dest_parent_node.is_dir():
+            return ctx.result_factory(stderr=f"cp: cannot create directory '{final_dest}': No such file or directory\n", exit_code=1)
+        _copy_tree(src_node, dest_parent_node, actual_resolved_dest[-1])
+        return ctx.result_factory()
+
+    dest_perms = "0644"
+    try:
+        src_mode = int(src_node.permissions, 8) if (src_node.permissions and src_node.permissions.isdigit()) else 0
+        if src_mode & 0o111:
+            dest_perms = "0755"
+    except ValueError:
+        pass
+
+    success, err = ctx.vfs.write_file(
+        ctx.state.current_path,
+        final_dest,
+        src_node.content or "",
+        append=False,
+        owner=user,
+        permissions=dest_perms,
+        group=user,
+        user=user
+    )
+    if not success:
+        return ctx.result_factory(stderr=f"cp: cannot create regular file '{final_dest}': {err}\n", exit_code=1)
+
+    written_node, _ = ctx.vfs.get_node(ctx.state.current_path, final_dest)
+    if written_node:
+        written_node.owner = user
+        written_node.group = user
+
+    return ctx.result_factory()
+
+
+def cmd_touch(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "touch", "args": args}))
+    if not args:
+        return ctx.result_factory(stderr="touch: missing file operand\n", exit_code=1)
+
+    user = ctx.state.current_user
+    for target in args:
+        if target.startswith("-"):
+            continue
+        node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
+        if node:
+            continue
+        success, err = ctx.vfs.write_file(
+            ctx.state.current_path,
+            target,
+            "",
+            append=False,
+            owner=user,
+            permissions="644",
+            group=user,
+            user=user
+        )
+        if not success:
+            return ctx.result_factory(stderr=f"touch: cannot touch '{target}': {err}\n", exit_code=1)
+
+    return ctx.result_factory()
+
+
 def cmd_tree(ctx: Any, args: List[str]) -> Any:
     # Retained as an in-world discoverable POSIX utility
     start_node = ctx.vfs.resolve_path(ctx.state.current_path)
@@ -101,9 +304,9 @@ def cmd_cat(ctx: CommandContext, args: List[str]) -> CommandResult:
         if node.is_dir():
             return ctx.result_factory(stderr=f"cat: {filepath}: Is a directory\n", exit_code=1)
 
-        user = ctx.state.env.get("USER", "alice")
+        user = ctx.state.current_user
         allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
-        if not allowed or (node.permissions == "000" and node.owner != user):
+        if not allowed or not ctx.vfs.can_read(node, user):
             return ctx.result_factory(stderr=f"cat: {filepath}: Permission denied\n", exit_code=1)
 
         if filepath.endswith("README.txt") or filepath == "README.txt":
@@ -153,9 +356,9 @@ def cmd_head(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"head: cannot open '{filepath}': No such file or directory\n", exit_code=1)
 
-        user = ctx.state.env.get("USER", "alice")
+        user = ctx.state.current_user
         allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
-        if not allowed or (node.permissions == "000" and node.owner != user):
+        if not allowed or not ctx.vfs.can_read(node, user):
             return ctx.result_factory(stderr=f"head: cannot open '{filepath}': Permission denied\n", exit_code=1)
 
         if node.is_dir():
@@ -223,9 +426,9 @@ def cmd_tail(ctx: CommandContext, args: List[str]) -> CommandResult:
         node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, filepath)
         if not node:
             return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': No such file or directory\n", exit_code=1)
-        user = ctx.state.env.get("USER", "alice")
+        user = ctx.state.current_user
         allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1], user)
-        if not allowed or (node.permissions == "000" and node.owner != user):
+        if not allowed or not ctx.vfs.can_read(node, user):
             return ctx.result_factory(stderr=f"tail: cannot open '{filepath}': Permission denied\n", exit_code=1)
         if node.is_dir():
             return ctx.result_factory(stderr=f"tail: error reading '{filepath}': Is a directory\n", exit_code=1)
@@ -310,9 +513,9 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"grep: {target}: No such file or directory\n", exit_code=2)
 
-        user = ctx.state.env.get("USER", "alice")
+        user = ctx.state.current_user
         allowed, _ = ctx.vfs.check_permissions(resolved_path[:-1] if node.is_file() else resolved_path, user)
-        if not allowed or (node.permissions == "000" and node.owner != user):
+        if not allowed or not ctx.vfs.can_read(node, user):
             return ctx.result_factory(stderr=f"grep: {target}: Permission denied\n", exit_code=2)
 
         if node.is_dir():
@@ -343,36 +546,21 @@ def cmd_grep(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "find", "args": args}))
-    if not ctx.state.system_flags.get("FIND_UNLOCKED", False):
-        return ctx.result_factory(
-            stderr=(
-                "[RECOVERY ERROR]: Filesystem query subsystem offline. Search index unlinked.\n"
-                "Execute '/mnt/recovery/bin/recovery.sh' to restore search registers.\n"
-            ),
-            exit_code=1
-        )
     search_path = "."
-    pattern: Optional[str] = None
-    target_type: Optional[str] = None  # "f" or "d"
-
     idx = 0
     if args and not args[0].startswith("-"):
         search_path = args[0]
         idx = 1
 
+    # Split remaining tokens into clauses separated by -o or -or
+    clauses: List[List[str]] = [[]]
     while idx < len(args):
-        if args[idx] == "-name":
-            if idx + 1 >= len(args):
-                return ctx.result_factory(stderr="find: missing argument to `-name'\n", exit_code=1)
-            pattern = args[idx + 1].strip('"').strip("'")
-            idx += 2
-        elif args[idx] == "-type":
-            if idx + 1 >= len(args):
-                return ctx.result_factory(stderr="find: missing argument to `-type'\n", exit_code=1)
-            target_type = args[idx + 1]
-            idx += 2
+        tok = args[idx]
+        if tok in ["-o", "-or"]:
+            clauses.append([])
         else:
-            return ctx.result_factory(stderr=f"find: unknown predicate `{args[idx]}'\n", exit_code=1)
+            clauses[-1].append(tok)
+        idx += 1
 
     start_node, resolved_path = ctx.vfs.get_node(ctx.state.current_path, search_path)
     if not start_node:
@@ -383,31 +571,63 @@ def cmd_find(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not allowed or (start_node.is_dir() and start_node.permissions in ["000", "700", "0700"] and start_node.owner != user):
         return ctx.result_factory(stderr=f"find: '{search_path}': Permission denied\n", exit_code=1)
 
-    display_prefix = search_path.rstrip("/")
-    if not display_prefix:
-        display_prefix = "/"
+    if search_path.startswith("/"):
+        display_prefix = "/" + "/".join(resolved_path) if resolved_path else "/"
+    else:
+        display_prefix = search_path.rstrip("/")
+        if not display_prefix:
+            display_prefix = "."
 
     all_nodes = ctx.vfs.find_nodes(start_node, display_prefix, resolved_path[-1] if resolved_path else "")
 
+    parsed_clauses = []
+    for clause in clauses:
+        if not clause:
+            continue
+        predicates = []
+        c_idx = 0
+        while c_idx < len(clause):
+            flag = clause[c_idx]
+            if flag in ["-name", "-iname"]:
+                if c_idx + 1 >= len(clause):
+                    return ctx.result_factory(stderr=f"find: missing argument to `{flag}'\n", exit_code=1)
+                pat = clause[c_idx + 1].strip('"').strip("'")
+                case_fold = (flag == "-iname")
+                if case_fold:
+                    predicates.append(lambda n, p, name, pat=pat.lower(): fnmatch.fnmatch(name.lower(), pat))
+                else:
+                    predicates.append(lambda n, p, name, pat=pat: fnmatch.fnmatch(name, pat))
+                c_idx += 2
+            elif flag == "-type":
+                if c_idx + 1 >= len(clause):
+                    return ctx.result_factory(stderr="find: missing argument to `-type'\n", exit_code=1)
+                t = clause[c_idx + 1]
+                if t == "f":
+                    predicates.append(lambda n, p, name: n.is_file())
+                elif t == "d":
+                    predicates.append(lambda n, p, name: n.is_dir())
+                c_idx += 2
+            else:
+                return ctx.result_factory(stderr=f"find: unknown predicate `{flag}'\n", exit_code=1)
+        parsed_clauses.append(predicates)
+
     results = []
     for node, path_str, name in all_nodes:
-        # Check type filter
-        if target_type == "f" and not node.is_file():
-            continue
-        if target_type == "d" and not node.is_dir():
-            continue
+        if not parsed_clauses:
+            matches = True
+        else:
+            matches = False
+            for preds in parsed_clauses:
+                if all(pred(node, path_str, name) for pred in preds):
+                    matches = True
+                    break
+        if matches:
+            if "phoenix.key" in path_str:
+                ctx.state.system_flags["KEY_DISCOVERED"] = True
+                ctx.bus.publish(Event("flag_changed", {"flag": "KEY_DISCOVERED", "value": True}))
+            results.append(path_str)
 
-        # Check name pattern filter
-        if pattern:
-            if not fnmatch.fnmatch(name, pattern):
-                continue
-
-        if "phoenix.key" in path_str:
-            ctx.state.system_flags["KEY_DISCOVERED"] = True
-            ctx.bus.publish(Event("flag_changed", {"flag": "KEY_DISCOVERED", "value": True}))
-
-        results.append(path_str)
-
+    results.sort()
     output = "\n".join(results) + ("\n" if results else "")
     return ctx.result_factory(stdout=output)
 
@@ -440,6 +660,27 @@ def cmd_cd(ctx: CommandContext, args: List[str]) -> CommandResult:
     return ctx.result_factory()
 
 
+def mode_to_rwx(mode_str: str, is_dir: bool = False) -> str:
+    try:
+        mode = int(mode_str, 8) if (mode_str and mode_str.isdigit()) else 0
+    except ValueError:
+        mode = 0
+    chars = []
+    # User
+    chars.append("r" if mode & 0o400 else "-")
+    chars.append("w" if mode & 0o200 else "-")
+    chars.append("x" if mode & 0o100 else "-")
+    # Group
+    chars.append("r" if mode & 0o040 else "-")
+    chars.append("w" if mode & 0o020 else "-")
+    chars.append("x" if mode & 0o010 else "-")
+    # Other
+    chars.append("r" if mode & 0o004 else "-")
+    chars.append("w" if mode & 0o002 else "-")
+    chars.append("x" if mode & 0o001 else "-")
+    return "".join(chars)
+
+
 def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ls", "args": args}))
     show_all = False
@@ -447,9 +688,11 @@ def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
     targets = []
 
     for arg in args:
-        if arg.startswith("-"):
-            if "a" in arg: show_all = True
-            if "l" in arg: long_format = True
+        if arg.startswith("-") and len(arg) > 1:
+            if "a" in arg:
+                show_all = True
+            if "l" in arg:
+                long_format = True
         else:
             targets.append(arg)
 
@@ -462,14 +705,16 @@ def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
         if not node:
             return ctx.result_factory(stderr=f"ls: cannot access '{target}': No such file or directory\n", exit_code=2)
 
-        user = ctx.state.env.get("USER", "alice")
+        user = ctx.state.current_user
         allowed, _ = ctx.vfs.check_permissions(resolved_path, user)
         if not allowed or (node.is_dir() and node.permissions in ["000", "700", "0700"] and node.owner != user):
             return ctx.result_factory(stderr=f"ls: cannot open directory '{target}': Permission denied\n", exit_code=2)
 
         if node.is_file():
             if long_format:
-                output_blocks.append(f"-rwxr-xr-x 1 {node.owner} {node.owner} 4096 {target}")
+                rwx = mode_to_rwx(node.permissions, False)
+                grp = getattr(node, "group", node.owner)
+                output_blocks.append(f"-{rwx} 1 {node.owner} {grp} 4096 {target}")
             else:
                 output_blocks.append(target)
             continue
@@ -487,12 +732,14 @@ def cmd_ls(ctx: CommandContext, args: List[str]) -> CommandResult:
                     child_type = "d"
                     perms = "rwxr-xr-x"
                     owner = "root"
+                    group = "root"
                 else:
                     child = node.children[name]
                     child_type = "d" if child.is_dir() else "-"
-                    perms = "rwxr-xr-x" if child.permissions == "755" else "rw-r--r--"
+                    perms = mode_to_rwx(child.permissions, child.is_dir())
                     owner = child.owner
-                rendered.append(f"{child_type}{perms} 1 {owner} {owner} 4096 {name}")
+                    group = getattr(child, "group", owner)
+                rendered.append(f"{child_type}{perms} 1 {owner} {group} 4096 {name}")
             else:
                 rendered.append(name)
 
@@ -515,37 +762,48 @@ def cmd_chmod(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     messages = []
     for target in target_paths:
-        node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
-        if not node:
+        target_node, _ = ctx.vfs.get_node(ctx.state.current_path, target)
+        if not target_node:
             return ctx.result_factory(stderr=f"chmod: cannot access '{target}': No such file or directory\n", exit_code=1)
 
-        # Prevent unauthorized modification of root-owned /opt/phoenix before incident logs are audited
-        clean_tgt = target.rstrip("/")
-        if (clean_tgt == "phoenix" or clean_tgt.endswith("/phoenix")) and not (ctx.state.system_flags.get("LOGS_AUDITED") or ctx.state.system_flags.get("RECOVERY_LOCATED")):
-            return ctx.result_factory(stderr=f"chmod: changing permissions of '{target}': Operation not permitted\n", exit_code=1)
+        # POSIX Ownership Check:
+        if ctx.state.current_user != "root" and target_node.owner != ctx.state.current_user:
+            return ctx.result_factory(
+                stderr=f"chmod: changing permissions of '{target}': Operation not permitted\n",
+                exit_code=1
+            )
 
-        # Numeric mode support (e.g. 755, 644, 700, 777, 600)
-        if mode_str.isdigit() and len(mode_str) == 3:
-            node.permissions = mode_str
-        elif mode_str.isdigit() and len(mode_str) == 4 and mode_str.startswith("0"):
-            node.permissions = mode_str[1:]
+        # Numeric mode support (e.g. 755, 644, 700, 777, 600, 0000, 0444, 0755)
+        if mode_str.isdigit() and len(mode_str) in [3, 4]:
+            target_node.permissions = mode_str
         # Symbolic mode support (+x, -x, u+x, etc.)
         elif "+x" in mode_str:
-            node.permissions = "755"
+            try:
+                cur_mode = int(target_node.permissions, 8) if (target_node.permissions and target_node.permissions.isdigit()) else 0
+            except ValueError:
+                cur_mode = 0
+            if cur_mode == 0:
+                target_node.permissions = "755"
+            else:
+                target_node.permissions = oct(cur_mode | 0o111)[2:]
         elif "-x" in mode_str:
-            node.permissions = "644"
+            try:
+                cur_mode = int(target_node.permissions, 8) if (target_node.permissions and target_node.permissions.isdigit()) else 0
+            except ValueError:
+                cur_mode = 0
+            target_node.permissions = oct(cur_mode & ~0o111)[2:]
         else:
             return ctx.result_factory(stderr=f"chmod: invalid mode: '{mode_str}'\n", exit_code=1)
 
         # Diegetic event triggers for recovery partition binaries
-        if "repair_buffer" in target and ("+x" in mode_str or mode_str in ["755", "777", "700"]):
+        if "repair_buffer" in target and ("+x" in mode_str or mode_str in ["755", "777", "700", "0755"]):
             ctx.state.system_flags["BUFFER_REPAIRED"] = True
             ctx.bus.publish(Event("flag_changed", {"flag": "BUFFER_REPAIRED", "value": True}))
         elif ".bashrc" in target:
             ctx.state.system_flags["BASHRC_RESTORED"] = True
             ctx.bus.publish(Event("flag_changed", {"flag": "BASHRC_RESTORED", "value": True}))
 
-        messages.append(f"[chmod]: mode of '{target}' changed to {node.permissions}\n")
+        messages.append(f"[chmod]: mode of '{target}' changed to {target_node.permissions}\n")
 
     return ctx.result_factory(stdout="".join(messages))
 
@@ -569,7 +827,7 @@ def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "kill", "args": args}))
     if not args:
         return ctx.result_factory(
-            stderr="kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ...\n", 
+            stderr="kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ...\n",
             exit_code=1
         )
 
@@ -578,14 +836,24 @@ def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     idx = 0
     while idx < len(args):
-        if args[idx].startswith("-"):
-            sig = args[idx].lstrip("-")
-            idx += 1
-        elif args[idx] == "-s" and idx + 1 < len(args):
+        arg = args[idx]
+        if arg in ["-s", "-n"] and idx + 1 < len(args):
             sig = args[idx + 1]
             idx += 2
+        elif arg.startswith("-s") and len(arg) > 2:
+            sig = arg[2:]
+            idx += 1
+        elif arg.startswith("-n") and len(arg) > 2:
+            sig = arg[2:]
+            idx += 1
+        elif arg.startswith("-") and not arg.lstrip("-").isdigit() and len(arg) > 1:
+            sig = arg.lstrip("-")
+            idx += 1
+        elif arg.startswith("-") and arg[1:].isdigit():
+            sig = arg[1:]
+            idx += 1
         else:
-            pid_str = args[idx]
+            pid_str = arg
             idx += 1
 
     if not pid_str or not pid_str.isdigit():
@@ -595,23 +863,54 @@ def cmd_kill(ctx: CommandContext, args: List[str]) -> CommandResult:
         )
 
     target_pid = int(pid_str)
+    sig_normalized = sig.upper()
+    is_sigkill = sig_normalized in ["9", "KILL", "SIGKILL"]
 
     # Locate Process
     proc = next((p for p in ctx.state.process_table if p.pid == target_pid and p.status == "running"), None)
     if not proc:
         return ctx.result_factory(stderr=f"kill: ({target_pid}) - No such process\n", exit_code=1)
 
-    # Special Handling for sys_miner (PID 104)
+    # PID 102 (task_audit)
+    if target_pid == 102 or proc.name == "task_audit":
+        proc.status = "terminated"
+        ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != target_pid]
+        audit_content = (
+            "================================================================================\n"
+            "                 TASK AUDIT SUBSYSTEM INCIDENT REPORT\n"
+            "================================================================================\n"
+            "Timestamp: 03:42:15 UTC\n"
+            "Status: Process PID 102 halted.\n\n"
+            "CRITICAL FINDING: Rogue daemon PID 104 (/tmp/sys_miner) has hooked Signal 15 (SIGTERM)\n"
+            "using custom sigaction exception vectors. Standard kill (SIGTERM) will be trapped\n"
+            "and rejected by the process line discipline.\n\n"
+            "DIRECTIVE: Forceful kernel termination required. Use non-maskable SIGKILL:\n"
+            "    kill -9 104\n"
+            "================================================================================\n"
+        )
+        ctx.vfs.write_file([], "/tmp/audit_report.txt", audit_content, append=False, owner="root", permissions="644")
+        return ctx.result_factory(stdout=f"Process {target_pid} (task_audit) terminated. Audit log written to /tmp/audit_report.txt\n")
+
+    # PID 104 (sys_miner)
     if target_pid == 104 or proc.name == "sys_miner":
-        if sig.upper() in ["9", "KILL", "SIGKILL"]:
+        if is_sigkill:
+            if any(p.pid == 102 for p in ctx.state.process_table):
+                return ctx.result_factory(
+                    stderr="[KERNEL]: Process 104 terminated, but supervisor (PID 102) immediately respawned worker.\n"
+                           "[ACTION]: Terminate parent supervisor task (PID 102) first.\n",
+                    exit_code=1
+                )
             proc.status = "terminated"
             ctx.state.process_table = [p for p in ctx.state.process_table if p.pid != target_pid]
             ctx.state.system_flags["MALWARE_TERMINATED"] = True
+            ctx.state.system_flags["CPU_NORMAL"] = True
             ctx.bus.publish(Event("flag_changed", {"flag": "MALWARE_TERMINATED", "value": True}))
+            ctx.bus.publish(Event("flag_changed", {"flag": "CPU_NORMAL", "value": True}))
             return ctx.result_factory(stdout="[KERNEL]: Process 104 (sys_miner) forcefully killed by SIGKILL.\n")
         else:
             return ctx.result_factory(
-                stdout="[sys_miner]: Caught SIGTERM signal. Trapping signal and continuing execution... (Use SIGKILL / -9 to force termination)\n"
+                stderr="[SIGNAL WARN]: PID 104 caught signal 15 (SIGTERM). Process locked; request discarded.\n",
+                exit_code=1
             )
 
     # Default process termination for other PIDs
@@ -665,14 +964,16 @@ def cmd_ip(ctx: CommandContext, args: List[str]) -> CommandResult:
 
             if action == "up":
                 ctx.state.network_interfaces[target_iface]["state"] = "UP"
-                if target_iface in ["osiris0", "apollo0"]:
-                    ctx.state.system_flags["NETWORK_ONLINE"] = True
-                    ctx.bus.publish(Event("flag_changed", {"flag": "NETWORK_ONLINE", "value": True}))
+                if target_iface == "osiris0":
+                    ctx.state.system_flags["NET_LINK_UP"] = True
+                    ctx.bus.publish(Event("flag_changed", {"flag": "NET_LINK_UP", "value": True}))
                 return ctx.result_factory()
             elif action == "down":
                 ctx.state.network_interfaces[target_iface]["state"] = "DOWN"
-                if target_iface in ["osiris0", "apollo0"]:
+                if target_iface == "osiris0":
+                    ctx.state.system_flags["NET_LINK_UP"] = False
                     ctx.state.system_flags["NETWORK_ONLINE"] = False
+                    ctx.bus.publish(Event("flag_changed", {"flag": "NET_LINK_UP", "value": False}))
                     ctx.bus.publish(Event("flag_changed", {"flag": "NETWORK_ONLINE", "value": False}))
                 return ctx.result_factory()
             else:
@@ -724,7 +1025,7 @@ def cmd_ss(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "ping", "args": args}))
-    count = 4
+    count = None
     target = None
     idx = 0
     while idx < len(args):
@@ -748,17 +1049,30 @@ def cmd_ping(ctx: CommandContext, args: List[str]) -> CommandResult:
     if not target:
         return ctx.result_factory(stderr="ping: usage error: Destination address required\n", exit_code=1)
 
-    iface_state = ctx.state.network_interfaces.get("osiris0", ctx.state.network_interfaces.get("apollo0", {})).get("state", "DOWN")
+    iface_state = ctx.state.network_interfaces.get("osiris0", {}).get("state", "DOWN")
     if iface_state == "DOWN":
         return ctx.result_factory(stderr="ping: connect: Network is unreachable\n", exit_code=2)
 
+    has_ctrl_c = ctx.state.unlocked_ergonomics.get("ctrl_c", False)
+    if count is None:
+        pkt_count = 5
+        extra_msg = "" if has_ctrl_c else "[TIMEOUT ADVISORY]: Foreground probe auto-terminated after 5 cycles (SIGINT unmapped).\n"
+    else:
+        pkt_count = count
+        extra_msg = ""
+
     lines = [f"PING {target} ({target}) 56(84) bytes of data."]
-    for i in range(1, count + 1):
+    for i in range(1, pkt_count + 1):
         lines.append(f"64 bytes from {target}: icmp_seq={i} ttl=64 time=0.042 ms")
     lines.append("")
     lines.append(f"--- {target} ping statistics ---")
-    lines.append(f"{count} packets transmitted, {count} received, 0% packet loss, time {count * 1000}ms")
+    lines.append(f"{pkt_count} packets transmitted, {pkt_count} received, 0% packet loss, time {pkt_count * 1000}ms")
     lines.append("rtt min/avg/max/mdev = 0.038/0.042/0.049/0.004 ms")
+    if extra_msg:
+        lines.append(extra_msg.strip())
+
+    ctx.state.system_flags["NETWORK_ONLINE"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "NETWORK_ONLINE", "value": True}))
 
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
 

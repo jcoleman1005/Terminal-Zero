@@ -7,6 +7,7 @@ from terminal_zero.core.persistence import load_game_state, register_autosave_ha
 from terminal_zero.content.initial_vfs import build_default_vfs
 from terminal_zero.content.debriefs import DebriefManager
 from terminal_zero.commands import COMMAND_TABLE
+from terminal_zero.engine.narrative_sync import NarrativeSyncObserver
 from terminal_zero.engine.repl import TerminalShell
 
 
@@ -26,6 +27,9 @@ def main():
         state = TerminalState(vfs, bus, ["home", "alice"])
     else:
         vfs = state.vfs
+
+    vfs.set_event_bus(bus)
+    sync_observer = NarrativeSyncObserver(state, bus, vfs)
 
     register_autosave_handler(bus, lambda: state)
     DebriefManager(bus)

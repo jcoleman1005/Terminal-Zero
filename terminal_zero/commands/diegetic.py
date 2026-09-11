@@ -228,8 +228,6 @@ def cmd_osiris_net(ctx: CommandContext, args: List[str]) -> CommandResult:
         stdout=f"[OSIRIS-NET v1.0]: Subnet link state is {iface_state}. Gateway 10.0.42.1\n"
     )
 
-cmd_apollo_net = cmd_osiris_net
-
 
 def cmd_sync(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.bus.publish(Event("command_executed", {"command": "sync"}))
@@ -658,4 +656,78 @@ def cmd_debriefs(ctx: CommandContext, args: List[str]) -> CommandResult:
 
 def cmd_lore(ctx: CommandContext, args: List[str]) -> CommandResult:
     return cmd_fieldguide(ctx, args)
+
+
+def cmd_cluster_probe(ctx: CommandContext, args: List[str]) -> CommandResult:
+    ctx.bus.publish(Event("command_executed", {"command": "cluster_probe", "args": args}))
+
+    # 1. Oracle Bypass Protection: Master triage bus offline before log triage
+    if not ctx.state.system_flags.get("LOGS_AUDITED", False):
+        return ctx.result_factory(
+            stderr="[PROBE FAULT]: Master triage bus offline. Audit security logs in /var/log before initiating cluster handshake.\n",
+            exit_code=1
+        )
+
+    # 2. State Evaluations
+    cpu_ok = not any(p.pid == 104 for p in ctx.state.process_table) and ctx.state.system_flags.get("CPU_NORMAL", False)
+
+    key_node, _ = ctx.vfs.get_node([], "/mnt/recovery/keys/phoenix.key")
+    has_key = key_node is not None and "PX-KEY-7701-ALPHA" in (key_node.content or "")
+    ctrl_c_ok = ctx.state.unlocked_ergonomics.get("ctrl_c", False) is True
+    storage_ok = has_key and ctrl_c_ok
+
+    net_iface_ok = ctx.state.network_interfaces.get("osiris0", {}).get("state") == "UP"
+    net_online = ctx.state.system_flags.get("NETWORK_ONLINE", False)
+    network_ok = net_iface_ok and net_online
+
+    all_passed = cpu_ok and storage_ok and network_ok
+
+    tag_success = "\033[1;32m[ SUCCESS ]\033[0m"
+    tag_pending = "\033[1;33m[ PENDING ]\033[0m"
+
+    compute_tag = tag_success if cpu_ok else tag_pending
+    storage_tag = tag_success if storage_ok else tag_pending
+    network_tag = tag_success if network_ok else tag_pending
+
+    lines = [
+        "================================================================================",
+        "                   PHOENIX CLUSTER RESTORATION PROBE v2.4",
+        "================================================================================",
+        f"  [ SPOKE A : COMPUTE ] ......... {compute_tag} -> Rogue miner killed, CPU normalized",
+        f"  [ SPOKE B : STORAGE ] ......... {storage_tag} -> Phoenix recovery key loaded, SIGINT mapped",
+        f"  [ SPOKE C : NETWORK ] ......... {network_tag} -> Interface osiris0 link UP, gateway online",
+        "================================================================================",
+    ]
+
+    if not all_passed:
+        lines.append("\n[DIAGNOSTIC ADVISORIES]:")
+        if not cpu_ok:
+            lines.append("  • Compute fault: Inspect /tmp and check running processes ('ps aux'). Rogue task still active.")
+        if not storage_ok:
+            lines.append("  • Storage fault: Locate recovery key in /mnt/recovery/keys/ and execute /mnt/recovery/bin/recovery.sh.")
+        if not network_ok:
+            lines.append("  • Network fault: Bring up adapter ('ip link set osiris0 up') and verify connectivity ('ping -c 4 10.0.42.1').")
+        lines.append("")
+        return ctx.result_factory(stdout="\n".join(lines) + "\n", exit_code=0)
+
+    ctx.state.system_flags["VERTICAL_SLICE_COMPLETE"] = True
+    ctx.bus.publish(Event("flag_changed", {"flag": "VERTICAL_SLICE_COMPLETE", "value": True}))
+
+    lines.extend([
+        "[ CLUSTER STATUS: SYNCHRONIZED ]",
+        "All node telemetry verified. Phoenix service daemon online.",
+        "",
+        "================================================================================",
+        " [VOX TRANSMISSION // PRIORITY CHANNEL 0x01]",
+        "================================================================================",
+        " Morgan: \"Alice... the telemetry cleared! The cluster handshake went through!",
+        "          Every node in the cluster is acknowledging our heartbeat.",
+        "          You took back control of this machine from the ground up.\"",
+        "================================================================================",
+        "",
+        "*** VERTICAL SLICE COMPLETE ***",
+        ""
+    ])
+    return ctx.result_factory(stdout="\n".join(lines) + "\n", exit_code=0)
+
 
