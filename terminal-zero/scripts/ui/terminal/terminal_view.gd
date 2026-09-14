@@ -166,7 +166,7 @@ func _chunks_to_bbcode(chunks: Array) -> String:
 				int(col.r * 255), int(col.g * 255), int(col.b * 255)
 			]
 			# Escape [ and ] so they don't confuse BBCode parser.
-			var safe := ch.text.replace("[", "[lb]")
+			var safe = ch.text.replace("[", "[lb]")
 			out += "[color=%s]%s[/color]" % [hex, safe]
 	return out
 
@@ -183,8 +183,12 @@ func _append_bbcode(bbcode: String) -> void:
 
 
 func _scroll_to_bottom() -> void:
+	if not is_inside_tree():
+		return
 	await get_tree().process_frame
-	_scroll.scroll_vertical = _scroll.get_v_scroll_bar().max_value
+	if not is_inside_tree():
+		return
+	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
 	_new_output_bar.visible = false
 
 
@@ -210,8 +214,8 @@ func _handle_key(event: InputEventKey) -> void:
 
 	# Tab — completion request (capability-gated)
 	if event.keycode == KEY_TAB:
+		get_viewport().set_input_as_handled()
 		if _caps.tab_completion and not _busy:
-			get_viewport().set_input_as_handled()
 			completion_requested.emit(_line_edit.text, _line_edit.caret_column)
 		return
 
@@ -219,20 +223,23 @@ func _handle_key(event: InputEventKey) -> void:
 	if event.keycode == KEY_UP:
 		if _caps.command_history and _history.size() > 0 and not _busy:
 			get_viewport().set_input_as_handled()
-			_history_navigate(-1)
+			_history_navigate(1)
 		return
 
 	# Down — history navigate forward (capability-gated)
 	if event.keycode == KEY_DOWN:
 		if _caps.command_history and not _busy:
 			get_viewport().set_input_as_handled()
-			_history_navigate(1)
+			_history_navigate(-1)
 		return
 
 
 # ── History navigation ─────────────────────────────────────────────────────────
 
 func _history_navigate(direction: int) -> void:
+	if not _caps.command_history or _history.is_empty() or _busy:
+		return
+
 	# Save draft when starting to browse.
 	if _history_index == -1:
 		_history_draft = _line_edit.text
@@ -242,7 +249,7 @@ func _history_navigate(direction: int) -> void:
 	if _history_index == -1:
 		_line_edit.text = _history_draft
 	else:
-		# Index 0 = oldest, last = most recent; navigate from newest.
+		# Index 0 = most recent command, last = oldest command.
 		var pos := (_history.size() - 1) - _history_index
 		_line_edit.text = _history[pos]
 
@@ -254,10 +261,6 @@ func _history_navigate(direction: int) -> void:
 func _on_text_submitted(command: String) -> void:
 	if _busy:
 		return
-
-	# Commit prompt + command into scrollback.
-	var submitted_line := _prompt + command + "\n"
-	_append_bbcode("[color=#c8c8c8]%s[/color]" % submitted_line.replace("[", "[lb]"))
 
 	# Clear input.
 	_line_edit.text = ""

@@ -18,6 +18,8 @@
 [ext_resource type="Script" path="res://scripts/ui/terminal/terminal_view.gd" id="1_tvscript"]
 
 [node name="TerminalView" type="PanelContainer"]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2

@@ -25,12 +25,12 @@ extends Control
 ## The stub adapter acts as the fake backend.
 var _stub: StubBackendAdapter
 
-@onready var _terminal: TerminalView = $Split/TerminalView
-@onready var _btn_load:       Button = $ToolBar/BtnLoad
-@onready var _btn_history:    Button = $ToolBar/BtnHistory
-@onready var _btn_completion: Button = $ToolBar/BtnCompletion
-@onready var _btn_interrupt:  Button = $ToolBar/BtnInterrupt
-@onready var _status_label:   Label  = $ToolBar/StatusLabel
+@onready var _terminal: TerminalView = $VBoxRoot/Split/TerminalView
+@onready var _btn_load:       Button = $VBoxRoot/ToolBar/BtnLoad
+@onready var _btn_history:    Button = $VBoxRoot/ToolBar/BtnHistory
+@onready var _btn_completion: Button = $VBoxRoot/ToolBar/BtnCompletion
+@onready var _btn_interrupt:  Button = $VBoxRoot/ToolBar/BtnInterrupt
+@onready var _status_label:   Label  = $VBoxRoot/ToolBar/StatusLabel
 
 
 func _ready() -> void:
