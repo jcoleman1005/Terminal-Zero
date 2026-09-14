@@ -4,7 +4,7 @@ from typing import List
 from terminal_zero.core.events import Event
 from terminal_zero.core.state import CommandContext, CommandResult
 from terminal_zero.core.persistence import save_game_state
-from terminal_zero.content.narrative import get_primary_goal, get_todo_content, get_victory_screen
+from terminal_zero.content.narrative import get_primary_goal, get_todo_content, get_victory_screen, get_boot_screen
 from terminal_zero.content.man_pages import MAN_PAGES
 from terminal_zero.content.initial_vfs import build_default_vfs
 
@@ -261,7 +261,6 @@ def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.state.listening_sockets = list(fresh_state.listening_sockets)
     ctx.state.last_stderr = ""
 
-    from terminal_zero.engine.repl import get_boot_screen
     reboot_banner = (
         "\nBroadcast message from root@osiris (tty1) (system reboot):\n\n"
         "The system is going down for reboot NOW!\n"
@@ -384,7 +383,7 @@ def cmd_help(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     # Location-aware extra tip if in /opt/backup/profiles
     if ctx.state.cwd_str == "/opt/backup/profiles" and not flags.get("BASHRC_RESTORED", False):
-        lines.append("\nLOCATION TIP: You found the backup profiles! Read 'NOTE_FROM_MORGAN.txt' with 'cat NOTE_FROM_MORGAN.txt' to restore your shell.")
+        lines.append("\nLOCATION TIP: You found the backup profiles! Read 'MORGAN_NOTE.txt' with 'cat MORGAN_NOTE.txt' to restore your shell.")
 
     lines.append(f"\n{get_primary_goal(flags, getattr(ctx.state, 'discovered_clues', {}))}")
     return ctx.result_factory(stdout="\n".join(lines) + "\n")
@@ -551,17 +550,17 @@ def cmd_manuals(ctx: CommandContext, args: List[str]) -> CommandResult:
 
     catalog = [
         ("SURVIVAL CARD", "/home/alice/README.txt", "Basic Navigation, Terminal Diagnostics & Decrypt"),
-        ("LONG LISTING GUIDE", "/opt/backup/profiles/.HOW_TO_READ_LL.txt", "File Details, Modes & Permissions Breakdown"),
-        ("PROFILE SCRATCHPAD", "/opt/backup/profiles/NOTE_FROM_MORGAN.txt", "Shell Profile Template & Redirection Overwrite"),
-        ("LOG TRIAGE SCRATCHPAD", "/var/log/NOTE_FROM_MORGAN.txt", "Log Streams, Filtering Noise & Search Signatures"),
-        ("LOG FORENSICS MANUAL", "/var/log/HOW_TO_READ_LOGS.txt", "Log Anatomy, Event Formatting & Filtering"),
+        ("LONG LISTING GUIDE", "/opt/backup/profiles/LL_GUIDE.txt", "File Details, Modes & Permissions Breakdown"),
+        ("PROFILE SCRATCHPAD", "/opt/backup/profiles/MORGAN_NOTE.txt", "Shell Profile Template & Redirection Overwrite"),
+        ("LOG TRIAGE SCRATCHPAD", "/var/log/MORGAN_NOTE.txt", "Log Streams, Filtering Noise & Search Signatures"),
+        ("LOG FORENSICS MANUAL", "/var/log/LOG_FORENSICS_GUIDE.txt", "Log Anatomy, Event Formatting & Filtering"),
         ("GREP FORENSICS GUIDE", "/var/log/.grep_juice", "Log Filter Patterns & Practical Grep Recipes"),
         ("SECOPS TRIAGE GUIDE", "/var/log/REPAIR_COMMANDS.txt", "Incident Dossier Registration Commands"),
-        ("RECOVERY SCRATCHPAD", "/mnt/recovery/NOTE_FROM_MORGAN.txt", "Recursive Search Utility & Key Location"),
-        ("PERMISSIONS SCRATCHPAD", "/mnt/recovery/bin/PERMISSIONS_NOTE.txt", "Octal Mode Bits, Execute Rights & Signal Traps"),
-        ("PROCESS SCRATCHPAD", "/tmp/NOTE_FROM_MORGAN.txt", "Process Tables, High CPU & Unconditional Signals"),
-        ("NETWORK SCRATCHPAD", "/etc/network/NOTE_FROM_MORGAN.txt", "Interface Link State & Gateway Ping Verification"),
-        ("PHOENIX SCRATCHPAD", "/etc/phoenix/NOTE_FROM_MORGAN.txt", "Append Mode (>>), Config Permissions & Daemon"),
+        ("RECOVERY SCRATCHPAD", "/mnt/recovery/MORGAN_NOTE.txt", "Recursive Search Utility & Key Location"),
+        ("PERMISSIONS SCRATCHPAD", "/mnt/recovery/bin/MORGAN_NOTE.txt", "Octal Mode Bits, Execute Rights & Signal Traps"),
+        ("PROCESS SCRATCHPAD", "/tmp/MORGAN_NOTE.txt", "Process Tables, High CPU & Unconditional Signals"),
+        ("NETWORK SCRATCHPAD", "/etc/network/MORGAN_NOTE.txt", "Interface Link State & Gateway Ping Verification"),
+        ("PHOENIX SCRATCHPAD", "/etc/phoenix/MORGAN_NOTE.txt", "Append Mode (>>), Config Permissions & Daemon"),
         ("SYSADMIN PROTOCOLS", "/usr/share/doc/sysadmin_notes.txt", "Process Management, File Modes & Networking"),
     ]
 

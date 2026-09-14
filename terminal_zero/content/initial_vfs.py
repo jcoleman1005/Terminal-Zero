@@ -32,7 +32,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
 
     # Standard POSIX & FHS Structure across all sectors
     dirs = [
-        "bin", "usr/bin", "usr/share/doc", "var/log", "tmp", 
+        "bin", "usr/bin", "usr/share/doc", "var/log", "tmp",
         "mnt/recovery", "mnt/recovery/archive/2038", "mnt/recovery/backups/stale", "mnt/recovery/tools/legacy",
         "mnt/recovery/bin", "mnt/recovery/keys", "mnt/recovery/docs",
         "opt/backup", "opt/backup/profiles", "etc/network", "etc/phoenix", "etc/skel",
@@ -44,6 +44,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_dir("/home", perms="755", owner="root", group="root")
     add_dir("/home/alice", perms="755", owner="alice", group="alice")
     add_dir("/home/alice/diagnostics", perms="755", owner="alice", group="alice")
+    # Hidden archive of personal logs left by the previous operator (Maya).
+    # Discovered when the player runs 'ls -a' in /home/alice/.
+    add_dir("/home/alice/.maya_notes", perms="755", owner="alice", group="alice")
+    add_dir("/home/alice/.maya_notes/archive", perms="755", owner="alice", group="alice")
     add_dir("/etc/skel", perms="0755", owner="root", group="root")
 
     # Soft-Gate /opt/phoenix via Permissions (0700 until LOGS_AUDITED or RECOVERY_LOCATED is set)
@@ -146,12 +150,16 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
 
     # Milestone 1: /opt/backup/profiles & /home/alice
+    # Note: visible as MORGAN_NOTE.txt (no dot-prefix). The ls -a mechanic is taught
+    # here conceptually, then rewarded later when the player finds hidden lore in
+    # other directories they revisit (starting with .maya_notes/ right here).
     note_content = (
         "// STICKY NOTE TAPED TO MONITOR FRAME\n"
         "Alice—\n\n"
         "The attacker didn't just break the drivers; they tried to bury their tracks.\n\n"
-        "Once you fix the terminal buffer ('stty sane'), remember that Unix hides system profiles\n"
-        "and recovery caches behind a dot prefix (like this file: .note.txt).\n\n"
+        "Once you fix the terminal buffer ('stty sane'), remember that Unix hides system\n"
+        "profiles and recovery caches behind a dot prefix — files and folders whose\n"
+        "names start with a dot.\n\n"
         "Plain 'ls' won't show them. You need to pass the '-a' (all) flag:\n"
         "  ls -a\n\n"
         "First, delete the corrupted configuration artifact:\n"
@@ -159,9 +167,11 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "Then copy the clean template from the system backup directory:\n"
         "  cp /opt/backup/profiles/alice.bashrc /home/alice/.bashrc\n\n"
         "Tab autocompletion is dead until you restore your profile.\n\n"
+        "The previous operator left some personal logs in a hidden directory here.\n"
+        "Once you know 'ls -a', you'll find them.\n\n"
         "— Morgan\n"
     )
-    add_file("/home/alice/.note.txt", note_content, perms="644", owner="alice", group="alice")
+    add_file("/home/alice/MORGAN_NOTE.txt", note_content, perms="644", owner="alice", group="alice")
     add_file(
         "/home/alice/.bashrc.corrupt",
         "# CORRUPTED ENVIRONMENT PROFILE\n# SYNTAX ERROR AT LINE 1: BAD RECOVERY DESCRIPTOR\n",
@@ -201,7 +211,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PRIORITY: HIGH\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 03:42:11 AM\n"
-        "// FILE: /opt/backup/profiles/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /opt/backup/profiles/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "Whoever hit our network knew exactly how to make an operator miserable.\n"
@@ -227,8 +237,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/opt/backup/profiles/NOTE_FROM_MORGAN.txt", morgan_note, perms="644", owner="root")
-    
+    add_file("/opt/backup/profiles/MORGAN_NOTE.txt", morgan_note, perms="644", owner="root")
+
     ll_guide_content = (
         "================================================================================\n"
         "         SYSADMIN REFERENCE GUIDE // HOW TO READ 'll' (LONG LISTING)\n"
@@ -253,8 +263,8 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "You can restore executable permissions on any file using: \033[1;33mchmod +x <filename>\033[0m\n"
         "================================================================================\n"
     )
-    add_file("/opt/backup/profiles/.HOW_TO_READ_LL.txt", ll_guide_content, perms="644", owner="root")
-    
+    add_file("/opt/backup/profiles/LL_GUIDE.txt", ll_guide_content, perms="644", owner="root")
+
     add_file("/opt/backup/profiles/alice.bashrc", alice_bashrc_content, perms="644", owner="root")
     add_file(
         "/home/alice/.bashrc",
@@ -265,7 +275,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     )
     add_file(
         "/home/alice/.bash_history",
-        "pwd\nls -la\ncat diagnostics/BOOT_FAIL.log\nrepair_buffer\ncat .note.txt\ncd /opt/backup/profiles\ncat NOTE_FROM_MORGAN.txt\ncat alice.bashrc > /home/alice/.bashrc\n",
+        "pwd\nls -la\ncat diagnostics/BOOT_FAIL.log\nrepair_buffer\ncat MORGAN_NOTE.txt\ncd /opt/backup/profiles\ncat MORGAN_NOTE.txt\ncat alice.bashrc > /home/alice/.bashrc\n",
         perms="600",
         owner="alice",
         group="alice"
@@ -303,12 +313,36 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         owner="root"
     )
 
+    # Maya_04 — placed at /opt/backup/profiles/ for contextual discovery.
+    # The player arrives here to restore .bashrc; Maya's note reveals the human
+    # backstory: the previous operator had this exact same problem.
+    maya_04_content = (
+        "// ============================================================================\n"
+        "// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]\n"
+        "// TIMESTAMP: 2042-07-20 // FILE: /opt/backup/profiles/PREVIOUS_OPERATOR_NOTE.txt\n"
+        "// ============================================================================\n\n"
+        "Javi kept writing about how the up and down arrow keys and the tab key \"saved\n"
+        "my fingers from having to type more than I need to.\" He was always kind of lazy.\n\n"
+        "But so am I. So I tried using them and kept getting errors — nothing was\n"
+        "completing, nothing was recalling.\n\n"
+        "Buried in one of his technical notes he explained that his shell profile had\n"
+        "gotten wiped once. A file called '.bashrc' in his home folder — the one that\n"
+        "configures how the terminal behaves — was missing. Without it, Tab and the\n"
+        "arrow keys basically go dead. He said he had to restore it from a backup he\n"
+        "kept at /opt/backup/profiles/.\n\n"
+        "I patched mine from there. If you're reading this and your terminal feels\n"
+        "broken: check /opt/backup/profiles/ first.\n\n"
+        "— Maya\n"
+        "// ============================================================================\n"
+    )
+    add_file("/opt/backup/profiles/PREVIOUS_OPERATOR_NOTE.txt", maya_04_content, perms="644", owner="root")
+
     # Milestone 2: /var/log/
     var_log_morgan_note = (
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // LOG TRIAGE\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 04:22:08 AM\n"
-        "// FILE: /var/log/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /var/log/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "They hit the authentication daemon hard. The compromise logged hundreds of\n"
@@ -322,7 +356,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/var/log/NOTE_FROM_MORGAN.txt", var_log_morgan_note, perms="644", owner="alice")
+    add_file("/var/log/MORGAN_NOTE.txt", var_log_morgan_note, perms="644", owner="alice")
 
     how_to_read_logs_content = (
         "================================================================================\n"
@@ -354,7 +388,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "register confirmed security leads into your incident dossier.\n"
         "================================================================================\n"
     )
-    add_file("/var/log/HOW_TO_READ_LOGS.txt", how_to_read_logs_content, perms="644", owner="root")
+    add_file("/var/log/LOG_FORENSICS_GUIDE.txt", how_to_read_logs_content, perms="644", owner="root")
 
     grep_juice_content = (
         "================================================================================\n"
@@ -468,7 +502,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // RECOVERY MOUNT\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:10:44 AM\n"
-        "// FILE: /mnt/recovery/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /mnt/recovery/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "Before the quarantine locked me out, I mirrored our fallback tools and cluster\n"
@@ -489,10 +523,10 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/mnt/recovery/NOTE_FROM_MORGAN.txt", mnt_recovery_morgan_note, perms="644", owner="alice")
+    add_file("/mnt/recovery/MORGAN_NOTE.txt", mnt_recovery_morgan_note, perms="644", owner="alice")
 
     add_file(
-        "/mnt/recovery/docs/RECOVERY_NOTES.txt",
+        "/mnt/recovery/docs/RECOVERY_GUIDE.txt",
         "================================================================================\n"
         "                 SECOPS RECOVERY MANIFEST // PARTITION ADVISORY\n"
         "================================================================================\n"
@@ -512,7 +546,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // SECURITY LOCKDOWN\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 05:45:19 AM\n"
-        "// FILE: /mnt/recovery/bin/NOTE.txt\n"
+        "// FILE: /mnt/recovery/bin/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "The containment protocol panicked and zeroed the permission mode bits on\n"
@@ -533,8 +567,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/mnt/recovery/bin/NOTE.txt", permissions_note, perms="644", owner="alice")
-    add_file("/mnt/recovery/bin/PERMISSIONS_NOTE.txt", permissions_note, perms="644", owner="alice")
+    add_file("/mnt/recovery/bin/MORGAN_NOTE.txt", permissions_note, perms="644", owner="alice")
 
     recovery_sh_content = (
         "#!/bin/bash\n"
@@ -568,7 +601,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PROCESS REMEDIATION\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:15:33 AM\n"
-        "// FILE: /tmp/NOTE.txt\n"
+        "// FILE: /tmp/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "Our CPU thermal alarm is firing. The intruder dropped a persistent background\n"
@@ -585,8 +618,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/tmp/NOTE.txt", tmp_morgan_note, perms="644", owner="alice")
-    add_file("/tmp/NOTE_FROM_MORGAN.txt", tmp_morgan_note, perms="644", owner="alice")
+    add_file("/tmp/MORGAN_NOTE.txt", tmp_morgan_note, perms="644", owner="alice")
 
     # Soft-Gated & Diegetic Tool Binaries
     add_file("/opt/phoenix/recovery/tree", "ELF 64-bit LSB executable\n", perms="755")
@@ -605,12 +637,12 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         perms="644"
     )
 
-    # Milestone 5: /etc/network/interfaces & NOTE_FROM_MORGAN.txt
+    # Milestone 5: /etc/network/interfaces & MORGAN_NOTE.txt
     network_morgan_note = (
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // NETWORK RECOVERY\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 06:50:02 AM\n"
-        "// FILE: /etc/network/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /etc/network/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "The miner is dead and CPU load is back to normal, but the machine is still\n"
@@ -631,8 +663,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/etc/network/NOTE_FROM_MORGAN.txt", network_morgan_note, perms="644", owner="alice")
-    add_file("/etc/network/NETWORK_ADVISORY.txt", network_morgan_note, perms="644", owner="alice")
+    add_file("/etc/network/MORGAN_NOTE.txt", network_morgan_note, perms="644", owner="alice")
 
     interfaces_content = (
         "# OSIRIS WORKSTATION NETWORK INTERFACE CONFIGURATION\n"
@@ -654,7 +685,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "// ============================================================================\n"
         "// INCIDENT SCRATCHPAD // OSIRIS WORKSTATION // PHOENIX CLUSTER DAEMON\n"
         "// HOST: osiris-ws-01 | USER: morgan [SYSADMIN] | TIMESTAMP: 07:35:14 AM\n"
-        "// FILE: /etc/phoenix/NOTE_FROM_MORGAN.txt\n"
+        "// FILE: /etc/phoenix/MORGAN_NOTE.txt\n"
         "// ============================================================================\n\n"
         "Alice—\n\n"
         "This is it. The gateway is reachable and the workstation is stable.\n"
@@ -682,8 +713,7 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
         "— Morgan\n"
         "// ============================================================================\n"
     )
-    add_file("/etc/phoenix/NOTE_FROM_MORGAN.txt", phoenix_morgan_note, perms="644", owner="root")
-    add_file("/etc/phoenix/PHOENIX_RECOVERY.txt", phoenix_morgan_note, perms="644", owner="root")
+    add_file("/etc/phoenix/MORGAN_NOTE.txt", phoenix_morgan_note, perms="644", owner="root")
 
     initial_conf = (
         "# PHOENIX EMERGENCY CLUSTER RESTORATION DAEMON CONFIG\n"
@@ -698,5 +728,84 @@ def build_default_vfs(flags: Optional[Dict[str, bool]] = None) -> VFSNode:
     add_file("/etc/phoenix/phoenix.conf.default", initial_conf, perms="0444", owner="root", group="root")
     add_file("/opt/backup/phoenix.conf", initial_conf, perms="644", owner="root")
 
-    return root
+    # =========================================================================
+    # Maya Notes — Personal logs left by the previous operator
+    # Hidden inside /home/alice/.maya_notes/ (discovered via 'ls -a').
+    # Maya_04 is placed at /opt/backup/profiles/ for contextual discovery
+    # (see the PREVIOUS_OPERATOR_NOTE.txt entry above, near that section).
+    # Maya_10 (goodbye letter) and Maya_05–09 are reserved for future drafting.
+    # =========================================================================
 
+    maya_00_content = (
+        "// ============================================================================\n"
+        "// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]\n"
+        "// TIMESTAMP: 2042-07-14 // FILE: /home/alice/.maya_notes/Maya_00.txt\n"
+        "// ============================================================================\n\n"
+        "God this sucks. They threw me on this thing when Javi kicked the bucket, just\n"
+        "because I knew how to turn it on. Javi never got around to training anybody\n"
+        "how to do this.\n\n"
+        "Anyway I found a sticky note taped to the terminal that says if I type 'cd'\n"
+        "followed by the name of a directory — which is apparently a different \"room\"\n"
+        "in the system — I can move there. I've been trying to hop around but I keep\n"
+        "getting errors saying things like \"no such file or directory.\"\n\n"
+        "At least I figured out that typing:\n"
+        "  cd ~\n"
+        "...always drops me back in my home folder. I'll take it.\n\n"
+        "— Maya\n"
+        "// ============================================================================\n"
+    )
+    add_file("/home/alice/.maya_notes/Maya_00.txt", maya_00_content, perms="644", owner="alice", group="alice")
+
+    maya_01_content = (
+        "// ============================================================================\n"
+        "// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]\n"
+        "// TIMESTAMP: 2042-07-15 // FILE: /home/alice/.maya_notes/Maya_01.txt\n"
+        "// ============================================================================\n\n"
+        "Ok I figured out why cd kept failing! You have to type the directory name\n"
+        "EXACTLY as it appears — weird forward-slashes and dots included. The system\n"
+        "is very literal.\n\n"
+        "Oh yeah — I also found out that if I type 'ls -a', a whole extra bunch of\n"
+        "files and folders appear. Javi apparently stashed some of his more... personal\n"
+        "notes in those dot-folders. I read one. I was not interested in learning about\n"
+        "his weird rash.\n\n"
+        "— Maya\n"
+        "// ============================================================================\n"
+    )
+    add_file("/home/alice/.maya_notes/Maya_01.txt", maya_01_content, perms="644", owner="alice", group="alice")
+
+    maya_02_content = (
+        "// ============================================================================\n"
+        "// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]\n"
+        "// TIMESTAMP: 2042-07-17 // FILE: /home/alice/.maya_notes/Maya_02.txt\n"
+        "// ============================================================================\n\n"
+        "Oh yeah! Just made my own secret file!\n\n"
+        "Turns out when Javi wrote \"touching\" in one of his notes, he was literally\n"
+        "talking about the command that creates a new empty file:\n"
+        "  touch <filename>\n\n"
+        "I definitely thought he meant something else. Anyway. I'm going to go back\n"
+        "and leave some notes for myself in my home folder so I don't forget how to\n"
+        "move around.\n\n"
+        "— Maya\n"
+        "// ============================================================================\n"
+    )
+    add_file("/home/alice/.maya_notes/Maya_02.txt", maya_02_content, perms="644", owner="alice", group="alice")
+
+    # Maya_03 is one level deeper — player must 'cd archive' to find it,
+    # then needs 'cd ..' to get back out. The note teaches the skill required
+    # to leave the room it's in. Subdir name TBD; using 'archive' as placeholder.
+    maya_03_content = (
+        "// ============================================================================\n"
+        "// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]\n"
+        "// TIMESTAMP: 2042-07-18 // FILE: /home/alice/.maya_notes/archive/Maya_03.txt\n"
+        "// ============================================================================\n\n"
+        "Ok I'm starting to get lost. I went four directories deep trying to find where\n"
+        "Javi kept his tool notes and had no idea how to backtrack.\n\n"
+        "Luckily I mistyped something and discovered that 'cd ..' (two dots, no space)\n"
+        "goes up one level to the parent folder. Accidentally stumbling into solutions\n"
+        "is basically my whole strategy at this point.\n\n"
+        "— Maya\n"
+        "// ============================================================================\n"
+    )
+    add_file("/home/alice/.maya_notes/archive/Maya_03.txt", maya_03_content, perms="644", owner="alice", group="alice")
+
+    return root

@@ -25,3 +25,86 @@
 [2026-09-03 10:33:26] [/etc/network] [Flags: 11/13] that's...a lot of information that I'm not sure what it means
 [2026-09-03 10:48:20] [/home/alice] [Flags: 11/13] aha! this was the document i needed
 [2026-09-03 10:58:38] [/etc/phoenix] [Flags: 12/13] there's no instructions on how to append
+[2026-09-12 08:55:41] [/home/alice] [Flags: 1/17] this file should only contain cd, pwd, decrypt, and sync commands
+[2026-09-12 08:55:41] [/var/log] [Flags: 3/17] There should be an "inventory" command that brings up a directory that shows manuals, readm
+[2026-09-12 08:55:41] [/var/log] [Flags: 3/17] the examples above give away the answer for alert 0x02
+[2026-09-12 08:55:41] [/var/log] [Flags: 3/17] there is still no reason to use grep
+[2026-09-12 08:55:41] [/home/alice] [Flags: 6/17] I'm lost
+[2026-09-12 08:55:41] [/home/alice] [Flags: 1/17] the following steps should be hidden until the step above it has been completed
+[2026-09-12 08:55:41] [/var/log] [Flags: 2/17] the error message shouldn't say to run the taskctl command, just point to the txt file
+[2026-09-12 08:55:41] [/home/alice] [Flags: 4/17] this sticky note is redundant and doesn't serve a purpose. It should instead give a clud
+[2026-09-12 08:55:41] [/var/log] [Flags: 4/17] lets remove the color coding
+[2026-09-12 08:55:41] [/var/log] [Flags: 4/17] there should be a file called .grep_juice that explains how to use grep to search for alert
+[2026-09-12 08:55:41] [/var/log] [Flags: 4/17] yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
+[2026-09-12 08:55:41] [/mnt/recovery/bin] [Flags: 5/17] Take it to linix card printed twice
+[2026-09-12 08:55:41] [/mnt/recovery/keys] [Flags: 6/17] is there a way to reword phase 4 so that it's not so technically worded? As i und
+[2026-09-12 08:55:41] [/home/alice] [Flags: 1/17] decrypt explaination for missing terminal commands should say "<command> currupted and n
+[2026-09-12 08:55:41] [/home/alice/diagnostics] [Flags: 2/17] "Let's make the take it to linux cards hidden. Instead of auto triggering, t
+[2026-09-12 08:55:41] [/var/log] [Flags: 3/17] somehow I ended up in phase 2 before phase 1. That's fine, since we're going for a metroidv
+[2026-09-12 08:55:41] [/opt/backup/profiles] [Flags: 4/17] there was a lot of text that a beginner might not understand in the morgan note
+[2026-09-12 08:55:41] [/opt/backup/profiles] [Flags: 4/17] add a hint to check spelling
+[2026-09-12 08:55:41] [/opt/backup/profiles] [Flags: 4/17] make the new command yellow text
+[2026-09-12 08:55:41] [/var/log] [Flags: 4/17] we need to make it more obvious in the morgan notes that he "hid" files that can be accesse
+[2026-09-12 08:55:41] [/var/log] [Flags: 4/17] the examples give away the answers. we should have use an example document in the root (REA
+[2026-09-12 08:55:41] [/var/log] [Flags: 5/17] the todo marks that the player correctly used grep, but the player didn't run the commands
+[2026-09-12 08:55:41] [/var/log] [Flags: 5/17] phase 3 should start with a task to discover how to raise permissions (i.e. find the chmod
+[2026-09-12 08:55:41] [/etc/network] [Flags: 7/17] /etc/network/NOTE.txt needs a better descriptive filename
+[2026-09-12 08:55:41] [/etc/network] [Flags: 7/17] that's...a lot of information that I'm not sure what it means
+[2026-09-12 08:55:41] [/home/alice] [Flags: 7/17] aha! this was the document i needed
+[2026-09-12 08:55:41] [/etc/phoenix] [Flags: 9/17] there's no instructions on how to append
+[2026-09-12 08:56:33] [/home/alice] [Flags: 1/17] this file should only contain cd, pwd, decrypt, and sync commands
+[2026-09-12 08:56:33] [/var/log] [Flags: 3/17] There should be an "inventory" command that brings up a directory that shows manuals, readm
+[2026-09-12 08:56:33] [/var/log] [Flags: 3/17] the examples above give away the answer for alert 0x02
+[2026-09-12 08:56:33] [/var/log] [Flags: 3/17] there is still no reason to use grep
+[2026-09-12 08:56:33] [/home/alice] [Flags: 6/17] I'm lost
+[2026-09-12 08:56:33] [/home/alice] [Flags: 1/17] the following steps should be hidden until the step above it has been completed
+[2026-09-12 08:56:33] [/var/log] [Flags: 2/17] the error message shouldn't say to run the taskctl command, just point to the txt file
+[2026-09-12 08:56:33] [/home/alice] [Flags: 4/17] this sticky note is redundant and doesn't serve a purpose. It should instead give a clud
+[2026-09-12 08:56:33] [/var/log] [Flags: 4/17] lets remove the color coding
+[2026-09-12 08:56:33] [/var/log] [Flags: 4/17] there should be a file called .grep_juice that explains how to use grep to search for alert
+[2026-09-12 08:56:33] [/var/log] [Flags: 4/17] yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
+[2026-09-12 08:56:33] [/mnt/recovery/bin] [Flags: 5/17] Take it to linix card printed twice
+[2026-09-12 08:56:33] [/mnt/recovery/keys] [Flags: 6/17] is there a way to reword phase 4 so that it's not so technically worded? As i und
+[2026-09-12 08:56:33] [/home/alice] [Flags: 1/17] decrypt explaination for missing terminal commands should say "<command> currupted and n
+[2026-09-12 08:56:33] [/home/alice/diagnostics] [Flags: 2/17] "Let's make the take it to linux cards hidden. Instead of auto triggering, t
+[2026-09-12 08:56:33] [/var/log] [Flags: 3/17] somehow I ended up in phase 2 before phase 1. That's fine, since we're going for a metroidv
+[2026-09-12 08:56:33] [/opt/backup/profiles] [Flags: 4/17] there was a lot of text that a beginner might not understand in the morgan note
+[2026-09-12 08:56:33] [/opt/backup/profiles] [Flags: 4/17] add a hint to check spelling
+[2026-09-12 08:56:33] [/opt/backup/profiles] [Flags: 4/17] make the new command yellow text
+[2026-09-12 08:56:33] [/var/log] [Flags: 4/17] we need to make it more obvious in the morgan notes that he "hid" files that can be accesse
+[2026-09-12 08:56:33] [/var/log] [Flags: 4/17] the examples give away the answers. we should have use an example document in the root (REA
+[2026-09-12 08:56:33] [/var/log] [Flags: 5/17] the todo marks that the player correctly used grep, but the player didn't run the commands
+[2026-09-12 08:56:33] [/var/log] [Flags: 5/17] phase 3 should start with a task to discover how to raise permissions (i.e. find the chmod
+[2026-09-12 08:56:33] [/etc/network] [Flags: 7/17] /etc/network/NOTE.txt needs a better descriptive filename
+[2026-09-12 08:56:33] [/etc/network] [Flags: 7/17] that's...a lot of information that I'm not sure what it means
+[2026-09-12 08:56:33] [/home/alice] [Flags: 7/17] aha! this was the document i needed
+[2026-09-12 08:56:33] [/etc/phoenix] [Flags: 9/17] there's no instructions on how to append
+[2026-09-12 08:56:33] [/var/log] [Flags: 3/17] The daemon explaination doesn't seem to serve any purpose. Why do I care about these?
+[2026-09-12 08:58:56] [/home/alice] [Flags: 1/17] this file should only contain cd, pwd, decrypt, and sync commands
+[2026-09-12 08:58:56] [/var/log] [Flags: 3/17] There should be an "inventory" command that brings up a directory that shows manuals, readm
+[2026-09-12 08:58:56] [/var/log] [Flags: 3/17] the examples above give away the answer for alert 0x02
+[2026-09-12 08:58:56] [/var/log] [Flags: 3/17] there is still no reason to use grep
+[2026-09-12 08:58:56] [/home/alice] [Flags: 6/17] I'm lost
+[2026-09-12 08:58:56] [/home/alice] [Flags: 1/17] the following steps should be hidden until the step above it has been completed
+[2026-09-12 08:58:56] [/var/log] [Flags: 2/17] the error message shouldn't say to run the taskctl command, just point to the txt file
+[2026-09-12 08:58:56] [/home/alice] [Flags: 4/17] this sticky note is redundant and doesn't serve a purpose. It should instead give a clud
+[2026-09-12 08:58:56] [/var/log] [Flags: 4/17] lets remove the color coding
+[2026-09-12 08:58:56] [/var/log] [Flags: 4/17] there should be a file called .grep_juice that explains how to use grep to search for alert
+[2026-09-12 08:58:56] [/var/log] [Flags: 4/17] yhe grep manual should explain what -i, -v, -n, and -r mean as well as define PATTERNS
+[2026-09-12 08:58:56] [/mnt/recovery/bin] [Flags: 5/17] Take it to linix card printed twice
+[2026-09-12 08:58:56] [/mnt/recovery/keys] [Flags: 6/17] is there a way to reword phase 4 so that it's not so technically worded? As i und
+[2026-09-12 08:58:56] [/home/alice] [Flags: 1/17] decrypt explaination for missing terminal commands should say "<command> currupted and n
+[2026-09-12 08:58:56] [/home/alice/diagnostics] [Flags: 2/17] "Let's make the take it to linux cards hidden. Instead of auto triggering, t
+[2026-09-12 08:58:56] [/var/log] [Flags: 3/17] somehow I ended up in phase 2 before phase 1. That's fine, since we're going for a metroidv
+[2026-09-12 08:58:56] [/opt/backup/profiles] [Flags: 4/17] there was a lot of text that a beginner might not understand in the morgan note
+[2026-09-12 08:58:56] [/opt/backup/profiles] [Flags: 4/17] add a hint to check spelling
+[2026-09-12 08:58:56] [/opt/backup/profiles] [Flags: 4/17] make the new command yellow text
+[2026-09-12 08:58:56] [/var/log] [Flags: 4/17] we need to make it more obvious in the morgan notes that he "hid" files that can be accesse
+[2026-09-12 08:58:56] [/var/log] [Flags: 4/17] the examples give away the answers. we should have use an example document in the root (REA
+[2026-09-12 08:58:56] [/var/log] [Flags: 5/17] the todo marks that the player correctly used grep, but the player didn't run the commands
+[2026-09-12 08:58:56] [/var/log] [Flags: 5/17] phase 3 should start with a task to discover how to raise permissions (i.e. find the chmod
+[2026-09-12 08:58:56] [/etc/network] [Flags: 7/17] /etc/network/NOTE.txt needs a better descriptive filename
+[2026-09-12 08:58:56] [/etc/network] [Flags: 7/17] that's...a lot of information that I'm not sure what it means
+[2026-09-12 08:58:56] [/home/alice] [Flags: 7/17] aha! this was the document i needed
+[2026-09-12 08:58:56] [/etc/phoenix] [Flags: 9/17] there's no instructions on how to append
+[2026-09-12 08:58:56] [/var/log] [Flags: 3/17] The daemon explaination doesn't seem to serve any purpose. Why do I care about these?
