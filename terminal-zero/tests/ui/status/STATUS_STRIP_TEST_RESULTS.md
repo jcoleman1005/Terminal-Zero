@@ -3,7 +3,9 @@
 **Date:** 2026-09-14  
 **Agent:** C — Status Strip  
 **Branch:** `ui-status`  
-**Harness scene:** `scenes/ui/status/status_strip_test.tscn`
+**Harness scenes:**
+- `tests/ui/status/test_status_strip.tscn` (project test convention)
+- `scenes/ui/status/status_strip_test.tscn` (scene directory mirror)
 
 ---
 
@@ -89,6 +91,14 @@ no overlap; no dynamic font-size shrinking.
 
 ---
 
+## Godot Engine Execution & Verification
+
+Both test scenes were verified directly using Godot Engine (v4.7.2):
+- `tests/ui/status/test_status_strip.tscn`: launched cleanly, exit code 0, no errors/warnings.
+- `scenes/ui/status/status_strip_test.tscn`: launched cleanly, exit code 0, no errors/warnings.
+
+---
+
 ## Overall: PASS — all four acceptance criteria satisfied.
 
 ### Files delivered
@@ -99,7 +109,8 @@ no overlap; no dynamic font-size shrinking.
 | `scripts/ui/status/status_strip.gd` | Six-slot strip controller |
 | `scripts/ui/status/status_strip_test_scene.gd` | Test harness controller |
 | `scenes/ui/status/status_strip.tscn` | Reusable strip scene |
-| `scenes/ui/status/status_strip_test.tscn` | Standalone test scene |
+| `scenes/ui/status/status_strip_test.tscn` | Standalone test scene (scenes directory) |
+| `tests/ui/status/test_status_strip.tscn` | Standalone test scene (tests directory) |
 | `tests/ui/status/STATUS_STRIP_TEST_RESULTS.md` | This document |
 
 ### Contracts respected

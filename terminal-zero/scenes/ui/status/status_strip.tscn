@@ -1,21 +1,13 @@
-; status_strip.tscn
-; StatusStrip — reusable scene for the six-slot OSIRIS telemetry bar.
-;
-; Owned by: Status Strip Agent
-; This scene may be instanced by main_ui.tscn once integration merges.
-;
-; The root node carries status_strip.gd which builds all child slots
-; procedurally in _ready(), so no sub-nodes are declared here.
-
 [gd_scene load_steps=2 format=3 uid="uid://status_strip"]
 
 [ext_resource type="Script" path="res://scripts/ui/status/status_strip.gd" id="1_strip"]
 
 [node name="StatusStrip" type="PanelContainer"]
-anchor_right = 1.0
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 3
 anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 0.0
-custom_minimum_size = Vector2(0, 24)
+grow_horizontal = 2
 size_flags_horizontal = 3
 script = ExtResource("1_strip")
