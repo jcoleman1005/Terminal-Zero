@@ -4,7 +4,7 @@ from typing import List
 from terminal_zero.core.events import Event
 from terminal_zero.core.state import CommandContext, CommandResult
 from terminal_zero.core.persistence import save_game_state
-from terminal_zero.content.narrative import get_primary_goal, get_todo_content, get_victory_screen
+from terminal_zero.content.narrative import get_primary_goal, get_todo_content, get_victory_screen, get_boot_screen
 from terminal_zero.content.man_pages import MAN_PAGES
 from terminal_zero.content.initial_vfs import build_default_vfs
 
@@ -261,7 +261,6 @@ def cmd_reboot(ctx: CommandContext, args: List[str]) -> CommandResult:
     ctx.state.listening_sockets = list(fresh_state.listening_sockets)
     ctx.state.last_stderr = ""
 
-    from terminal_zero.engine.repl import get_boot_screen
     reboot_banner = (
         "\nBroadcast message from root@osiris (tty1) (system reboot):\n\n"
         "The system is going down for reboot NOW!\n"

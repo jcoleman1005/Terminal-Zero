@@ -1,0 +1,63 @@
+========================================================================================
+[ACT 1: THE LOCAL CONSOLE ONBOARDING]
+========================================================================================
+ [Boot Alert] ──► Inspect /home/alice ──► Read BOOT_FAIL.log
+                        │
+                        ▼
+ [M0: Line Discipline] ──► stty sane
+                        │   └─► BUFFER_REPAIRED = True | Unlocks Up/Down Arrow History
+                        ▼
+ [M1: Shell Profile]   ──► cp /opt/backup/profiles/alice.bashrc ~/.bashrc
+                            └─► BASHRC_RESTORED = True | Unlocks Tab Autocompletion
+                                    │
+                                    ▼
+========================================================================================
+[THE FORENSIC CHOKEPOINT: /var/log/auth.log]
+========================================================================================
+ [Screen Flood]  ──► cat auth.log (200+ lines scroll off-screen)
+                        │
+                        ▼
+ [The Runbook]   ──► head -n 6 auth.log (Reveals grep pattern syntax)
+                        │
+                        ▼
+ [Stream Filter] ──► grep -i "ALERT" auth.log (Collapses noise to 3 vectors)
+                        │
+                        ▼
+            {LOGS_AUDITED = True} -> Unlocks Spoke Navigation & cluster_probe Port
+                        │
+                        ▼
+========================================================================================
+[ACT 2: THE THREE DECOUPLED SPOKES (PLAYABLE IN ANY ORDER)]
+========================================================================================
+         ┌──────────────────────────────┼──────────────────────────────┐
+         ▼                              ▼                              ▼
+  [SPOKE A: COMPUTE]            [SPOKE B: STORAGE]            [SPOKE C: NETWORK]
+   Location: /tmp                Location: /mnt/recovery       Location: /etc/network
+         │                              │                              │
+   1. ps aux                     1. find /mnt/recovery -name   1. cat /etc/network/interfaces
+   2. kill 102 (task_audit)         "*.sh" -o -name "*.key"    2. ip addr (State: DOWN)
+      └─► Releases audit report  2. chmod +x recovery.sh       3. ip link set osiris0 up
+   3. kill 104 (sys_miner)       3. ./recovery.sh              4. ping -c 4 10.0.42.1
+      └─► Refused: trapped 15       └─► Arms Ctrl+C (SIGINT)      └─► 4 packets, 0% loss
+   4. kill -9 104 (SIGKILL)      4. cat phoenix.key                    │
+      └─► CPU throttles down            │                              │
+         │                              │                              │
+         ▼                              ▼                              ▼
+   CPU_NORMAL = True             KEY_ACQUIRED = True            NET_ONLINE = True
+   (PIDs 102 & 104 cleared)      (ctrl_c_ok + key verified)     (Link UP + Gateway ping)
+         │                              │                              │
+         └──────────────────────────────┼──────────────────────────────┘
+                                        │
+                                        ▼
+========================================================================================
+[THE CONVERGENCE GATE: /opt/phoenix/bin/cluster_probe]
+========================================================================================
+   • Precondition: LOGS_AUDITED == True (Rejects premature oracle execution)
+   • Evaluates live states:
+       [1] COMPUTE CORES    : [ SUCCESS ] (PIDs 102 and 104 dead; CPU at 0.1%)
+       [2] STORAGE / IDENT  : [ SUCCESS ] (ctrl_c_ok == True AND phoenix.key present)
+       [3] NETWORK ADAPTER  : [ SUCCESS ] (osiris0 UP AND NETWORK_ONLINE == True)
+
+   If any check fails: Prints diagnostic state advisory for that specific spoke.
+   If all 3 pass     : Unlocks victory broadcast and displays final educational debrief.
+========================================================================================

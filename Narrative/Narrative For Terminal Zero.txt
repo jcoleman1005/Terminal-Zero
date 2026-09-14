@@ -1,0 +1,22 @@
+Narrative For Terminal Zero
+
+Maya:
+Voice: Panicked, overwhelmed, Resentful 
+Notes should follow her journey of trying to figure out how to navigate and patch together the personal machine of OSIRIS.
+Refers to older users, who’s notes the player will later use to disentangle the system and learn the lore
+Maya_00
+	“ God this sucks. They threw me on this thing when Javi kicked the bucket, just because I knew how to turn it on. Javi never got around to training anybody how to do this. Anyway I found a note taped to the terminal that says if I type ‘cd’ followed by the name of a ‘directory’ which I guess is a different part of the system, I can basically move there. I’ve tried hopping to different places in the system, but i keep getting errors. At least i know that cd ~ will bring me back here. ’ ‘’’cd <filename>
+
+Maya_01
+	“Ok i figured out how to enter a directory! Turns out you have to type EXACTLY what it says, weird ‘/’s and ‘.’ included. Oh yeah if I type ls -a, a whole bunch of new files and directories open up! Javi placed some of his more…personal notes in those dot folders. I read one, but I wasn’t interested in learning about his weird rash.” 
+
+Maya_02
+	“Oh yeah! Just made my own secret file! Not that it matters. Turns out that when Javi wrote “touching” in one of his notes, he was actually talking about the command that makes blank files. (touch <filename>) I definitely thought he was talking about something else. I’m going to go back and write some notes for myself in the main folder so I don’t forget how to move and stuff.” 
+
+Maya_03
+	“Ok now I’m starting to get a little lost. Luckily my finger slipped and I accidentally typed cd . . and found that I could go backwards. 
+
+Maya_04
+	“Javi kept writing about the up and down arrows and the tab key and how they “saved my fingers from having to type more than I need to”. He was always kind of lazy. 
+
+But so am I. So I tried to use the keys and I kept getting errors. He wrote that he lost his $PATH (he spelled it just like that) and had to restore it from a back up. He said it was in the bin, but I checked the trash in the room and didn’t find anything. 
