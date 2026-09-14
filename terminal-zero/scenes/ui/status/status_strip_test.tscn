@@ -1,0 +1,22 @@
+; status_strip_test.tscn
+; Standalone acceptance-test scene for the Status Strip (Agent C, Milestone 1).
+;
+; Owned by: Status Strip Agent
+; Run with: Scene > Run Current Scene (F6) in the Godot editor.
+; Do NOT set as the main scene — this is a harness only.
+;
+; The root script (status_strip_test_scene.gd) builds all nodes in _ready()
+; and injects five fake-data presets that cycle automatically.
+
+[gd_scene load_steps=2 format=3 uid="uid://status_strip_test"]
+
+[ext_resource type="Script" path="res://scripts/ui/status/status_strip_test_scene.gd" id="1_test"]
+
+[node name="StatusStripTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
