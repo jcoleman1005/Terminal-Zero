@@ -185,6 +185,7 @@ func _build_ui() -> void:
 	_overlay_close_btn = Button.new()
 	_overlay_close_btn.text = "[X]"
 	_overlay_close_btn.flat = true
+	_overlay_close_btn.focus_mode = Control.FOCUS_NONE
 	_overlay_close_btn.add_theme_color_override("font_color", COLOR_TEXT_DIM)
 	_overlay_close_btn.add_theme_font_override("font", _mono_font)
 	_overlay_close_btn.pressed.connect(_on_overlay_close_pressed)
@@ -192,6 +193,8 @@ func _build_ui() -> void:
 	header_hbox.add_child(_overlay_close_btn)
 
 	# Connect mouse-wheel scrolling.
+	_scroll_container.focus_mode = Control.FOCUS_NONE
+	_scroll_container.get_v_scroll_bar().focus_mode = Control.FOCUS_NONE
 	_scroll_container.get_v_scroll_bar().scrolling.connect(_on_scrollbar_scrolled)
 
 
@@ -199,6 +202,7 @@ func _make_tab_button(slot_index: int) -> Button:
 	var btn := Button.new()
 	btn.text = "──────"
 	btn.flat = true
+	btn.focus_mode = Control.FOCUS_NONE
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.add_theme_font_override("font", _mono_font)
@@ -213,6 +217,7 @@ func _make_close_button() -> Button:
 	var btn := Button.new()
 	btn.text = " ✕ "
 	btn.flat = true
+	btn.focus_mode = Control.FOCUS_NONE
 	btn.add_theme_color_override("font_color", COLOR_TEXT_DIM)
 	btn.add_theme_font_override("font", _mono_font)
 	btn.pressed.connect(func(): close_active_tab())
@@ -294,6 +299,7 @@ func close_active_tab() -> void:
 	elif _active_index >= _tabs.size():
 		_active_index = _tabs.size() - 1
 	_refresh_display()
+	focus_return_requested.emit()
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
@@ -489,6 +495,11 @@ func handle_companion_input(event: InputEvent) -> bool:
 		return true
 
 	return false
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if handle_companion_input(event):
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
