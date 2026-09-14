@@ -153,7 +153,8 @@ func _run_all_tests() -> void:
 	_test_b2_three_tabs()
 	_test_b3_eviction()
 	_test_b4_existing_document()
-	_test_b5_keyboard_capture()
+	_test_b5_keyboard_controls()
+	_test_b6_responsive_and_capabilities()
 	_print_summary()
 
 
@@ -171,6 +172,14 @@ func _test_b1_open_guide() -> void:
 	_assert(pass_one_tab, "one tab open")
 	_assert(pass_content, "document content readable")
 	_assert(pass_active,  "correct document is active")
+
+	# Test independent scroll position
+	_workspace.set_scroll_position(100.0)
+	_workspace.open_document(_doc_b)
+	_workspace.set_scroll_position(20.0)
+	_workspace.open_document(_guide_doc)
+	var scroll_restored := is_equal_approx(_workspace.get_scroll_position(), 100.0)
+	_assert(scroll_restored, "independent scroll position preserved across tab switches")
 
 
 # ── B2 — Three tabs ───────────────────────────────────────────────────────────
@@ -235,34 +244,95 @@ func _test_b4_existing_document() -> void:
 	_assert(_workspace.get_active_document_id() == "doc_b", "B became active")
 
 
-# ── B5 — Keyboard capture ────────────────────────────────────────────────────
+# ── B5 — Keyboard controls ───────────────────────────────────────────────────
 
-func _test_b5_keyboard_capture() -> void:
-	_log("\n[b]B5 — Keyboard capture[/b]")
-	# We cannot send real InputEvents in a non-headless unit test without a
-	# running viewport loop, so we verify the structural guarantee:
-	# - _unhandled_input returns false for plain (non-Alt) key events.
+func _test_b5_keyboard_controls() -> void:
+	_log("\n[b]B5 — Keyboard controls[/b]")
 	_workspace_reset()
 	_workspace.open_document(_doc_a)
+	_workspace.open_document(_doc_b)
+	_workspace.open_document(_doc_c)
 
+	# 1. Plain typing must not be consumed
 	var plain_key := InputEventKey.new()
 	plain_key.keycode = KEY_A
 	plain_key.pressed = true
 	plain_key.alt_pressed = false
+	var consumed_plain := _workspace.handle_companion_input(plain_key)
+	_assert(not consumed_plain, "plain typing (no Alt) is NOT consumed by companion")
 
-	var consumed_plain := _workspace._unhandled_input(plain_key)
-	_assert(not consumed_plain, "plain typing is NOT consumed by companion")
+	# 2. Ctrl-modified key must not be consumed by companion
+	var ctrl_key := InputEventKey.new()
+	ctrl_key.keycode = KEY_C
+	ctrl_key.pressed = true
+	ctrl_key.alt_pressed = true
+	ctrl_key.ctrl_pressed = true
+	var consumed_ctrl := _workspace.handle_companion_input(ctrl_key)
+	_assert(not consumed_ctrl, "Ctrl+Alt key is NOT consumed by companion")
 
-	var alt_key := InputEventKey.new()
-	# Alt+W without a running action map will not match the action string, but
-	# we verify that the function at least does not swallow non-Alt events.
-	alt_key.keycode = KEY_A
-	alt_key.pressed = true
-	alt_key.alt_pressed = false
-	var consumed_plain2 := _workspace._unhandled_input(alt_key)
-	_assert(not consumed_plain2, "non-Alt key with same code not consumed")
+	# 3. Alt+1 switches to Tab 1 (doc_a)
+	var alt1 := InputEventKey.new()
+	alt1.keycode = KEY_1
+	alt1.pressed = true
+	alt1.alt_pressed = true
+	var handled_alt1 := _workspace.handle_companion_input(alt1)
+	_assert(handled_alt1, "Alt+1 was handled")
+	_assert(_workspace.get_active_document_id() == "doc_a", "Alt+1 activated tab 1 (doc_a)")
 
-	_log("  [color=gray](Full Alt-action tests require running in editor with input map)[/color]")
+	# 4. Alt+2 switches to Tab 2 (doc_b)
+	var alt2 := InputEventKey.new()
+	alt2.keycode = KEY_2
+	alt2.pressed = true
+	alt2.alt_pressed = true
+	var handled_alt2 := _workspace.handle_companion_input(alt2)
+	_assert(handled_alt2, "Alt+2 was handled")
+	_assert(_workspace.get_active_document_id() == "doc_b", "Alt+2 activated tab 2 (doc_b)")
+
+	# 5. Alt+Down scrolls down
+	var initial_scroll := _workspace.get_scroll_position()
+	var alt_down := InputEventKey.new()
+	alt_down.keycode = KEY_DOWN
+	alt_down.pressed = true
+	alt_down.alt_pressed = true
+	var handled_down := _workspace.handle_companion_input(alt_down)
+	_assert(handled_down, "Alt+Down was handled")
+
+	# 6. Alt+Up scrolls up
+	var alt_up := InputEventKey.new()
+	alt_up.keycode = KEY_UP
+	alt_up.pressed = true
+	alt_up.alt_pressed = true
+	var handled_up := _workspace.handle_companion_input(alt_up)
+	_assert(handled_up, "Alt+Up was handled")
+
+	# 7. Alt+W closes active tab
+	var alt_w := InputEventKey.new()
+	alt_w.keycode = KEY_W
+	alt_w.pressed = true
+	alt_w.alt_pressed = true
+	var handled_w := _workspace.handle_companion_input(alt_w)
+	_assert(handled_w, "Alt+W was handled")
+	_assert(_workspace.get_tab_count() == 2, "active tab closed (2 tabs remain)")
+
+
+# ── B6 — Responsive modes & Capabilities ──────────────────────────────────────
+
+func _test_b6_responsive_and_capabilities() -> void:
+	_log("\n[b]B6 — Responsive modes & Capabilities[/b]")
+	_workspace.set_layout_mode(CompanionWorkspace.MODE_OVERLAY)
+	_assert(_workspace.get_layout_mode() == CompanionWorkspace.MODE_OVERLAY, "OVERLAY mode set")
+
+	_workspace.set_layout_mode(CompanionWorkspace.MODE_SIDE_PANE)
+	_assert(_workspace.get_layout_mode() == CompanionWorkspace.MODE_SIDE_PANE, "SIDE_PANE mode set")
+
+	var caps := ShellCapabilities.create_default()
+	caps.companion_workspace = false
+	_workspace.apply_capabilities(caps)
+	_assert(not _workspace.visible, "workspace hidden when companion_workspace capability is false")
+
+	caps.companion_workspace = true
+	_workspace.apply_capabilities(caps)
+	_assert(_workspace.visible, "workspace visible when companion_workspace capability is true")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -279,6 +349,7 @@ func _assert(condition: bool, description: String) -> void:
 	var line   := "  [color=%s]%s[/color] %s" % [color, marker, description]
 	_log(line)
 	_results.append("%s %s" % [marker, description])
+	print("  %s %s" % [marker, description])
 	if not condition:
 		push_error("Companion test FAILED: %s" % description)
 
@@ -292,4 +363,4 @@ func _print_summary() -> void:
 	var total  := _results.size()
 	var color  := "green" if passed == total else "yellow"
 	_log("\n━━━━ Summary: [color=%s]%d / %d passed[/color] ━━━━" % [color, passed, total])
-	print("=== CompanionWorkspace Milestone 1: %d / %d tests passed ===" % [passed, total])
+	print("\n=== CompanionWorkspace Milestone 1: %d / %d tests passed ===" % [passed, total])

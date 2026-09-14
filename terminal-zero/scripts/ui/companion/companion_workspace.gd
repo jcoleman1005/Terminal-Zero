@@ -301,12 +301,13 @@ func close_active_tab() -> void:
 func _activate_tab(index: int) -> void:
 	# Save current scroll position before switching.
 	if _active_index >= 0 and _active_index < _tabs.size():
-		_tabs[_active_index].scroll_px = _scroll_container.get_v_scroll_bar().value
+		if _scroll_container != null and is_instance_valid(_scroll_container):
+			var bar := _scroll_container.get_v_scroll_bar()
+			if bar.max_value > bar.min_value:
+				_tabs[_active_index].scroll_px = bar.value
 	_active_index = index
 	_refresh_display()
-	# Restore scroll for newly active tab.
-	await get_tree().process_frame
-	if _active_index >= 0 and _active_index < _tabs.size():
+	if _scroll_container != null and is_instance_valid(_scroll_container) and _active_index >= 0 and _active_index < _tabs.size():
 		_scroll_container.get_v_scroll_bar().value = _tabs[_active_index].scroll_px
 
 
@@ -381,84 +382,118 @@ func _truncate(s: String, max_len: int) -> String:
 ## Scroll the active document by pixel_delta (positive = down).
 ## Called by Alt+Up/Down handlers; does NOT transfer keyboard focus.
 func _scroll_by(pixel_delta: float) -> void:
+	if _active_index >= 0 and _active_index < _tabs.size():
+		_tabs[_active_index].scroll_px = maxf(0.0, _tabs[_active_index].scroll_px + pixel_delta)
+	if _scroll_container == null or not is_instance_valid(_scroll_container):
+		return
 	var bar := _scroll_container.get_v_scroll_bar()
 	bar.value = clampf(bar.value + pixel_delta, bar.min_value, bar.max_value)
 
 
 func _scroll_page(direction: int) -> void:
+	if _scroll_container == null or not is_instance_valid(_scroll_container):
+		return
 	var page_px := _scroll_container.size.y * SCROLL_PAGE_FACTOR
 	_scroll_by(direction * page_px)
 
 
 func _scroll_to_start() -> void:
-	_scroll_container.get_v_scroll_bar().value = 0.0
+	if _active_index >= 0 and _active_index < _tabs.size():
+		_tabs[_active_index].scroll_px = 0.0
+	if _scroll_container == null or not is_instance_valid(_scroll_container):
+		return
+	var bar := _scroll_container.get_v_scroll_bar()
+	bar.value = bar.min_value
 
 
 func _scroll_to_end() -> void:
+	if _scroll_container == null or not is_instance_valid(_scroll_container):
+		return
 	var bar := _scroll_container.get_v_scroll_bar()
 	bar.value = bar.max_value
+	if _active_index >= 0 and _active_index < _tabs.size():
+		_tabs[_active_index].scroll_px = bar.value
+
+
+## Get current scroll position in pixels.
+func get_scroll_position() -> float:
+	if _active_index >= 0 and _active_index < _tabs.size():
+		return _tabs[_active_index].scroll_px
+	if _scroll_container != null and is_instance_valid(_scroll_container):
+		return _scroll_container.get_v_scroll_bar().value
+	return 0.0
+
+
+## Set current scroll position in pixels.
+func set_scroll_position(pos: float) -> void:
+	if _active_index >= 0 and _active_index < _tabs.size():
+		_tabs[_active_index].scroll_px = pos
+	if _scroll_container != null and is_instance_valid(_scroll_container):
+		var bar := _scroll_container.get_v_scroll_bar()
+		bar.value = pos
 
 
 # ── Input handling ────────────────────────────────────────────────────────────
 
 ## Handle Alt-modified shortcuts without stealing terminal text-entry focus.
-## Return true only when the event was consumed.
-func _unhandled_input(event: InputEvent) -> bool:
-	# Only process keyboard events with Alt held.
-	if not (event is InputEventKey) or not event.pressed:
+## Returns true only when the event was consumed.
+func handle_companion_input(event: InputEvent) -> bool:
+	if not visible or not _companion_enabled:
+		return false
+	if not (event is InputEventKey):
 		return false
 	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.is_echo():
+		return false
 	if not key_event.alt_pressed:
 		return false
-	# Do not intercept if Ctrl or Shift is also held (allow system shortcuts).
-	if key_event.ctrl_pressed or key_event.shift_pressed:
+	if key_event.ctrl_pressed or key_event.shift_pressed or key_event.meta_pressed:
 		return false
 
-	if Input.is_action_just_pressed(&"ui_companion_scroll_up"):
+	var kc := key_event.keycode
+	if kc == KEY_NONE:
+		kc = key_event.physical_keycode
+
+	if event.is_action_pressed(&"ui_companion_scroll_up") or kc == KEY_UP:
 		_scroll_by(-SCROLL_LINE_PX)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_scroll_down"):
+	if event.is_action_pressed(&"ui_companion_scroll_down") or kc == KEY_DOWN:
 		_scroll_by(SCROLL_LINE_PX)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_page_up"):
+	if event.is_action_pressed(&"ui_companion_page_up") or kc == KEY_PAGEUP:
 		_scroll_page(-1)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_page_down"):
+	if event.is_action_pressed(&"ui_companion_page_down") or kc == KEY_PAGEDOWN:
 		_scroll_page(1)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_doc_start"):
+	if event.is_action_pressed(&"ui_companion_doc_start") or kc == KEY_HOME:
 		_scroll_to_start()
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_doc_end"):
+	if event.is_action_pressed(&"ui_companion_doc_end") or kc == KEY_END:
 		_scroll_to_end()
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_tab_1"):
+	if event.is_action_pressed(&"ui_companion_tab_1") or kc == KEY_1:
 		if _tabs.size() >= 1:
 			_activate_tab(0)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_tab_2"):
+	if event.is_action_pressed(&"ui_companion_tab_2") or kc == KEY_2:
 		if _tabs.size() >= 2:
 			_activate_tab(1)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_tab_3"):
+	if event.is_action_pressed(&"ui_companion_tab_3") or kc == KEY_3:
 		if _tabs.size() >= 3:
 			_activate_tab(2)
-		get_viewport().set_input_as_handled()
 		return true
-	if Input.is_action_just_pressed(&"ui_companion_close_tab"):
+	if event.is_action_pressed(&"ui_companion_close_tab") or kc == KEY_W:
 		close_active_tab()
-		get_viewport().set_input_as_handled()
 		return true
 
 	return false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if handle_companion_input(event):
+		get_viewport().set_input_as_handled()
 
 
 # ── Mouse wheel on the scroll container ──────────────────────────────────────
