@@ -1,0 +1,46 @@
+# ==============================================================================
+# TERMINAL ZERO — Git Ignore Rules
+# ==============================================================================
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Python virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python packaging and distributions
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Game runtime and save artifacts
+savegame.json
+
+# Godot engine artifacts (matches terminal-zero/.gitignore)
+.godot/
+/android/
+
+# Operating system and editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Ensure Godot UID files are always tracked
+!*.uid

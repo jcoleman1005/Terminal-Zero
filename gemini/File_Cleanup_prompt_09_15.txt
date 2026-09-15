@@ -1,0 +1,75 @@
+You are performing a repository hygiene cleanup on TERMINAL ZERO before the next Godot integration milestone.
+
+The project is currently functional. TerminalView, CompanionWorkspace, and StatusStrip have been independently implemented, merged into `Godot_migration`, and manually tested successfully.
+
+Your goal is to make the repository cleaner and safer to continue developing WITHOUT reorganizing the working architecture.
+
+## Priorities
+
+1. Audit the repository structure and Git state.
+2. Identify generated/runtime files that should not be tracked, especially:
+
+   * `__pycache__/`
+   * `*.pyc`
+   * Godot `.godot/`
+   * runtime save/test artifacts where appropriate
+3. Improve `.gitignore` appropriately.
+4. Identify generated files that are already tracked and therefore continue appearing despite `.gitignore`.
+5. Identify obvious duplicate, temporary, obsolete, or misplaced development artifacts.
+6. Inspect the current `Terminal-Zero/terminal-zero/` directory arrangement and explain why it exists. Do NOT move or rename it unless it is unquestionably accidental and doing so cannot break paths.
+7. Inspect the repository's UI-agent documentation/bundle files and recommend whether they should remain where they are, move under `docs/`, or be removed as redundant. Do not make a large documentation reorganization without justification.
+8. Check for other obvious repository hygiene problems.
+9. Preserve Godot `.uid` files that should be version-controlled.
+10. Preserve all source code, tests, scenes, contracts, documentation, and intentional project content.
+
+## Hard constraints
+
+DO NOT:
+
+* redesign the project architecture
+* reorganize source directories for aesthetics
+* modify application behavior
+* rewrite working code
+* change shared UI contracts
+* modify TerminalView, CompanionWorkspace, or StatusStrip behavior
+* delete anything whose purpose is uncertain
+* perform broad refactors
+* switch branches
+* merge/rebase/reset
+* touch other worktrees
+
+If you are uncertain whether something is safe to remove or change, leave it alone and report it.
+
+## Workflow
+
+First audit the repository.
+
+Then classify findings as:
+
+* SAFE TO CLEAN
+* SHOULD KEEP
+* NEEDS HUMAN DECISION
+
+Perform only SAFE TO CLEAN changes.
+
+After cleanup:
+
+* verify the Godot project still opens/parses
+* run available automated/headless checks where appropriate
+* verify existing standalone UI test scenes have not been broken
+* inspect `git diff`
+* ensure no unrelated source behavior changed
+
+Commit the cleanup to the currently checked-out `Godot_migration` branch with a clear repository-hygiene commit message.
+
+At completion, report:
+
+1. What you found
+2. What you changed
+3. What you deliberately left alone
+4. Anything requiring my decision
+5. Files changed
+6. Tests/checks performed and results
+7. Final commit hash
+
+This is a hygiene pass, not a refactor. Prefer a slightly messy working repository over risking functional code.
