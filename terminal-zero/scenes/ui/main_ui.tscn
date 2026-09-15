@@ -1,0 +1,69 @@
+[gd_scene load_steps=7 format=3 uid="uid://main_ui"]
+
+[ext_resource type="Script" path="res://scripts/ui/main_ui.gd" id="1_mainui"]
+[ext_resource type="Script" path="res://scripts/ui/contracts/terminal_backend_adapter.gd" id="2_adapter"]
+
+; ── Placeholder scenes ────────────────────────────────────────────────────────
+; These node types will be replaced with instanced PackedScenes once each
+; parallel agent delivers their scene file.
+;
+; Terminal Agent  → scenes/ui/terminal/terminal_view.tscn
+; Companion Agent → scenes/ui/companion/companion_workspace.tscn
+; Status Agent    → scenes/ui/status/status_strip.tscn
+; Effects Agent   → scenes/ui/effects/effects_layer.tscn
+
+[node name="MainUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mainui")
+
+[node name="BackendAdapter" type="Node" parent="."]
+script = ExtResource("2_adapter")
+
+[node name="RootVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Workspace" type="Control" parent="RootVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="WorkspaceLayout" type="HSplitContainer" parent="RootVBox/Workspace"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+; ── Placeholder: replaced by terminal_view.tscn (Terminal Agent) ──────────────
+[node name="TerminalView" type="Control" parent="RootVBox/Workspace/WorkspaceLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+; ── Placeholder: replaced by companion_workspace.tscn (Companion Agent) ───────
+[node name="CompanionWorkspace" type="Control" parent="RootVBox/Workspace/WorkspaceLayout"]
+layout_mode = 2
+size_flags_horizontal = 1
+visible = false
+
+; ── Placeholder: replaced by effects_layer.tscn (Effects Agent) ──────────────
+[node name="EffectsLayer" type="Control" parent="RootVBox/Workspace"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+; ── Placeholder: replaced by status_strip.tscn (Status Agent) ────────────────
+[node name="StatusStrip" type="Control" parent="RootVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 24)

@@ -1,0 +1,276 @@
+┌─ ~/Documents/Terminal-Zero on  main [✘!]
+└─> python terminal_zero.py
+================================================================================
+OSIRIS WORKSTATION OS v2.4 (x86_64-osiris-linux-gnu)
+================================================================================
+[ 0.001 ] Kernel initialized (Linux 5.15.0-osiris)
+[ 0.042 ] Checking hardware ring buffers........ [DEGRADED] -> Up/Down history recall offline
+[ 0.088 ] Loading shell user environment........ [ FAILED ] -> Shell profile missing (~/.bashrc)
+[ 0.120 ] Security subsystem audit.............. [ ALERT  ] -> Intrusion traces detected in /var/log/
+[ 0.195 ] Process supervisor integrity.......... [CRITICAL] -> Rogue miner active @ 98% CPU (/tmp/sys_miner)
+[ 0.240 ] Network link status (osiris0)......... [  DOWN  ] -> Network interface osiris0 offline
+[ 0.310 ] Cluster restoration gateway........... [INACTIVE] -> Cluster restoration gateway offline
+================================================================================
+*** SYSTEM IN EMERGENCY RECOVERY MODE ***
+Operator: alice (tty1) | Host: osiris | Location: /home/alice
+
+ONBOARDING ACTIONS:
+• Type 'ls' to look around your current directory.
+• Type 'cat <filename>' (e.g. 'cat README.txt') to read file contents.
+• Type 'exit' to disconnect from session.
+================================================================================
+
+alice@osiris:/home/alice$ ls
+BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cat TODO.txt
+================================================================================
+OSIRIS WORKSTATION // INCIDENT RECOVERY CHECKLIST
+================================================================================
+[ ] PHASE 0: COLD BOOT & MEMORY RECALL
+• [ ] Inspect diagnostics/BOOT_FAIL.log for ring buffer fault
+• [ ] Execute 'repair_buffer' to restore command history (Up/Down keys)
+
+[ ] PHASE 1: USER SHELL ENVIRONMENT
+• [ ] ??? [Classified Directives]
+
+[ ] PHASE 2: INCIDENT LOG FORENSICS
+• [ ] ??? [Classified Directives]
+
+[ ] PHASE 3: RECOVERY PARTITION & RECURSIVE SEARCH
+• [ ] ??? [Classified Directives]
+
+[ ] PHASE 4: PROCESS SUPERVISOR & ROGUE MINER
+• [ ] ??? [Classified Directives]
+
+[ ] PHASE 5: NETWORK HARDWARE & GATEWAY UPLINK
+• [ ] ??? [Classified Directives]
+
+[ ] PHASE 6: CLUSTER SUPERVISOR DAEMON
+• [ ] ??? [Classified Directives]
+
+================================================================================
+[STATUS]: Type 'todo' from any folder to review active workstation objectives.
+Tip: Run 'taskctl link' to enable global shortcuts, or 'manuals' for documentation.
+================================================================================
+alice@osiris:/home/alice$ ls
+BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cat BOOT_FAIL.log
+[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.
+[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.
+[03:41:02.118] [DRIVER STATE] Line discipline running in raw unbuffered mode (-icanon echo).
+[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.
+[03:41:02.125] [ACTION REQUIRED] Reset line discipline to sane defaults by running: 'stty sane'
+alice@osiris:/home/alice$ #is this too much text?
+alice@osiris:/home/alice$ stty sane
+
+[!] ABILITY UNLOCKED: Command Memory Recall (Use UP/DOWN arrows to navigate history)
+[+] Linux Field Guide entry registered: 'Terminal Line Disciplines & Input Buffering'
+(Type 'fieldguide' or 'cards' to review your real-world Linux debriefs)
+[stty]: Line discipline reset to sane defaults. Cooked mode and input buffer active.
+alice@osiris:/home/alice$ ls
+BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cat MORGAN_NOTE.txt
+// STICKY NOTE TAPED TO MONITOR FRAME
+Alice—
+
+The attacker didn't just break the drivers; they tried to bury their tracks.
+
+Once you fix the terminal buffer ('stty sane'), remember that Unix hides system
+profiles and recovery caches behind a dot prefix — files and folders whose
+names start with a dot.
+
+Plain 'ls' won't show them. You need to pass the '-a' (all) flag:
+ls -a
+
+First, delete the corrupted configuration artifact:
+rm /home/alice/.bashrc.corrupt
+
+Then copy the clean template from the system backup directory:
+cp /opt/backup/profiles/alice.bashrc /home/alice/.bashrc
+
+Tab autocompletion is dead until you restore your profile.
+
+The previous operator left some personal logs in a hidden directory here.
+Once you know 'ls -a', you'll find them.
+
+— Morgan
+alice@osiris:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .bashrc.corrupt  .bashrc.default  .maya_notes  BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cd .maya_notes
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive
+alice@osiris:/home/alice/.maya_notes$ cat Maya_00.txt
+// ============================================================================
+// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]
+// TIMESTAMP: 2042-07-14 // FILE: /home/alice/.maya_notes/Maya_00.txt
+// ============================================================================
+
+God this sucks. They threw me on this thing when Javi kicked the bucket, just
+because I knew how to turn it on. Javi never got around to training anybody
+how to do this.
+
+Anyway I found a sticky note taped to the terminal that says if I type 'cd'
+followed by the name of a directory — which is apparently a different "room"
+in the system — I can move there. I've been trying to hop around but I keep
+getting errors saying things like "no such file or directory."
+
+At least I figured out that typing:
+cd ~
+...always drops me back in my home folder. I'll take it.
+
+— Maya
+// ============================================================================
+alice@osiris:/home/alice/.maya_notes$ #this should be surfaced on the top so that the player learns how to use cd
+alice@osiris:/home/alice/.maya_notes$ cd ..
+alice@osiris:/home/alice$ ls -a
+.  ..  .bash_history  .bashrc  .bashrc.corrupt  .bashrc.default  .maya_notes  BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cd .maya_notes
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive
+alice@osiris:/home/alice/.maya_notes$ cat Maya_01.txt
+// ============================================================================
+// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]
+// TIMESTAMP: 2042-07-15 // FILE: /home/alice/.maya_notes/Maya_01.txt
+// ============================================================================
+
+Ok I figured out why cd kept failing! You have to type the directory name
+EXACTLY as it appears — weird forward-slashes and dots included. The system
+is very literal.
+
+Oh yeah — I also found out that if I type 'ls -a', a whole extra bunch of
+files and folders appear. Javi apparently stashed some of his more... personal
+notes in those dot-folders. I read one. I was not interested in learning about
+his weird rash.
+
+— Maya
+// ============================================================================
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive
+alice@osiris:/home/alice/.maya_notes$ cat Maya_02.txt
+// ============================================================================
+// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]
+// TIMESTAMP: 2042-07-17 // FILE: /home/alice/.maya_notes/Maya_02.txt
+// ============================================================================
+
+Oh yeah! Just made my own secret file!
+
+Turns out when Javi wrote "touching" in one of his notes, he was literally
+talking about the command that creates a new empty file:
+touch <filename>
+
+I definitely thought he meant something else. Anyway. I'm going to go back
+and leave some notes for myself in my home folder so I don't forget how to
+move around.
+
+— Maya
+// ============================================================================
+alice@osiris:/home/alice/.maya_notes$ touch test.txt
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive  test.txt
+alice@osiris:/home/alice/.maya_notes$ cat test.txt
+alice@osiris:/home/alice/.maya_notes$ #note in my mind, the maya notes should appear as the player explores the different directories.
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive  test.txt
+alice@osiris:/home/alice/.maya_notes$ cd archive
+alice@osiris:/home/alice/.maya_notes/archive$ ls
+Maya_03.txt
+alice@osiris:/home/alice/.maya_notes/archive$ cat Maya_03.txt
+// ============================================================================
+// PERSONAL LOG // OSIRIS WORKSTATION // USER: maya [OPERATOR-TEMP]
+// TIMESTAMP: 2042-07-18 // FILE: /home/alice/.maya_notes/archive/Maya_03.txt
+// ============================================================================
+
+Ok I'm starting to get lost. I went four directories deep trying to find where
+Javi kept his tool notes and had no idea how to backtrack.
+
+Luckily I mistyped something and discovered that 'cd ..' (two dots, no space)
+goes up one level to the parent folder. Accidentally stumbling into solutions
+is basically my whole strategy at this point.
+
+— Maya
+// ============================================================================
+alice@osiris:/home/alice/.maya_notes/archive$ cd ..
+alice@osiris:/home/alice/.maya_notes$ ls
+Maya_00.txt  Maya_01.txt  Maya_02.txt  archive  test.txt
+alice@osiris:/home/alice/.maya_notes$ ls -a
+.  ..  Maya_00.txt  Maya_01.txt  Maya_02.txt  archive  test.txt
+alice@osiris:/home/alice/.maya_notes$ cd ..
+alice@osiris:/home/alice$ ls
+BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cat README.txt
+// ============================================================================
+// OSIRIS WORKSTATION // EMERGENCY OPERATOR PROTOCOL
+// ============================================================================
+Alice—
+
+If you're seeing this on your screen, the automated lockdown caught you at your
+desk when the network dropped. Don't panic. The system put your terminal in a
+quarantine environment (/home/alice) so the attack couldn't touch your shell.
+
+The desktop GUI is gone. You're going to have to drive this machine through the
+command line.
+
+Keep these three commands in your head right now:
+• 'pwd'            (Print Working Directory)
+Tells you where you are standing in the system tree.
+• 'ls'             (List)
+Shows you all visible files and folders in your current directory.
+• 'cat <filename>' (Concatenate / Read)
+Dumps the text inside a file right onto your screen.
+Example: cat README.txt
+
+Your terminal driver took a direct hit on boot, which is why your Up/Down arrow
+keys aren't recalling previous commands.
+
+Inspect 'BOOT_FAIL.log' using 'cat' to see the exact fault, then
+run the recovery utility it specifies.
+
+If a command fails or spits out an error you don't understand, type 'decrypt'.
+I wrote it to catch whatever POSIX error the kernel just threw and translate
+the sysadmin jargon into plain English.
+
+— Morgan
+// ============================================================================
+alice@osiris:/home/alice$ #note Narrative idea: the player is not named, they are simply exploring the terminal. Maya is the last to have used it
+alice@osiris:/home/alice$ ls
+BOOT_FAIL.log  MORGAN_NOTE.txt  README.txt  TODO.txt  diagnostics
+alice@osiris:/home/alice$ cat BOOT_FAIL.log
+[03:41:02.109] [KERNEL ALERT] Osiris Workstation Core Subsystem Degraded (Boot ID: 0x42-INIT).
+[03:41:02.112] [ERR_TTY_RING] Input ring buffer desynchronized at line discipline layer.
+[03:41:02.115] [HARDWARE FAULT] Interactive command recall (UP/DOWN arrow keys) suspended.
+[03:41:02.118] [DRIVER STATE] Line discipline running in raw unbuffered mode (-icanon echo).
+[03:41:02.120] [DIAGNOSTIC] Register mismatch in terminal driver ring registers.
+[03:41:02.125] [ACTION REQUIRED] Reset line discipline to sane defaults by running: 'stty sane'
+alice@osiris:/home/alice$ cat MORGAN_NOTE.tdt
+cat: MORGAN_NOTE.tdt: No such file or directory
+alice@osiris:/home/alice$ cat MORGAN_NOTE.tdt
+cat: MORGAN_NOTE.tdt: No such file or directory
+alice@osiris:/home/alice$ cat MORGAN_NOTE.txt
+// STICKY NOTE TAPED TO MONITOR FRAME
+Alice—
+
+The attacker didn't just break the drivers; they tried to bury their tracks.
+
+Once you fix the terminal buffer ('stty sane'), remember that Unix hides system
+profiles and recovery caches behind a dot prefix — files and folders whose
+names start with a dot.
+
+Plain 'ls' won't show them. You need to pass the '-a' (all) flag:
+ls -a
+
+First, delete the corrupted configuration artifact:
+rm /home/alice/.bashrc.corrupt
+
+Then copy the clean template from the system backup directory:
+cp /opt/backup/profiles/alice.bashrc /home/alice/.bashrc
+
+Tab autocompletion is dead until you restore your profile.
+
+The previous operator left some personal logs in a hidden directory here.
+Once you know 'ls -a', you'll find them.
+
+— Morgan
+alice@osiris:/home/alice$ #again the MORGAN NOTE tells the player what to do. The pattern should go: Morgan note give clue for current "directory puzzle solution" then give "location" clue for the player to go to that directory to look
+around.
+alice@osiris:/home/alice$

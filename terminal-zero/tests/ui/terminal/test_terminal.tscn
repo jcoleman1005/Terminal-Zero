@@ -1,0 +1,81 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_terminal"]
+
+; ── Test scene for TerminalView — Milestone 1 ─────────────────────────────────
+;
+; Owned by: Terminal Agent
+; Location: tests/ui/terminal/test_terminal.tscn
+;
+; Runs without main_ui.tscn.
+; Uses StubBackendAdapter (instantiated in test_terminal.gd).
+;
+; Layout:
+;   Root (Control, fullscreen)
+;   ├── VBoxRoot (VBoxContainer)
+;   │   ├── ToolBar (HBoxContainer) — test controls
+;   │   │   ├── BtnLoad   (Button)
+;   │   │   ├── BtnHistory (Button)
+;   │   │   ├── BtnCompletion (Button)
+;   │   │   ├── BtnInterrupt (Button)
+;   │   │   └── StatusLabel (Label)
+;   │   └── Split (Control, fills remaining space)
+;   │       └── TerminalView (instance of terminal_view.tscn)
+
+[ext_resource type="Script" path="res://tests/ui/terminal/test_terminal.gd" id="1_harness"]
+[ext_resource type="PackedScene" path="res://scenes/ui/terminal/terminal_view.tscn" id="2_tv"]
+
+[node name="Root" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_harness")
+
+[node name="VBoxRoot" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="ToolBar" type="HBoxContainer" parent="VBoxRoot"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 32)
+
+[node name="BtnLoad" type="Button" parent="VBoxRoot/ToolBar"]
+layout_mode = 2
+text = "A2/A3: Flood + Delayed Output"
+
+[node name="BtnHistory" type="Button" parent="VBoxRoot/ToolBar"]
+layout_mode = 2
+text = "A4: Unlock History"
+
+[node name="BtnCompletion" type="Button" parent="VBoxRoot/ToolBar"]
+layout_mode = 2
+text = "A5: Unlock Completion"
+
+[node name="BtnInterrupt" type="Button" parent="VBoxRoot/ToolBar"]
+layout_mode = 2
+text = "Unlock Interrupt"
+
+[node name="StatusLabel" type="Label" parent="VBoxRoot/ToolBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "All capabilities OFF"
+horizontal_alignment = 2
+
+[node name="Split" type="Control" parent="VBoxRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TerminalView" parent="VBoxRoot/Split" instance=ExtResource("2_tv")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
